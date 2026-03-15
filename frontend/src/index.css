@@ -1,0 +1,194 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    @apply bg-gray-950 text-gray-100 min-h-screen;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply bg-gray-700 hover:bg-gray-600 text-gray-100 font-medium py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-success {
+    @apply bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-danger {
+    @apply bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+  }
+
+  .card {
+    @apply bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-lg;
+  }
+
+  .card-hover {
+    @apply card hover:border-indigo-500 transition-colors duration-200 cursor-pointer;
+  }
+
+  .input-field {
+    @apply bg-gray-800 border border-gray-700 text-gray-100 rounded-lg px-4 py-2 w-full focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors duration-200 placeholder-gray-500;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-blue {
+    @apply badge bg-blue-900 text-blue-300;
+  }
+
+  .badge-green {
+    @apply badge bg-emerald-900 text-emerald-300;
+  }
+
+  .badge-yellow {
+    @apply badge bg-yellow-900 text-yellow-300;
+  }
+
+  .badge-red {
+    @apply badge bg-red-900 text-red-300;
+  }
+
+  .badge-purple {
+    @apply badge bg-purple-900 text-purple-300;
+  }
+
+  .section-title {
+    @apply text-xl font-semibold text-gray-100 mb-4;
+  }
+
+  .page-container {
+    @apply max-w-4xl mx-auto px-4 py-8;
+  }
+}
+
+/* Flashcard flip animation */
+.flashcard-container {
+  perspective: 1000px;
+}
+
+.flashcard {
+  width: 100%;
+  height: 200px;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.6s ease;
+  cursor: pointer;
+}
+
+.flashcard.flipped {
+  transform: rotateY(180deg);
+}
+
+.flashcard-front,
+.flashcard-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.flashcard-front {
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  border: 2px solid #334155;
+}
+
+.flashcard-back {
+  background: linear-gradient(135deg, #1e3a5f, #0f2942);
+  border: 2px solid #1d4ed8;
+  transform: rotateY(180deg);
+}
+
+/* Chat bubbles */
+.chat-bubble-user {
+  @apply bg-indigo-600 text-white rounded-2xl rounded-br-sm px-4 py-3 max-w-xs ml-auto;
+}
+
+.chat-bubble-ai {
+  @apply bg-gray-800 text-gray-100 rounded-2xl rounded-bl-sm px-4 py-3 max-w-xs;
+}
+
+/* Progress bar */
+.progress-bar {
+  @apply h-2 rounded-full overflow-hidden bg-gray-800;
+}
+
+.progress-fill {
+  @apply h-full rounded-full transition-all duration-500 ease-out;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #111827;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #374151;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4b5563;
+}
+
+/* Answer option styles */
+.answer-option {
+  @apply flex items-center gap-3 p-4 rounded-lg border border-gray-700 cursor-pointer transition-all duration-200 hover:border-indigo-500 hover:bg-gray-800;
+}
+
+.answer-option.selected {
+  @apply border-indigo-500 bg-indigo-900/30;
+}
+
+.answer-option.correct {
+  @apply border-emerald-500 bg-emerald-900/30;
+}
+
+.answer-option.incorrect {
+  @apply border-red-500 bg-red-900/30;
+}
+
+/* Skeleton loading */
+.skeleton {
+  @apply bg-gray-800 rounded animate-pulse;
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6, #d946ef);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* XP badge glow */
+.xp-glow {
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+}
