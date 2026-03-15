@@ -98,12 +98,76 @@ Every function in every service that calls Gemini has a hardcoded fallback dict/
 | Whisper model | `tiny` (~75 MB, CPU, int8) | `services/pronunciation_service.py` |
 | API timeout (frontend) | 60 s | `api/client.js` |
 
-## Git
+## Git — Mandatory Push Policy
 
-The `backend/.env`, `*.db`, `backend/audio/`, `backend/exports/`, and `frontend/dist/` are gitignored. After changes:
+**Push to GitHub after every meaningful change.** Never let work accumulate in an unsaved local state. If a session ends without pushing, progress can be lost.
+
+### When to commit and push
+
+Commit and push immediately after each of the following:
+- Any new file created (router, service, component, page)
+- Any bug fixed
+- Any feature completed or partially completed
+- Any refactor, even small
+- Any CLAUDE.md update
+- Before ending a work session
+
+### Commit message format
+
+Messages must be specific enough to understand what changed without reading the diff:
+
+```
+<type>: <what changed and why>
+
+- Detail 1 (which file, what exactly)
+- Detail 2
+- Detail 3 (if relevant)
+```
+
+**Types**: `feat`, `fix`, `refactor`, `style`, `docs`, `chore`
+
+**Good examples**:
+```
+feat: add PDF export endpoint for lessons
+
+- backend/routers/lessons.py: GET /api/lessons/{id}/export-pdf
+- backend/services/pdf_service.py: fpdf2-based generator with vocab table
+- frontend/src/pages/DailyLesson.jsx: Download PDF button with blob fetch
+```
+
+```
+fix: correct uvicorn launch path in start.bat
+
+- Was: cd backend && uvicorn main:app
+- Now: uvicorn backend.main:app (run from project root)
+- Fixes ImportError on relative backend.* imports
+```
+
+**Bad examples** (too vague — never use these):
+```
+update files
+fix bug
+changes
+wip
+```
+
+### Commands
+
+All git commands run from `language-tutor/` (the repo root):
 
 ```bash
 git add -A
-git commit -m "description"
+git commit -m "feat: description
+
+- file.py: what changed
+- component.jsx: what changed"
 git push
 ```
+
+Check what will be committed before committing:
+```bash
+git status
+git diff --staged
+```
+
+The `backend/.env`, `*.db`, `backend/audio/`, `backend/exports/`, and `frontend/dist/` are gitignored and will never be committed.
