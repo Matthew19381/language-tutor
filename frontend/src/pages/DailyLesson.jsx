@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  BookOpen, Volume2, CheckCircle, ChevronDown, ChevronUp,
+  BookOpen, CheckCircle, ChevronDown, ChevronUp,
   AlertTriangle, MessageSquare, PenTool, Star, Download,
   RefreshCw, Eye, EyeOff
 } from 'lucide-react'

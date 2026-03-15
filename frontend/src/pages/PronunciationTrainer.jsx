@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Mic, MicOff, Volume2, RotateCcw, ChevronRight } from 'lucide-react'
+import { Mic, MicOff, RotateCcw, ChevronRight } from 'lucide-react'
 import { getUserId } from '../api/client'
 import { PageLoader } from '../components/LoadingSpinner'
 import axios from 'axios'
@@ -98,8 +98,9 @@ export default function PronunciationTrainer() {
 
   const scoreColor = result
     ? result.score >= 80 ? 'text-emerald-400'
-    : result.score >= 50 ? 'text-yellow-400'
-    : 'text-red-400'
+      : result.score >= 50 ? 'text-yellow-400'
+      : 'text-red-400'
+    : ''
 
   return (
     <div className="page-container max-w-xl mx-auto">
