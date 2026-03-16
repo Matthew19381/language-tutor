@@ -16,24 +16,14 @@ if (-not (Test-Path "backend\.env")) {
 $rootDir = $PWD.Path
 
 Write-Host "Starting Language Tutor Backend..." -ForegroundColor Green
-Start-Process powershell -ArgumentList "-NoExit", "-Command", `
-    "Set-Location '$rootDir'; " + `
-    "Write-Host 'Installing Python dependencies...' -ForegroundColor Cyan; " + `
-    "pip install -r backend\requirements.txt; " + `
-    "Write-Host ''; " + `
-    "Write-Host 'Starting backend on http://localhost:8000' -ForegroundColor Green; " + `
-    "uvicorn backend.main:app --reload --port 8000"
+$backendCmd = "Set-Location '$rootDir'; Write-Host 'Starting backend on http://localhost:8000' -ForegroundColor Green; python -m pip install -r backend\requirements.txt; uvicorn backend.main:app --reload --port 8000"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", $backendCmd
 
 Start-Sleep -Seconds 2
 
 Write-Host "Starting Language Tutor Frontend..." -ForegroundColor Green
-Start-Process powershell -ArgumentList "-NoExit", "-Command", `
-    "Set-Location '$rootDir\frontend'; " + `
-    "Write-Host 'Installing Node dependencies...' -ForegroundColor Cyan; " + `
-    "npm install; " + `
-    "Write-Host ''; " + `
-    "Write-Host 'Starting frontend on http://localhost:5173' -ForegroundColor Green; " + `
-    "npm run dev"
+$frontendCmd = "Set-Location '$rootDir\frontend'; Write-Host 'Starting frontend on http://localhost:5173' -ForegroundColor Green; npm install; npm run dev"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", $frontendCmd
 
 Write-Host ""
 Write-Host "============================================" -ForegroundColor Cyan
@@ -43,7 +33,6 @@ Write-Host "  Frontend: http://localhost:5173" -ForegroundColor White
 Write-Host "  API Docs: http://localhost:8000/docs" -ForegroundColor White
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "Both windows are opening. Wait for them to finish"
-Write-Host "installing dependencies before opening the browser."
+Write-Host "Both windows are opening. Wait a moment before opening the browser."
 Write-Host ""
 Read-Host "Press Enter to exit this window"
