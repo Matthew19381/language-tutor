@@ -64,25 +64,12 @@ describe('NavBar', () => {
 })
 
 describe('NavBar with logged-in user', () => {
-  beforeEach(() => {
-    const { getUserId, getStats } = vi.mocked(
-      // eslint-disable-next-line no-undef
-      await import('../../api/client')
-    )
-    getUserId.mockReturnValue(1)
-    getStats.mockResolvedValue({
-      user: { streak_days: 5, total_xp: 100, cefr_level: 'B1' },
-    })
-  })
-
   it('does not render "Get Started" when user exists', async () => {
     const { getUserId } = await import('../../api/client')
     getUserId.mockReturnValue(42)
 
     renderNavBar()
-    // "Get Started" should not be visible when userId is set
-    // (it's rendered via !userStats && !userId, so with userId set it won't show)
-    // Note: userStats is still null until the async getStats resolves
+    // userId is set, so "Get Started" should not appear
     expect(screen.queryByText('Get Started')).toBeNull()
   })
 })
