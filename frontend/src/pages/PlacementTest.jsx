@@ -8,8 +8,9 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import {
   startPlacementTest, submitPlacementTest, createUser, setUserId
 } from '../api/client'
+import { useLanguage } from '../hooks/useLanguage'
 
-const LANGUAGES = ['German', 'English', 'French', 'Spanish', 'Italian', 'Portuguese']
+const LANGUAGES = ['German', 'English', 'French', 'Spanish', 'Italian', 'Portuguese', 'Russian']
 const NATIVE_LANGUAGES = ['Polish', 'English', 'German', 'French', 'Spanish', 'Russian', 'Other']
 
 const STEPS = {
@@ -21,6 +22,7 @@ const STEPS = {
 
 export default function PlacementTest() {
   const navigate = useNavigate()
+  const { t } = useLanguage()
   const [step, setStep] = useState(STEPS.SETUP)
   const [error, setError] = useState('')
 
@@ -41,7 +43,7 @@ export default function PlacementTest() {
 
   const handleStartTest = async () => {
     if (!name.trim()) {
-      setError('Please enter your name')
+      setError(t('place.enterName'))
       return
     }
     setError('')
@@ -126,8 +128,8 @@ export default function PlacementTest() {
           <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-4">
             <BookOpen className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-2xl font-bold">Placement Test</h1>
-          <p className="text-gray-400 mt-1">Discover your current language level</p>
+          <h1 className="text-2xl font-bold">{t('place.title')}</h1>
+          <p className="text-gray-400 mt-1">{t('place.subtitle')}</p>
         </div>
 
         {/* Setup Step */}
@@ -146,12 +148,12 @@ export default function PlacementTest() {
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">
                   <User className="w-4 h-4 inline mr-1" />
-                  Your Name
+                  {t('place.yourName')}
                 </label>
                 <input
                   type="text"
                   className="input-field"
-                  placeholder="Enter your name"
+                  placeholder={t('place.namePlaceholder')}
                   value={name}
                   onChange={e => setName(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleStartTest()}
@@ -161,7 +163,7 @@ export default function PlacementTest() {
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">
                   <Globe className="w-4 h-4 inline mr-1" />
-                  I want to learn
+                  {t('place.targetLanguage')}
                 </label>
                 <select
                   className="input-field"
@@ -176,7 +178,7 @@ export default function PlacementTest() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">
-                  My native language
+                  {t('place.nativeLanguage')}
                 </label>
                 <select
                   className="input-field"
@@ -198,11 +200,11 @@ export default function PlacementTest() {
               {loadingTest ? (
                 <>
                   <LoadingSpinner size="sm" />
-                  Generating test...
+                  {t('place.loading')}
                 </>
               ) : (
                 <>
-                  Start Test
+                  {t('place.startTest')}
                   <ChevronRight className="w-5 h-5" />
                 </>
               )}
@@ -217,10 +219,10 @@ export default function PlacementTest() {
             <div className="mb-6">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-gray-400">
-                  Question {currentIndex + 1} of {questions.length}
+                  {t('place.question')} {currentIndex + 1} {t('place.of')} {questions.length}
                 </span>
                 <span className="text-sm text-gray-400">
-                  {answeredCount} answered
+                  {answeredCount} {t('place.answered')}
                 </span>
               </div>
               <div className="progress-bar">
@@ -276,7 +278,7 @@ export default function PlacementTest() {
                 disabled={currentIndex === 0}
               >
                 <ChevronLeft className="w-4 h-4" />
-                Previous
+                {t('place.previous')}
               </button>
 
               {currentIndex < questions.length - 1 ? (
@@ -284,7 +286,7 @@ export default function PlacementTest() {
                   className="btn-primary flex items-center gap-2"
                   onClick={handleNext}
                 >
-                  Next
+                  {t('place.next')}
                   <ChevronRight className="w-4 h-4" />
                 </button>
               ) : (
@@ -293,7 +295,7 @@ export default function PlacementTest() {
                   onClick={handleSubmit}
                   disabled={answeredCount === 0}
                 >
-                  Submit Test
+                  {t('place.submit')}
                   <CheckCircle className="w-4 h-4" />
                 </button>
               )}
@@ -323,8 +325,8 @@ export default function PlacementTest() {
         {/* Submitting Step */}
         {step === STEPS.SUBMITTING && (
           <div className="card text-center py-12">
-            <LoadingSpinner size="lg" text="Analyzing your results..." />
-            <p className="text-gray-500 text-sm mt-4">Generating your personalized study plan...</p>
+            <LoadingSpinner size="lg" text={t('place.analyzing')} />
+            <p className="text-gray-500 text-sm mt-4">{t('place.loading')}</p>
           </div>
         )}
 
@@ -335,13 +337,13 @@ export default function PlacementTest() {
               <div className="w-16 h-16 bg-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl font-bold text-white">{results.cefr_level}</span>
               </div>
-              <h2 className="text-2xl font-bold mb-1">Your Level: {results.cefr_level}</h2>
+              <h2 className="text-2xl font-bold mb-1">{t('place.yourLevel')} {results.cefr_level}</h2>
               <p className="text-gray-400">Score: {Math.round(results.score)}%</p>
             </div>
 
             {results.strong_areas?.length > 0 && (
               <div className="mb-4">
-                <h3 className="font-medium text-emerald-400 mb-2">Strong areas</h3>
+                <h3 className="font-medium text-emerald-400 mb-2">{t('place.strongAreas')}</h3>
                 <div className="flex flex-wrap gap-2">
                   {results.strong_areas.map((area, i) => (
                     <span key={i} className="badge-green capitalize">{area}</span>
@@ -352,7 +354,7 @@ export default function PlacementTest() {
 
             {results.weak_areas?.length > 0 && (
               <div className="mb-4">
-                <h3 className="font-medium text-red-400 mb-2">Areas to improve</h3>
+                <h3 className="font-medium text-red-400 mb-2">{t('place.weakAreas')}</h3>
                 <div className="flex flex-wrap gap-2">
                   {results.weak_areas.map((area, i) => (
                     <span key={i} className="badge-red capitalize">{area}</span>
@@ -363,14 +365,14 @@ export default function PlacementTest() {
 
             {results.recommendations && (
               <div className="bg-gray-800 rounded-lg p-4 mb-6">
-                <h3 className="font-medium mb-2">Recommendations</h3>
+                <h3 className="font-medium mb-2">{t('place.recommendations')}</h3>
                 <p className="text-gray-400 text-sm leading-relaxed">{results.recommendations}</p>
               </div>
             )}
 
             {results.study_plan && (
               <div className="bg-indigo-900/20 border border-indigo-700/30 rounded-lg p-4 mb-6">
-                <h3 className="font-medium text-indigo-300 mb-1">30-Day Study Plan Created!</h3>
+                <h3 className="font-medium text-indigo-300 mb-1">{t('place.studyPlan')}</h3>
                 <p className="text-gray-400 text-sm">
                   Your personalized plan covers {results.study_plan.daily_topics?.length || 30} days
                   of {results.study_plan.language} learning at {results.study_plan.cefr_level} level.
@@ -379,7 +381,7 @@ export default function PlacementTest() {
             )}
 
             <button className="btn-primary w-full py-3" onClick={handleFinish}>
-              Start Learning
+              {t('place.startLearning')}
             </button>
           </div>
         )}

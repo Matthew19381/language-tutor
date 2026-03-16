@@ -160,3 +160,16 @@ export const clearUser = () => {
   localStorage.removeItem('userName')
   localStorage.removeItem('userLanguage')
 }
+
+// ===== CSV Export =====
+
+export const exportProgressCSV = (userId) =>
+  axios.get(`/api/stats/${userId}/export-csv`, { responseType: 'blob' })
+
+// ===== Obsidian Export =====
+
+export const exportObsidian = (lessonId, dayOffset = 0, upload = false) =>
+  axios.get(`/api/lessons/${lessonId}/export-obsidian`, {
+    params: { day_offset: dayOffset, upload },
+    responseType: upload ? 'json' : 'blob',
+  })

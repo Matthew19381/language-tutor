@@ -20,9 +20,16 @@ backend/.env
 *.sqlite
 *.sqlite3
 
-# Backend generated files (audio and PDF exports)
+# Backend generated files (audio, PDF and Obsidian exports)
 backend/audio/
 backend/exports/
+
+# Google Drive OAuth token (contains secrets)
+backend/gdrive_token.json
+backend/gdrive_credentials.json
+
+# Discord/notifier state
+backend/notifier_state.json
 
 # Node
 node_modules/

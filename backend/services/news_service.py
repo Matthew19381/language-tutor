@@ -34,6 +34,10 @@ RSS_FEEDS = {
     "Polish": [
         "https://www.polsatnews.pl/rss/wszystkie.xml",
     ],
+    "Russian": [
+        "https://www.voanews.com/api/zmmiqmmte_",
+        "https://feeds.bbci.co.uk/russian/rss.xml",
+    ],
 }
 
 DEFAULT_FEEDS = [

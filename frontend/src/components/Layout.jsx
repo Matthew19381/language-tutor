@@ -3,10 +3,12 @@ import { Outlet } from 'react-router-dom'
 import NavBar from './NavBar'
 import NotificationManager from './NotificationManager'
 import { getUserId, getStats } from '../api/client'
+import { useLanguage } from '../hooks/useLanguage'
 
 export default function Layout() {
   const [toasts, setToasts] = useState([])
   const userId = getUserId()
+  const { t } = useLanguage()
 
   // Poll for new achievements every time the layout mounts (route changes)
   const checkNewAchievements = useCallback(async () => {
@@ -44,6 +46,7 @@ export default function Layout() {
             key={toast.id}
             toast={toast}
             onClose={() => removeToast(toast.id)}
+            label={t('achievement.unlocked')}
           />
         ))}
       </div>
@@ -51,7 +54,7 @@ export default function Layout() {
   )
 }
 
-function AchievementToast({ toast, onClose }) {
+function AchievementToast({ toast, onClose, label }) {
   useEffect(() => {
     const timer = setTimeout(onClose, 4000)
     return () => clearTimeout(timer)
@@ -61,7 +64,7 @@ function AchievementToast({ toast, onClose }) {
     <div className="bg-gray-800 border border-yellow-600/50 rounded-xl px-4 py-3 shadow-2xl flex items-center gap-3 animate-fade-in">
       <span className="text-2xl">{toast.icon}</span>
       <div className="flex-1">
-        <p className="text-yellow-300 font-semibold text-sm">Achievement Unlocked!</p>
+        <p className="text-yellow-300 font-semibold text-sm">{label}</p>
         <p className="text-white text-sm">{toast.title}</p>
         <p className="text-gray-400 text-xs">{toast.description}</p>
       </div>

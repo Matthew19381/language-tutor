@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 
 from backend.database import engine, Base
 from backend.routers import placement, lessons, tests, flashcards, conversation, stats
-from backend.routers import quickmode, news, pronunciation
+from backend.routers import quickmode, news, pronunciation, settings
 
 logging.basicConfig(
     level=logging.INFO,
@@ -63,6 +63,7 @@ app.include_router(stats.router, tags=["Stats"])
 app.include_router(quickmode.router, tags=["QuickMode"])
 app.include_router(news.router, tags=["News"])
 app.include_router(pronunciation.router, tags=["Pronunciation"])
+app.include_router(settings.router, tags=["Settings"])
 
 # Serve audio files
 audio_dir = os.path.join(os.path.dirname(__file__), "audio")

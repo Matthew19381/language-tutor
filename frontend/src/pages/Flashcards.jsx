@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { getUserId, getFlashcards, getDueFlashcards, reviewFlashcard, exportAnki, addFlashcard } from '../api/client'
 import { PageLoader } from '../components/LoadingSpinner'
+import { useLanguage } from '../hooks/useLanguage'
 
 const TABS = { ALL: 'all', DUE: 'due', ADD: 'add' }
 
@@ -20,6 +21,7 @@ export default function Flashcards() {
   const [reviewDone, setReviewDone] = useState(new Set())
   const navigate = useNavigate()
   const userId = getUserId()
+  const { t } = useLanguage()
 
   // Add card form
   const [newWord, setNewWord] = useState('')
@@ -99,20 +101,20 @@ export default function Flashcards() {
         example_sentence: newExample
       })
       if (res.success) {
-        setAddMsg('Card added successfully!')
+        setAddMsg(t('flash.cardAdded') || 'Card added successfully!')
         setNewWord('')
         setNewTranslation('')
         setNewExample('')
         loadCards()
       } else {
-        setAddMsg(res.message || 'Card already exists')
+        setAddMsg(res.message || t('flash.cardExists'))
       }
     } catch (e) {
       setAddMsg('Error: ' + e.message)
     }
   }
 
-  if (loading) return <PageLoader text="Loading flashcards..." />
+  if (loading) return <PageLoader text={t('flash.loading')} />
 
   return (
     <div className="page-container">
@@ -121,9 +123,9 @@ export default function Flashcards() {
         <div className="flex items-center gap-3">
           <Brain className="w-7 h-7 text-purple-400" />
           <div>
-            <h1 className="text-2xl font-bold">Flashcards</h1>
+            <h1 className="text-2xl font-bold">{t('flash.title')}</h1>
             <p className="text-gray-400 text-sm">
-              {allCards.length} total · {dueCards.length} due today
+              {allCards.length} {t('flash.total')} · {dueCards.length} {t('flash.dueToday')}
             </p>
           </div>
         </div>
@@ -133,16 +135,16 @@ export default function Flashcards() {
           disabled={exporting || allCards.length === 0}
         >
           <Download className="w-4 h-4" />
-          {exporting ? 'Exporting...' : 'Export Anki'}
+          {exporting ? t('flash.exporting') : t('flash.exportAnki')}
         </button>
       </div>
 
       {/* Tabs */}
       <div className="flex gap-2 mb-6">
         {[
-          { key: TABS.DUE, label: `Due Today (${dueCards.length})`, icon: <Clock className="w-4 h-4" /> },
-          { key: TABS.ALL, label: `All Cards (${allCards.length})`, icon: <Eye className="w-4 h-4" /> },
-          { key: TABS.ADD, label: 'Add Card', icon: <Plus className="w-4 h-4" /> },
+          { key: TABS.DUE, label: `${t('flash.dueTab')} (${dueCards.length})`, icon: <Clock className="w-4 h-4" /> },
+          { key: TABS.ALL, label: `${t('flash.allTab')} (${allCards.length})`, icon: <Eye className="w-4 h-4" /> },
+          { key: TABS.ADD, label: t('flash.addTab'), icon: <Plus className="w-4 h-4" /> },
         ].map(({ key, label, icon }) => (
           <button
             key={key}
@@ -161,38 +163,38 @@ export default function Flashcards() {
       {/* Add Card Tab */}
       {tab === TABS.ADD && (
         <div className="card max-w-lg mx-auto">
-          <h2 className="text-xl font-semibold mb-4">Add New Flashcard</h2>
+          <h2 className="text-xl font-semibold mb-4">{t('flash.addNew')}</h2>
           {addMsg && (
             <div className={`p-3 rounded-lg mb-4 text-sm ${
-              addMsg.includes('successfully') ? 'bg-emerald-900/30 text-emerald-300' : 'bg-yellow-900/30 text-yellow-300'
+              addMsg.includes('successfully') || addMsg.includes('dodana') ? 'bg-emerald-900/30 text-emerald-300' : 'bg-yellow-900/30 text-yellow-300'
             }`}>
               {addMsg}
             </div>
           )}
           <div className="space-y-3">
             <div>
-              <label className="block text-sm text-gray-400 mb-1">Word / Phrase</label>
+              <label className="block text-sm text-gray-400 mb-1">{t('flash.wordPhrase')}</label>
               <input
                 className="input-field"
-                placeholder="Word in target language"
+                placeholder={t('flash.wordPlaceholder')}
                 value={newWord}
                 onChange={e => setNewWord(e.target.value)}
               />
             </div>
             <div>
-              <label className="block text-sm text-gray-400 mb-1">Translation</label>
+              <label className="block text-sm text-gray-400 mb-1">{t('flash.translationLabel')}</label>
               <input
                 className="input-field"
-                placeholder="Translation in your language"
+                placeholder={t('flash.translationPlaceholder')}
                 value={newTranslation}
                 onChange={e => setNewTranslation(e.target.value)}
               />
             </div>
             <div>
-              <label className="block text-sm text-gray-400 mb-1">Example sentence (optional)</label>
+              <label className="block text-sm text-gray-400 mb-1">{t('flash.exampleOptional')}</label>
               <input
                 className="input-field"
-                placeholder="Example sentence"
+                placeholder={t('flash.examplePlaceholder')}
                 value={newExample}
                 onChange={e => setNewExample(e.target.value)}
               />
@@ -202,7 +204,7 @@ export default function Flashcards() {
               onClick={handleAddCard}
               disabled={!newWord || !newTranslation}
             >
-              Add Card
+              {t('flash.addButton')}
             </button>
           </div>
         </div>
@@ -216,14 +218,14 @@ export default function Flashcards() {
               {tab === TABS.DUE ? (
                 <>
                   <CheckCircle className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
-                  <h3 className="text-lg font-semibold mb-1">All caught up!</h3>
-                  <p className="text-gray-400">No cards due for review today. Check back tomorrow!</p>
+                  <h3 className="text-lg font-semibold mb-1">{t('flash.allCaughtUp')}</h3>
+                  <p className="text-gray-400">{t('flash.noDueCards')}</p>
                 </>
               ) : (
                 <>
                   <Brain className="w-12 h-12 text-gray-500 mx-auto mb-3" />
-                  <h3 className="text-lg font-semibold mb-1">No flashcards yet</h3>
-                  <p className="text-gray-400">Complete lessons to automatically add vocabulary cards.</p>
+                  <h3 className="text-lg font-semibold mb-1">{t('flash.noCards')}</h3>
+                  <p className="text-gray-400">{t('flash.completeLesson')}</p>
                 </>
               )}
             </div>
@@ -233,7 +235,7 @@ export default function Flashcards() {
               <div className="flex justify-between text-sm text-gray-400 mb-3">
                 <span>{currentIndex + 1} / {displayCards.length}</span>
                 {tab === TABS.DUE && (
-                  <span>{reviewDone.size} reviewed</span>
+                  <span>{reviewDone.size} {t('flash.reviewed')}</span>
                 )}
               </div>
 
@@ -248,16 +250,16 @@ export default function Flashcards() {
                     <div className="flashcard-front">
                       <div className="text-center">
                         <p className="text-gray-400 text-xs mb-2 uppercase tracking-wider">
-                          {isFlipped ? 'translation' : 'word'}
+                          {isFlipped ? t('flash.translationSide') : t('flash.wordSide')}
                         </p>
                         <p className="text-3xl font-bold text-indigo-300">{currentCard.word}</p>
-                        <p className="text-gray-500 text-xs mt-3">Click to reveal translation</p>
+                        <p className="text-gray-500 text-xs mt-3">{t('flash.clickReveal')}</p>
                       </div>
                     </div>
                     {/* Back */}
                     <div className="flashcard-back">
                       <div className="text-center">
-                        <p className="text-gray-400 text-xs mb-2 uppercase tracking-wider">translation</p>
+                        <p className="text-gray-400 text-xs mb-2 uppercase tracking-wider">{t('flash.translationSide')}</p>
                         <p className="text-3xl font-bold text-emerald-300">{currentCard.translation}</p>
                         {currentCard.example_sentence && (
                           <p className="text-gray-400 text-sm mt-3 italic max-w-xs">
@@ -274,17 +276,17 @@ export default function Flashcards() {
               {tab === TABS.DUE && isFlipped && currentCard && (
                 <div className="grid grid-cols-4 gap-2 mb-4">
                   {[
-                    { rating: 1, label: 'Again', color: 'bg-red-700 hover:bg-red-600 text-white', desc: '<1d' },
-                    { rating: 2, label: 'Hard', color: 'bg-orange-700 hover:bg-orange-600 text-white', desc: '~3d' },
-                    { rating: 3, label: 'Good', color: 'bg-blue-700 hover:bg-blue-600 text-white', desc: '~7d' },
-                    { rating: 4, label: 'Easy', color: 'bg-emerald-700 hover:bg-emerald-600 text-white', desc: '~14d' },
-                  ].map(({ rating, label, color, desc }) => (
+                    { rating: 1, labelKey: 'flash.again', color: 'bg-red-700 hover:bg-red-600 text-white', desc: '<1d' },
+                    { rating: 2, labelKey: 'flash.hard', color: 'bg-orange-700 hover:bg-orange-600 text-white', desc: '~3d' },
+                    { rating: 3, labelKey: 'flash.good', color: 'bg-blue-700 hover:bg-blue-600 text-white', desc: '~7d' },
+                    { rating: 4, labelKey: 'flash.easy', color: 'bg-emerald-700 hover:bg-emerald-600 text-white', desc: '~14d' },
+                  ].map(({ rating, labelKey, color, desc }) => (
                     <button
                       key={rating}
                       className={`${color} rounded-lg py-2 text-sm font-medium transition-colors`}
                       onClick={() => handleReview(rating)}
                     >
-                      <div>{label}</div>
+                      <div>{t(labelKey)}</div>
                       <div className="text-xs opacity-75">{desc}</div>
                     </button>
                   ))}
@@ -299,20 +301,20 @@ export default function Flashcards() {
                   disabled={currentIndex === 0}
                 >
                   <ChevronLeft className="w-4 h-4" />
-                  Previous
+                  {t('flash.previous')}
                 </button>
                 <button
                   className={isFlipped ? 'btn-primary' : 'btn-secondary'}
                   onClick={handleFlip}
                 >
-                  {isFlipped ? 'Show Front' : 'Reveal'}
+                  {isFlipped ? t('flash.showFront') : t('flash.reveal')}
                 </button>
                 <button
                   className="btn-secondary flex items-center gap-2"
                   onClick={handleNext}
                   disabled={currentIndex === displayCards.length - 1}
                 >
-                  Next
+                  {t('flash.next')}
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>

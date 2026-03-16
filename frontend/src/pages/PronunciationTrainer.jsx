@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Mic, MicOff, RotateCcw, ChevronRight } from 'lucide-react'
 import { getUserId } from '../api/client'
 import { PageLoader } from '../components/LoadingSpinner'
+import { useLanguage } from '../hooks/useLanguage'
 import axios from 'axios'
 
 export default function PronunciationTrainer() {
@@ -19,6 +20,7 @@ export default function PronunciationTrainer() {
   const audioChunksRef = useRef([])
   const navigate = useNavigate()
   const userId = getUserId()
+  const { t } = useLanguage()
 
   useEffect(() => {
     if (!userId) { navigate('/placement'); return }
@@ -52,7 +54,7 @@ export default function PronunciationTrainer() {
       mediaRecorder.start()
       setRecording(true)
     } catch (e) {
-      setError('Could not access microphone. Please allow microphone access.')
+      setError(t('pronun.micError'))
     }
   }
 
@@ -65,7 +67,7 @@ export default function PronunciationTrainer() {
 
   const analyzeAudio = async (blob) => {
     if (!currentPhrase.trim()) {
-      setError('Please enter a phrase to practice.')
+      setError(t('pronun.enterPhraseError'))
       return
     }
     setAnalyzing(true)
@@ -83,7 +85,7 @@ export default function PronunciationTrainer() {
       setResult(response.data)
     } catch (e) {
       const detail = e.response?.data?.detail || e.message
-      setError(`Analysis failed: ${detail}`)
+      setError(`${t('pronun.analysisFailed')} ${detail}`)
     } finally {
       setAnalyzing(false)
     }
@@ -94,7 +96,7 @@ export default function PronunciationTrainer() {
     setCurrentIdx(i => (i + 1) % (phrases.length || 1))
   }
 
-  if (loading) return <PageLoader text="Loading pronunciation trainer..." />
+  if (loading) return <PageLoader text={t('pronun.loading')} />
 
   const scoreColor = result
     ? result.score >= 80 ? 'text-emerald-400'
@@ -107,8 +109,8 @@ export default function PronunciationTrainer() {
       <div className="flex items-center gap-3 mb-6">
         <Mic className="w-7 h-7 text-purple-400" />
         <div>
-          <h1 className="text-2xl font-bold">Pronunciation Trainer</h1>
-          <p className="text-gray-400">Record yourself and get instant feedback</p>
+          <h1 className="text-2xl font-bold">{t('pronun.title')}</h1>
+          <p className="text-gray-400">{t('pronun.subtitle')}</p>
         </div>
       </div>
 
@@ -121,7 +123,7 @@ export default function PronunciationTrainer() {
               !useCustom ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-gray-200'
             }`}
           >
-            From Lessons
+            {t('pronun.fromLessons')}
           </button>
           <button
             onClick={() => setUseCustom(true)}
@@ -129,7 +131,7 @@ export default function PronunciationTrainer() {
               useCustom ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-gray-200'
             }`}
           >
-            Custom Phrase
+            {t('pronun.customPhrase')}
           </button>
         </div>
 
@@ -137,7 +139,7 @@ export default function PronunciationTrainer() {
           <input
             type="text"
             className="input-field"
-            placeholder="Enter a phrase to practice..."
+            placeholder={t('pronun.enterPhrase')}
             value={customPhrase}
             onChange={e => setCustomPhrase(e.target.value)}
           />
@@ -161,7 +163,7 @@ export default function PronunciationTrainer() {
               </div>
             ) : (
               <p className="text-gray-400 text-sm">
-                Complete some lessons to get practice phrases, or use Custom Phrase.
+                {t('pronun.completeLessons')}
               </p>
             )}
             {phrases.length > 1 && (
@@ -176,7 +178,7 @@ export default function PronunciationTrainer() {
       {/* Recording Control */}
       <div className="card mb-4 text-center">
         <p className="text-gray-400 text-sm mb-4">
-          {recording ? 'Recording... Click to stop' : 'Click the microphone to start recording'}
+          {recording ? t('pronun.recording') : t('pronun.clickMic')}
         </p>
         <button
           onClick={recording ? stopRecording : startRecording}
@@ -193,7 +195,7 @@ export default function PronunciationTrainer() {
           }
         </button>
         {analyzing && (
-          <p className="text-indigo-400 text-sm mt-4 animate-pulse">Analyzing pronunciation...</p>
+          <p className="text-indigo-400 text-sm mt-4 animate-pulse">{t('pronun.analyzing')}</p>
         )}
         {error && (
           <p className="text-red-400 text-sm mt-4">{error}</p>
@@ -204,7 +206,7 @@ export default function PronunciationTrainer() {
       {result && (
         <div className="card">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-lg">Results</h2>
+            <h2 className="font-semibold text-lg">{t('pronun.results')}</h2>
             <button
               onClick={() => setResult(null)}
               className="text-gray-500 hover:text-gray-300"
@@ -236,11 +238,11 @@ export default function PronunciationTrainer() {
           {/* Transcription */}
           <div className="grid grid-cols-1 gap-3 text-sm">
             <div>
-              <span className="text-gray-500">You said:</span>
-              <p className="text-yellow-300 mt-0.5">{result.transcribed || '(nothing detected)'}</p>
+              <span className="text-gray-500">{t('pronun.youSaid')}</span>
+              <p className="text-yellow-300 mt-0.5">{result.transcribed || t('pronun.noDetected')}</p>
             </div>
             <div>
-              <span className="text-gray-500">Target:</span>
+              <span className="text-gray-500">{t('pronun.target')}</span>
               <p className="text-indigo-200 mt-0.5">{result.target}</p>
             </div>
           </div>
@@ -248,7 +250,7 @@ export default function PronunciationTrainer() {
           {/* Word-by-word */}
           {result.word_scores?.length > 0 && (
             <div className="mt-4">
-              <p className="text-gray-500 text-sm mb-2">Word analysis:</p>
+              <p className="text-gray-500 text-sm mb-2">{t('pronun.wordAnalysis')}</p>
               <div className="flex flex-wrap gap-2">
                 {result.word_scores.map((w, i) => (
                   <span
@@ -270,10 +272,10 @@ export default function PronunciationTrainer() {
           {/* Stats */}
           <div className="flex gap-4 mt-4 text-xs text-gray-500">
             {result.char_similarity !== undefined && (
-              <span>Char similarity: <span className="text-gray-300">{result.char_similarity}%</span></span>
+              <span>{t('pronun.charSimilarity')} <span className="text-gray-300">{result.char_similarity}%</span></span>
             )}
             {result.word_accuracy !== undefined && (
-              <span>Word accuracy: <span className="text-gray-300">{result.word_accuracy}%</span></span>
+              <span>{t('pronun.wordAccuracy')} <span className="text-gray-300">{result.word_accuracy}%</span></span>
             )}
           </div>
         </div>

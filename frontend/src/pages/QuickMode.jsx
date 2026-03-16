@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Timer, CheckCircle, BookOpen, FlaskConical, Brain, Mic, Newspaper, Play, Pause, RotateCcw } from 'lucide-react'
 import { getUserId } from '../api/client'
 import { PageLoader } from '../components/LoadingSpinner'
+import { useLanguage } from '../hooks/useLanguage'
 import axios from 'axios'
 
 const ICON_MAP = {
@@ -24,6 +25,7 @@ export default function QuickMode() {
   const intervalRef = useRef(null)
   const navigate = useNavigate()
   const userId = getUserId()
+  const { t } = useLanguage()
 
   useEffect(() => {
     if (!userId) { navigate('/placement'); return }
@@ -62,7 +64,7 @@ export default function QuickMode() {
     return `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`
   }
 
-  if (loading) return <PageLoader text="Loading quick mode..." />
+  if (loading) return <PageLoader text={t('quick.loading')} />
   if (!plan) return null
 
   const allDone = plan.activities.filter(a => !a.completed).every(a => checked[a.id])
@@ -74,7 +76,7 @@ export default function QuickMode() {
       <div className="flex items-center gap-3 mb-6">
         <Timer className="w-7 h-7 text-emerald-400" />
         <div>
-          <h1 className="text-2xl font-bold">15-Minute Mode</h1>
+          <h1 className="text-2xl font-bold">{t('quick.title')}</h1>
           <p className="text-gray-400">Quick daily practice — {plan.target_language} · {plan.cefr_level}</p>
         </div>
       </div>
@@ -93,7 +95,10 @@ export default function QuickMode() {
               timerActive ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-emerald-600 hover:bg-emerald-700'
             } text-white transition-colors`}
           >
-            {timerActive ? <><Pause className="w-4 h-4" /> Pause</> : <><Play className="w-4 h-4" /> Start</>}
+            {timerActive
+              ? <><Pause className="w-4 h-4" /> {t('quick.pause')}</>
+              : <><Play className="w-4 h-4" /> {t('quick.start')}</>
+            }
           </button>
           <button
             onClick={resetTimer}
@@ -103,17 +108,17 @@ export default function QuickMode() {
           </button>
         </div>
         {secondsLeft === 0 && (
-          <p className="text-emerald-400 font-semibold mt-3">Time's up! Great session! 🎉</p>
+          <p className="text-emerald-400 font-semibold mt-3">{t('quick.timeUp')}</p>
         )}
       </div>
 
       {/* Progress */}
       <div className="flex items-center justify-between mb-4">
         <p className="text-gray-400 text-sm">
-          {completedCount}/{plan.activities.length} activities
+          {completedCount}/{plan.activities.length} {t('quick.activities')}
         </p>
         <p className="text-gray-400 text-sm">
-          ~{plan.total_estimated_minutes} min estimated
+          ~{plan.total_estimated_minutes} {t('quick.estimated')}
         </p>
       </div>
       <div className="progress-bar mb-6">
@@ -163,7 +168,7 @@ export default function QuickMode() {
                     onClick={() => navigate(activity.route)}
                     className="block mt-1 text-indigo-400 hover:text-indigo-300 text-xs"
                   >
-                    Go →
+                    {t('quick.go')}
                   </button>
                 )}
               </div>
@@ -175,8 +180,8 @@ export default function QuickMode() {
       {allDone && (
         <div className="card border-emerald-700/30 bg-emerald-900/10 text-center mt-6">
           <CheckCircle className="w-10 h-10 text-emerald-400 mx-auto mb-2" />
-          <p className="text-emerald-300 font-bold text-lg">All done! Amazing session! 🎊</p>
-          <p className="text-gray-400 text-sm mt-1">You've completed your 15-minute daily practice.</p>
+          <p className="text-emerald-300 font-bold text-lg">{t('quick.allDone')}</p>
+          <p className="text-gray-400 text-sm mt-1">{t('quick.completed15min')}</p>
         </div>
       )}
     </div>

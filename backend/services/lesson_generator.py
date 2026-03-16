@@ -709,6 +709,7 @@ async def generate_daily_tips(
     prompt = f"""Generate 4 helpful daily language learning tips for a {native_language} speaker learning {language} at CEFR level {cefr_level}.
 
 Tips should cover different aspects: grammar, vocabulary, culture, and memory techniques.
+Each tip must cite a real scientific source (researcher name, year, study/theory name).
 
 Return JSON:
 {{
@@ -716,12 +717,14 @@ Return JSON:
         {{
             "title": "Tip title",
             "content": "Detailed tip content with examples",
-            "type": "grammar|vocabulary|culture|memory_tip"
+            "type": "grammar|vocabulary|culture|memory_tip",
+            "source": "Krashen (1982) - Input Hypothesis"
         }}
     ]
 }}
 
-Make tips practical, specific, and actionable. Include {language} examples where relevant."""
+Make tips practical, specific, and actionable. Include {language} examples where relevant.
+Use real citations: e.g. Ebbinghaus (1885), Krashen (1982), Nation (2001), Baddeley (1986), Swain (1985)."""
 
     try:
         return await generate_json(prompt)
@@ -732,22 +735,26 @@ Make tips practical, specific, and actionable. Include {language} examples where
                 {
                     "title": "Practice Every Day",
                     "content": f"Consistency is key in learning {language}. Even 15 minutes daily is better than 2 hours once a week.",
-                    "type": "memory_tip"
+                    "type": "memory_tip",
+                    "source": "Ebbinghaus (1885) - Spacing Effect"
                 },
                 {
                     "title": "Learn in Context",
                     "content": f"Don't just memorize word lists. Learn {language} words in sentences to remember them better.",
-                    "type": "vocabulary"
+                    "type": "vocabulary",
+                    "source": "Nation (2001) - Learning Vocabulary in Another Language"
                 },
                 {
                     "title": "Listen to Native Speakers",
                     "content": f"Watch {language} movies or listen to {language} music to improve your ear for the language.",
-                    "type": "culture"
+                    "type": "culture",
+                    "source": "Krashen (1982) - Input Hypothesis"
                 },
                 {
                     "title": "Grammar Building Blocks",
                     "content": f"Master the basic sentence structure of {language} before moving to complex forms.",
-                    "type": "grammar"
+                    "type": "grammar",
+                    "source": "Baddeley (1986) - Working Memory Model"
                 }
             ]
         }

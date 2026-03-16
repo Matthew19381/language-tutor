@@ -5,23 +5,25 @@ import {
   BarChart3, Flame, Star, Brain, Timer, Newspaper, Mic
 } from 'lucide-react'
 import { getUserId, getStats } from '../api/client'
-
-const navItems = [
-  { to: '/', label: 'Home', icon: LayoutGrid, exact: true },
-  { to: '/lesson', label: 'Lesson', icon: BookOpen },
-  { to: '/test', label: 'Test', icon: FlaskConical },
-  { to: '/flashcards', label: 'Flashcards', icon: Brain },
-  { to: '/conversation', label: 'Speak', icon: MessageSquare },
-  { to: '/quickmode', label: '15 min', icon: Timer },
-  { to: '/news', label: 'News', icon: Newspaper },
-  { to: '/pronunciation', label: 'Pronounce', icon: Mic },
-  { to: '/stats', label: 'Stats', icon: BarChart3 },
-]
+import { useLanguage } from '../hooks/useLanguage'
 
 export default function NavBar() {
   const location = useLocation()
   const [userStats, setUserStats] = useState(null)
   const userId = getUserId()
+  const { t } = useLanguage()
+
+  const navItems = [
+    { to: '/', label: t('nav.home'), icon: LayoutGrid, exact: true },
+    { to: '/lesson', label: t('nav.lesson'), icon: BookOpen },
+    { to: '/test', label: t('nav.test'), icon: FlaskConical },
+    { to: '/flashcards', label: t('nav.flashcards'), icon: Brain },
+    { to: '/conversation', label: t('nav.speak'), icon: MessageSquare },
+    { to: '/quickmode', label: t('nav.quickmode'), icon: Timer },
+    { to: '/news', label: t('nav.news'), icon: Newspaper },
+    { to: '/pronunciation', label: t('nav.pronounce'), icon: Mic },
+    { to: '/stats', label: t('nav.stats'), icon: BarChart3 },
+  ]
 
   useEffect(() => {
     if (userId) {
@@ -91,7 +93,7 @@ export default function NavBar() {
 
           {!userStats && !userId && (
             <Link to="/placement" className="btn-primary text-sm py-1.5">
-              Get Started
+              {t('nav.getStarted')}
             </Link>
           )}
         </div>

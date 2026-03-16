@@ -2,7 +2,7 @@ import json
 import logging
 import os
 from datetime import datetime, date, timedelta
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import Optional
@@ -16,6 +16,7 @@ from backend.models.flashcard import Flashcard
 from backend.services.lesson_generator import generate_daily_lesson
 from backend.services.audio_service import generate_vocabulary_audio, AUDIO_DIR
 from backend.services.pdf_service import generate_lesson_pdf, EXPORTS_DIR
+from backend.services.obsidian_service import save_obsidian_md
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -275,6 +276,77 @@ async def export_lesson_pdf(lesson_id: int, db: Session = Depends(get_db)):
     except Exception as e:
         logger.error(f"PDF generation error: {e}")
         raise HTTPException(status_code=500, detail=f"PDF generation failed: {str(e)}")
+
+
+@router.get("/api/lessons/{lesson_id}/export-obsidian")
+async def export_lesson_obsidian(
+    lesson_id: int,
+    day_offset: int = Query(0, description="-1=yesterday, 0=today, 1=tomorrow, 2=day after"),
+    upload: bool = Query(False, description="Upload to Google Drive instead of downloading"),
+    db: Session = Depends(get_db)
+):
+    lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+
+    content = json.loads(lesson.content)
+    lesson_data = {
+        "title": lesson.title,
+        "topic": lesson.topic,
+        "content": content,
+        "cefr_level": lesson.cefr_level,
+        "language": lesson.language,
+        "day_number": lesson.day_number,
+    }
+
+    # If day_offset > 0, pre-generate a future lesson
+    if day_offset > 0:
+        user = db.query(User).filter(User.id == lesson.user_id).first()
+        if user:
+            study_plan = db.query(StudyPlan).filter(
+                StudyPlan.user_id == user.id,
+                StudyPlan.is_active == True
+            ).first()
+            if study_plan:
+                future_day = lesson.day_number + day_offset
+                plan_data = json.loads(study_plan.plan_data)
+                try:
+                    future_content = await generate_daily_lesson(
+                        day_number=future_day,
+                        study_plan_data=plan_data,
+                        user_errors=[],
+                        cefr_level=user.cefr_level,
+                        language=user.target_language,
+                        native_language=user.native_language,
+                        recent_topics=[lesson.topic]
+                    )
+                    lesson_data = {
+                        "title": future_content.get("title", f"Day {future_day}"),
+                        "topic": future_content.get("topic", ""),
+                        "content": future_content,
+                        "cefr_level": user.cefr_level,
+                        "language": user.target_language,
+                        "day_number": future_day,
+                    }
+                except Exception as e:
+                    logger.error(f"Could not pre-generate future lesson: {e}")
+
+    filepath = save_obsidian_md(lesson_data, lesson_id)
+
+    if upload:
+        try:
+            from backend.services.google_drive_service import upload_to_google_drive
+            folder_id = os.environ.get("GDRIVE_FOLDER_ID")
+            url = upload_to_google_drive(filepath, folder_id)
+            return {"success": True, "url": url, "filename": os.path.basename(filepath)}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Google Drive upload failed: {e}")
+
+    return FileResponse(
+        filepath,
+        media_type="text/markdown",
+        filename=os.path.basename(filepath),
+    )
 
 
 @router.get("/api/lessons/list/{user_id}")

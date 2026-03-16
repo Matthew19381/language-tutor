@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Newspaper, BookOpen, ChevronDown, ChevronUp, ExternalLink, Plus } from 'lucide-react'
 import { getUserId, addFlashcard } from '../api/client'
 import { PageLoader } from '../components/LoadingSpinner'
+import { useLanguage } from '../hooks/useLanguage'
 import axios from 'axios'
 
 export default function News() {
@@ -13,6 +14,7 @@ export default function News() {
   const [addedWords, setAddedWords] = useState({})
   const navigate = useNavigate()
   const userId = getUserId()
+  const { t } = useLanguage()
 
   useEffect(() => {
     if (!userId) { navigate('/placement'); return }
@@ -39,7 +41,7 @@ export default function News() {
     }
   }
 
-  if (loading) return <PageLoader text="Loading news articles..." />
+  if (loading) return <PageLoader text={t('news.loading')} />
 
   if (error) {
     return (
@@ -56,14 +58,14 @@ export default function News() {
       <div className="flex items-center gap-3 mb-6">
         <Newspaper className="w-7 h-7 text-blue-400" />
         <div>
-          <h1 className="text-2xl font-bold">News in Target Language</h1>
-          <p className="text-gray-400">Simplified articles at your CEFR level</p>
+          <h1 className="text-2xl font-bold">{t('news.title')}</h1>
+          <p className="text-gray-400">{t('news.subtitle')}</p>
         </div>
       </div>
 
       {articles.length === 0 && (
         <div className="card text-center text-gray-400">
-          No articles available. Please try again later.
+          {t('news.noArticles')}
         </div>
       )}
 
@@ -95,7 +97,7 @@ export default function News() {
                 {/* Simplified Text */}
                 <div>
                   <h3 className="text-sm font-semibold text-gray-400 mb-2 flex items-center gap-1">
-                    <BookOpen className="w-4 h-4" /> Simplified Article
+                    <BookOpen className="w-4 h-4" /> {t('news.simplified')}
                   </h3>
                   <p className="text-gray-200 leading-relaxed">{article.simplified_text}</p>
                 </div>
@@ -103,7 +105,7 @@ export default function News() {
                 {/* Vocabulary */}
                 {article.vocabulary?.length > 0 && (
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-400 mb-2">Key Vocabulary</h3>
+                    <h3 className="text-sm font-semibold text-gray-400 mb-2">{t('news.vocabulary')}</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {article.vocabulary.map((v, j) => {
                         const key = `${v.word}-${v.translation}`
@@ -120,7 +122,7 @@ export default function News() {
                             <button
                               onClick={() => handleAddFlashcard(v.word, v.translation, article.title)}
                               className={`shrink-0 ${addedWords[key] ? 'text-emerald-500' : 'text-gray-600 hover:text-indigo-400'}`}
-                              title={addedWords[key] ? 'Added to flashcards' : 'Add to flashcards'}
+                              title={addedWords[key] ? t('news.addedToFlash') : t('news.addToFlash')}
                             >
                               {addedWords[key] ? '✓' : <Plus className="w-4 h-4" />}
                             </button>
@@ -134,10 +136,10 @@ export default function News() {
                 {/* Comprehension Questions */}
                 {article.comprehension_questions?.length > 0 && (
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-400 mb-2">Comprehension Questions</h3>
+                    <h3 className="text-sm font-semibold text-gray-400 mb-2">{t('news.comprehension')}</h3>
                     <div className="space-y-3">
                       {article.comprehension_questions.map((q, j) => (
-                        <ComprehensionQuestion key={j} question={q.question} answer={q.answer} />
+                        <ComprehensionQuestion key={j} question={q.question} answer={q.answer} t={t} />
                       ))}
                     </div>
                   </div>
@@ -151,7 +153,7 @@ export default function News() {
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-indigo-400 hover:text-indigo-300 text-sm"
                   >
-                    <ExternalLink className="w-3 h-3" /> Read original article
+                    <ExternalLink className="w-3 h-3" /> {t('news.readOriginal')}
                   </a>
                 )}
               </div>
@@ -163,7 +165,7 @@ export default function News() {
   )
 }
 
-function ComprehensionQuestion({ question, answer }) {
+function ComprehensionQuestion({ question, answer, t }) {
   const [showAnswer, setShowAnswer] = useState(false)
   return (
     <div className="bg-gray-800 rounded-lg p-3">
@@ -172,7 +174,7 @@ function ComprehensionQuestion({ question, answer }) {
         onClick={() => setShowAnswer(s => !s)}
         className="text-indigo-400 hover:text-indigo-300 text-xs"
       >
-        {showAnswer ? 'Hide answer' : 'Show answer'}
+        {showAnswer ? t('news.hideAnswer') : t('news.showAnswer')}
       </button>
       {showAnswer && (
         <p className="mt-2 text-emerald-300 text-sm">{answer}</p>

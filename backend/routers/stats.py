@@ -1,7 +1,10 @@
+import csv
+import io
 import json
 import logging
 from datetime import datetime, date
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Optional
 from sqlalchemy.orm import Session
@@ -207,3 +210,62 @@ async def get_leaderboard_position(user_id: int, db: Session = Depends(get_db)):
             for u in all_users[:5]
         ]
     }
+
+
+@router.get("/api/stats/{user_id}/export-csv")
+async def export_progress_csv(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    lessons = db.query(Lesson).filter(Lesson.user_id == user_id).order_by(Lesson.created_at.asc()).all()
+    test_results = db.query(TestResult).filter(TestResult.user_id == user_id).order_by(TestResult.created_at.asc()).all()
+    flashcards = db.query(Flashcard).filter(Flashcard.user_id == user_id).all()
+
+    # Build test results lookup by date
+    tests_by_date = {}
+    for t in test_results:
+        d = t.created_at.strftime("%Y-%m-%d")
+        if d not in tests_by_date:
+            tests_by_date[d] = []
+        tests_by_date[d].append(round(t.score, 1))
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["date", "day_number", "lesson_title", "lesson_completed", "test_scores", "xp_total", "streak", "flashcard_count"])
+
+    # Calculate cumulative XP per lesson completion
+    xp = 0
+    streak = 0
+    lesson_dates = sorted(set(l.completed_at.date() for l in lessons if l.completed_at))
+
+    for lesson in lessons:
+        d = lesson.created_at.strftime("%Y-%m-%d")
+        if lesson.is_completed:
+            xp += 25
+            # Approximate streak at time of completion
+            if lesson.completed_at:
+                streak = sum(
+                    1 for ld in lesson_dates
+                    if ld <= lesson.completed_at.date()
+                )
+        scores = tests_by_date.get(d, [])
+        scores_str = ";".join(str(s) for s in scores) if scores else ""
+        writer.writerow([
+            d,
+            lesson.day_number,
+            lesson.title,
+            lesson.is_completed,
+            scores_str,
+            xp,
+            streak,
+            len(flashcards),
+        ])
+
+    output.seek(0)
+    filename = f"progress_{user.name}_{date.today().isoformat()}.csv"
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
