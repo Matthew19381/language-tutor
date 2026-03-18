@@ -26,7 +26,7 @@ export default function Flashcards() {
   const userId = getUserId()
   const { t, targetLanguage } = useLanguage()
 
-  const [showAddForm, setShowAddForm] = useState(false)
+  const [showAddForm, setShowAddForm] = useState(true)
 
   // Add card form
   const [newWord, setNewWord] = useState('')
@@ -402,7 +402,13 @@ export default function Flashcards() {
                     <div className="flashcard-back">
                       <div className="text-center">
                         <p className="text-gray-400 text-xs mb-2 uppercase tracking-wider">{t('flash.translationSide')}</p>
-                        <p className="text-3xl font-bold text-emerald-300">{currentCard.translation}</p>
+                        <div className="flex items-center justify-center gap-2 mb-1">
+                          <p className="text-3xl font-bold text-indigo-300">{currentCard.word}</p>
+                          <div onClick={e => e.stopPropagation()}>
+                            <PlayButton text={currentCard.word} language={currentCard.language || targetLanguage} />
+                          </div>
+                        </div>
+                        <p className="text-2xl font-bold text-emerald-300">{currentCard.translation}</p>
                         {currentCard.example_sentence && (
                           <p className="text-gray-400 text-sm mt-3 italic max-w-xs">
                             {currentCard.example_sentence}
