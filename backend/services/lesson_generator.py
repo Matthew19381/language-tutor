@@ -282,7 +282,7 @@ Student profile:
 
 Generate a complete lesson with rich content. Return JSON:
 {{
-    "title": "Day {day_number}: {grammar_topic}",
+    "title": "Dzień {day_number}: {grammar_topic}",
     "topic": "{vocab_theme}",
     "explanation": "Detailed grammar explanation in {native_language} with {language} examples...",
     "vocabulary": [
@@ -359,7 +359,7 @@ If there are errors to address, add them to the error_review array with format:
     except Exception as e:
         logger.error(f"Error generating daily lesson: {e}")
         return {
-            "title": f"Day {day_number}: {grammar_topic}",
+            "title": f"Dzień {day_number}: {grammar_topic}",
             "topic": vocab_theme,
             "explanation": f"Today we will study {grammar_topic} in {language}. This is an important foundation for your {cefr_level} level studies.",
             "vocabulary": [
