@@ -249,6 +249,44 @@ async def complete_lesson(
     }
 
 
+class SaveExerciseErrorRequest(BaseModel):
+    question: Optional[str] = None
+    user_answer: Optional[str] = None
+    correct_answer: Optional[str] = None
+    exercise_type: Optional[str] = None
+
+
+@router.post("/api/lessons/{lesson_id}/exercise-error")
+async def save_exercise_error(
+    lesson_id: int,
+    request: SaveExerciseErrorRequest,
+    db: Session = Depends(get_db)
+):
+    """Save a wrong exercise answer to the lesson content for use in next lesson generation."""
+    lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+
+    try:
+        content = json.loads(lesson.content)
+    except Exception:
+        content = {}
+
+    errors = content.get("user_exercise_errors", [])
+    errors.append({
+        "question": request.question,
+        "user_answer": request.user_answer,
+        "correct_answer": request.correct_answer,
+        "type": request.exercise_type or "exercise"
+    })
+    # Keep last 10 errors only
+    content["user_exercise_errors"] = errors[-10:]
+    lesson.content = json.dumps(content)
+    db.commit()
+
+    return {"success": True, "total_errors": len(content["user_exercise_errors"])}
+
+
 @router.get("/api/lessons/audio/{lesson_id}")
 async def get_lesson_audio(lesson_id: int, db: Session = Depends(get_db)):
     lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()

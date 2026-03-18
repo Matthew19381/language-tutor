@@ -7,7 +7,7 @@ import {
   History, ArrowRight
 } from 'lucide-react'
 import axios from 'axios'
-import { getUserId, getTodayLesson, getLesson, completeLesson, addFlashcardAI, evaluateProduction, generateNextLesson, generateConceptFlashcards } from '../api/client'
+import { getUserId, getTodayLesson, getLesson, completeLesson, addFlashcardAI, evaluateProduction, generateNextLesson, generateConceptFlashcards, recordExerciseError } from '../api/client'
 import PlayButton from '../components/PlayButton'
 import { PageLoader } from '../components/LoadingSpinner'
 import { useLanguage } from '../hooks/useLanguage'
@@ -525,7 +525,7 @@ export default function DailyLesson() {
         >
           <div className="space-y-4">
             {content.exercises.map((ex, i) => (
-              <ExerciseCard key={i} exercise={ex} number={i + 1} language={lesson.language} t={t} />
+              <ExerciseCard key={i} exercise={ex} number={i + 1} language={lesson.language} lessonId={lesson.lesson_id} t={t} />
             ))}
           </div>
         </Section>
@@ -961,7 +961,7 @@ function SpecialCharHelper({ language, onInsert }) {
   )
 }
 
-function ExerciseCard({ exercise, number, language, t }) {
+function ExerciseCard({ exercise, number, language, lessonId, t }) {
   const [revealedCount, setRevealedCount] = useState(0)
   const [userAnswer, setUserAnswer] = useState('')
   const [selectedOption, setSelectedOption] = useState('')
@@ -973,8 +973,17 @@ function ExerciseCard({ exercise, number, language, t }) {
     if (!userAnswer.trim()) return
     const correct = String(exercise.answer || '').trim().toLowerCase()
     const given = userAnswer.trim().toLowerCase()
-    setIsCorrect(given === correct || correct.includes(given) || given.includes(correct))
+    const correct_ = given === correct || correct.includes(given) || given.includes(correct)
+    setIsCorrect(correct_)
     setChecked(true)
+    if (!correct_ && lessonId) {
+      recordExerciseError(lessonId, {
+        question: exercise.content || exercise.instruction,
+        user_answer: userAnswer.trim(),
+        correct_answer: String(exercise.answer || ''),
+        exercise_type: exercise.type || 'exercise'
+      }).catch(() => {})
+    }
   }
 
   const answerWords = exercise.answer ? String(exercise.answer).split(' ') : []
