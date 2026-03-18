@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import {
   BarChart3, Flame, Star, Trophy, BookOpen,
   FlaskConical, Brain, TrendingUp, Target, Calendar,
@@ -122,6 +122,22 @@ export default function Stats() {
   if (!stats) return null
 
   const { user, level_info, lessons, tests, flashcards, error_categories, error_examples, achievements } = stats
+
+  const CATEGORY_LABELS = {
+    grammar: 'Gramatyka',
+    vocabulary: 'Słownictwo',
+    word_order: 'Szyk zdania',
+    articles: 'Rodzajniki',
+    verb_conjugation: 'Koniugacja',
+    prepositions: 'Przyimki',
+    pronunciation_spelling: 'Wymowa/Pisownia',
+    fluency: 'Płynność',
+    register: 'Rejestr',
+    comprehension: 'Rozumienie',
+    application: 'Zastosowanie',
+    syntax: 'Składnia',
+    unknown: 'Inne',
+  }
 
   const CATEGORY_ADVICE = {
     grammar: 'Popracuj nad zasadami gramatycznymi — deklinacje, koniugacje, czasy gramatyczne.',
@@ -287,10 +303,15 @@ export default function Stats() {
       {/* Error Categories */}
       {error_categories && Object.keys(error_categories).length > 0 && (
         <div className="card mb-6">
-          <h2 className="section-title flex items-center gap-2">
-            <Target className="w-5 h-5 text-red-400" />
-            {t('stats.errorAnalysis')}
-          </h2>
+          <div className="flex items-center justify-between mb-1">
+            <h2 className="section-title flex items-center gap-2">
+              <Target className="w-5 h-5 text-red-400" />
+              {t('stats.errorAnalysis')}
+            </h2>
+            <Link to="/errors" className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">
+              Przegląd wszystkich błędów →
+            </Link>
+          </div>
           <p className="text-gray-400 text-sm mb-4">{t('stats.errorAreas')}</p>
           <div className="space-y-3">
             {Object.entries(error_categories)
@@ -302,7 +323,7 @@ export default function Stats() {
                 return (
                   <div key={category} className="mb-2">
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-300 capitalize">{category}</span>
+                      <span className="text-gray-300">{CATEGORY_LABELS[category] || category}</span>
                       <span className="text-gray-500">{count} {t('stats.errors')} ({pct}%)</span>
                     </div>
                     <div className="progress-bar mb-2">
