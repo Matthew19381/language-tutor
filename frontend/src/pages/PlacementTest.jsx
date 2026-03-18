@@ -374,8 +374,8 @@ export default function PlacementTest() {
               <div className="bg-indigo-900/20 border border-indigo-700/30 rounded-lg p-4 mb-6">
                 <h3 className="font-medium text-indigo-300 mb-1">{t('place.studyPlan')}</h3>
                 <p className="text-gray-400 text-sm">
-                  Your personalized plan covers {results.study_plan.daily_topics?.length || 30} days
-                  of {results.study_plan.language} learning at {results.study_plan.cefr_level} level.
+                  Twój spersonalizowany plan obejmuje {results.study_plan.daily_topics?.length || 30} dni
+                  nauki {results.study_plan.language} na poziomie {results.study_plan.cefr_level}.
                 </p>
               </div>
             )}

@@ -801,6 +801,8 @@ async def generate_daily_tips(
 ) -> dict:
     prompt = f"""Generate 4 helpful daily language learning tips for a {native_language} speaker learning {language} at CEFR level {cefr_level}.
 
+IMPORTANT: Write the "title" and "content" fields in {native_language} language. The source citation can be in English.
+
 Tips should cover different aspects: grammar, vocabulary, culture, and memory techniques.
 Each tip must cite a real scientific source (researcher name, year, study/theory name).
 
@@ -808,8 +810,8 @@ Return JSON:
 {{
     "tips": [
         {{
-            "title": "Tip title",
-            "content": "Detailed tip content with examples",
+            "title": "Tip title in {native_language}",
+            "content": "Detailed tip content in {native_language} with {language} examples",
             "type": "grammar|vocabulary|culture|memory_tip",
             "source": "Krashen (1982) - Input Hypothesis"
         }}
