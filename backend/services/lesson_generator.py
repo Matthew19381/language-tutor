@@ -836,26 +836,26 @@ Use real citations: e.g. Ebbinghaus (1885), Krashen (1982), Nation (2001), Badde
         return {
             "tips": [
                 {
-                    "title": "Practice Every Day",
-                    "content": f"Consistency is key in learning {language}. Even 15 minutes daily is better than 2 hours once a week.",
+                    "title": "Ćwicz codziennie",
+                    "content": f"Systematyczność to klucz do nauki {language}. Nawet 15 minut dziennie jest lepsze niż 2 godziny raz w tygodniu.",
                     "type": "memory_tip",
                     "source": "Ebbinghaus (1885) - Spacing Effect"
                 },
                 {
-                    "title": "Learn in Context",
-                    "content": f"Don't just memorize word lists. Learn {language} words in sentences to remember them better.",
+                    "title": "Ucz się w kontekście",
+                    "content": f"Nie zapamiętuj pojedynczych słów — ucz się słów {language} w zdaniach, by lepiej je zapamiętać.",
                     "type": "vocabulary",
                     "source": "Nation (2001) - Learning Vocabulary in Another Language"
                 },
                 {
-                    "title": "Listen to Native Speakers",
-                    "content": f"Watch {language} movies or listen to {language} music to improve your ear for the language.",
+                    "title": "Słuchaj native speakerów",
+                    "content": f"Oglądaj filmy lub słuchaj muzyki po {language}, by przyzwyczaić ucho do języka.",
                     "type": "culture",
                     "source": "Krashen (1982) - Input Hypothesis"
                 },
                 {
-                    "title": "Grammar Building Blocks",
-                    "content": f"Master the basic sentence structure of {language} before moving to complex forms.",
+                    "title": "Podstawy gramatyczne",
+                    "content": f"Opanuj podstawową budowę zdań w {language} zanim przejdziesz do bardziej złożonych form.",
                     "type": "grammar",
                     "source": "Baddeley (1986) - Working Memory Model"
                 }

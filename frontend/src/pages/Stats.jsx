@@ -274,7 +274,7 @@ export default function Stats() {
                 </div>
                 <div className="flex-1">
                   <p className={`text-sm ${lesson.completed ? 'text-gray-300' : 'text-gray-500'}`}>
-                    {lesson.title}
+                    {(lesson.title || '').replace(/^Day\s+\d+[:\s]*/i, '').replace(/^Dzień\s+\d+[:\s]*/i, '') || lesson.title}
                   </p>
                 </div>
                 <span className="text-xs text-gray-600">{lesson.date}</span>
@@ -308,55 +308,13 @@ export default function Stats() {
 
       {/* Error Categories */}
       {error_categories && Object.keys(error_categories).length > 0 && (
-        <div className="card mb-6">
-          <div className="flex items-center justify-between mb-1">
-            <h2 className="section-title flex items-center gap-2">
-              <Target className="w-5 h-5 text-red-400" />
-              {t('stats.errorAnalysis')}
-            </h2>
-            <Link to="/errors" className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">
-              Przegląd wszystkich błędów →
-            </Link>
-          </div>
-          <p className="text-gray-400 text-sm mb-4">{t('stats.errorAreas')}</p>
-          <div className="space-y-3">
-            {Object.entries(error_categories)
-              .sort((a, b) => b[1] - a[1])
-              .map(([category, count]) => {
-                const total = Object.values(error_categories).reduce((a, b) => a + b, 0)
-                const pct = Math.round((count / total) * 100)
-                const examples = error_examples?.[category] || []
-                return (
-                  <div key={category} className="mb-2">
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-300">{CATEGORY_LABELS[category] || category}</span>
-                      <span className="text-gray-500">{count} {t('stats.errors')} ({pct}%)</span>
-                    </div>
-                    <div className="progress-bar mb-2">
-                      <div
-                        className="progress-fill bg-red-500"
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                    {examples.length > 0 && (
-                      <div className="ml-2 space-y-1">
-                        {examples.map((ex, ei) => (
-                          <div key={ei} className="text-xs text-gray-500 flex gap-2">
-                            <span className="text-red-400 shrink-0">✗</span>
-                            <span className="truncate">{ex.question}</span>
-                            {ex.correct && <span className="text-emerald-500 shrink-0">→ {ex.correct}</span>}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {CATEGORY_ADVICE[category] && (
-                      <p className="text-xs text-indigo-400 mt-1 italic">💡 {CATEGORY_ADVICE[category]}</p>
-                    )}
-                  </div>
-                )
-              })}
-          </div>
-        </div>
+        <ErrorCategoriesCard
+          error_categories={error_categories}
+          error_examples={error_examples}
+          CATEGORY_LABELS={CATEGORY_LABELS}
+          CATEGORY_ADVICE={CATEGORY_ADVICE}
+          t={t}
+        />
       )}
 
       {/* Achievements */}
@@ -544,6 +502,71 @@ export default function Stats() {
       <p className="text-center text-gray-600 text-sm mt-6">
         {t('stats.memberSince')} {user?.member_since}
       </p>
+    </div>
+  )
+}
+
+function ErrorCategoriesCard({ error_categories, error_examples, CATEGORY_LABELS, CATEGORY_ADVICE, t }) {
+  const [expanded, setExpanded] = useState({})
+  const total = Object.values(error_categories).reduce((a, b) => a + b, 0)
+
+  return (
+    <div className="card mb-6">
+      <div className="flex items-center justify-between mb-1">
+        <h2 className="section-title flex items-center gap-2">
+          <Target className="w-5 h-5 text-red-400" />
+          {t('stats.errorAnalysis')}
+        </h2>
+        <Link to="/errors" className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">
+          Przegląd wszystkich błędów →
+        </Link>
+      </div>
+      <p className="text-gray-400 text-sm mb-4">{t('stats.errorAreas')}</p>
+      <div className="space-y-2">
+        {Object.entries(error_categories)
+          .sort((a, b) => b[1] - a[1])
+          .map(([category, count]) => {
+            const pct = Math.round((count / total) * 100)
+            const examples = error_examples?.[category] || []
+            const isOpen = expanded[category]
+            const hasDetails = examples.length > 0 || !!CATEGORY_ADVICE[category]
+            return (
+              <div key={category} className="rounded-lg overflow-hidden">
+                <button
+                  className="w-full text-left"
+                  onClick={() => hasDetails && setExpanded(e => ({ ...e, [category]: !e[category] }))}
+                >
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-300 flex items-center gap-1">
+                      {CATEGORY_LABELS[category] || category}
+                      {hasDetails && (
+                        <span className="text-gray-600 text-xs ml-1">{isOpen ? '▲' : '▼'}</span>
+                      )}
+                    </span>
+                    <span className="text-gray-500">{count} {t('stats.errors')} ({pct}%)</span>
+                  </div>
+                  <div className="progress-bar">
+                    <div className="progress-fill bg-red-500" style={{ width: `${pct}%` }} />
+                  </div>
+                </button>
+                {isOpen && hasDetails && (
+                  <div className="mt-2 pl-2 space-y-1">
+                    {examples.map((ex, ei) => (
+                      <div key={ei} className="text-xs text-gray-500 flex gap-2">
+                        <span className="text-red-400 shrink-0">✗</span>
+                        <span className="truncate">{ex.question}</span>
+                        {ex.correct && <span className="text-emerald-500 shrink-0">→ {ex.correct}</span>}
+                      </div>
+                    ))}
+                    {CATEGORY_ADVICE[category] && (
+                      <p className="text-xs text-indigo-400 mt-1 italic">💡 {CATEGORY_ADVICE[category]}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+      </div>
     </div>
   )
 }

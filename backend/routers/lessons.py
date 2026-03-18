@@ -345,7 +345,7 @@ async def export_lesson_obsidian(
                         recent_topics=[lesson.topic]
                     )
                     lesson_data = {
-                        "title": future_content.get("title", f"Day {future_day}"),
+                        "title": future_content.get("title", f"Dzień {future_day}"),
                         "topic": future_content.get("topic", ""),
                         "content": future_content,
                         "cefr_level": user.cefr_level,
