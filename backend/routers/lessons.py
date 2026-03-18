@@ -153,7 +153,10 @@ async def get_today_lesson(user_id: int, db: Session = Depends(get_db)):
                     translation=translation,
                     example_sentence=vocab_item.get("example", ""),
                     language=user.target_language,
-                    cefr_level=user.cefr_level
+                    cefr_level=user.cefr_level,
+                    lesson_id=lesson.id,
+                    lesson_day=lesson.day_number,
+                    lesson_topic=lesson.topic
                 )
                 db.add(flashcard)
 
@@ -531,7 +534,10 @@ async def generate_next_lesson(user_id: int, db: Session = Depends(get_db)):
                     translation=translation,
                     example_sentence=vocab_item.get("example", ""),
                     language=user.target_language,
-                    cefr_level=user.cefr_level
+                    cefr_level=user.cefr_level,
+                    lesson_id=lesson.id,
+                    lesson_day=lesson.day_number,
+                    lesson_topic=lesson.topic
                 )
                 db.add(flashcard)
     db.commit()

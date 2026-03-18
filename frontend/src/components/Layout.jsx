@@ -2,10 +2,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { Outlet } from 'react-router-dom'
 import NavBar from './NavBar'
 import NotificationManager from './NotificationManager'
-import { getUserId, getStats } from '../api/client'
+import { getUserId, getStats, askQuestion } from '../api/client'
 import { useLanguage } from '../hooks/useLanguage'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Timer } from 'lucide-react'
+import { Timer, Languages, X, ArrowRight } from 'lucide-react'
 
 // Only these paths are auto-marked on visit (lesson + test require explicit completion)
 const AUTO_VISIT_PATHS = ['/flashcards', '/conversation', '/quickmode', '/news', '/pronunciation']
@@ -113,6 +113,9 @@ export default function Layout() {
         </button>
       )}
 
+      {/* Translation Widget */}
+      <TranslatorWidget userId={userId} />
+
       {/* Achievement toasts */}
       <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-xs">
         {toasts.map((toast) => (
@@ -124,6 +127,72 @@ export default function Layout() {
           />
         ))}
       </div>
+    </div>
+  )
+}
+
+function TranslatorWidget({ userId }) {
+  const [open, setOpen] = useState(false)
+  const [text, setText] = useState('')
+  const [result, setResult] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const handleTranslate = async () => {
+    if (!text.trim() || !userId) return
+    setLoading(true)
+    try {
+      const res = await askQuestion(`Przetłumacz na polski (podaj samo tłumaczenie bez dodatkowych komentarzy): "${text.trim()}"`, userId)
+      setResult(res.answer || '')
+    } catch {
+      setResult('Błąd tłumaczenia.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="fixed bottom-6 left-4 z-40">
+      {open ? (
+        <div className="bg-gray-900 border border-gray-700 rounded-xl shadow-2xl p-3 w-72">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Languages className="w-4 h-4 text-indigo-400" />
+              <span className="text-sm font-semibold text-gray-200">Tłumacz</span>
+            </div>
+            <button onClick={() => { setOpen(false); setResult(''); setText('') }}>
+              <X className="w-4 h-4 text-gray-500 hover:text-gray-300" />
+            </button>
+          </div>
+          <textarea
+            className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-sm text-gray-200 resize-none h-16 focus:outline-none focus:border-indigo-500"
+            placeholder="Wpisz tekst do przetłumaczenia..."
+            value={text}
+            onChange={e => { setText(e.target.value); setResult('') }}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleTranslate() } }}
+          />
+          <button
+            onClick={handleTranslate}
+            disabled={loading || !text.trim()}
+            className="w-full mt-2 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+          >
+            {loading ? 'Tłumaczenie...' : <><ArrowRight className="w-3.5 h-3.5" /> Tłumacz</>}
+          </button>
+          {result && (
+            <div className="mt-2 p-2.5 bg-gray-800 rounded-lg border border-indigo-700/30">
+              <p className="text-sm text-emerald-300 leading-relaxed">{result}</p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <button
+          onClick={() => setOpen(true)}
+          className="flex items-center gap-2 bg-gray-800 hover:bg-indigo-700 border border-gray-700 hover:border-indigo-600 text-gray-300 hover:text-white px-3 py-2 rounded-xl shadow-lg transition-all"
+          title="Tłumacz"
+        >
+          <Languages className="w-5 h-5" />
+          <span className="text-sm font-medium">Tłumacz</span>
+        </button>
+      )}
     </div>
   )
 }

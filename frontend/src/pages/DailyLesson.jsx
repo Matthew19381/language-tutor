@@ -681,6 +681,7 @@ export default function DailyLesson() {
           <OutputForcingCard
             instruction={content.output_forcing.instruction}
             text={content.output_forcing.text}
+            translation={content.output_forcing.translation}
             language={lesson.language}
             t={t}
           />
@@ -784,7 +785,21 @@ function ComprehensionQ({ question, answer, t }) {
   )
 }
 
-function OutputForcingCard({ instruction, text, language, t }) {
+function TranslationReveal({ translation }) {
+  const [show, setShow] = useState(false)
+  if (!translation) return null
+  return (
+    <button
+      onClick={() => setShow(s => !s)}
+      className="text-xs text-gray-500 hover:text-gray-300 flex items-center gap-1"
+    >
+      <Eye className="w-3 h-3" />
+      {show ? <span className="text-emerald-300">{translation}</span> : 'Pokaż tłumaczenie'}
+    </button>
+  )
+}
+
+function OutputForcingCard({ instruction, text, translation, language, t }) {
   const [phase, setPhase] = useState(1)
   const [userRecall, setUserRecall] = useState('')
 
@@ -805,8 +820,9 @@ function OutputForcingCard({ instruction, text, language, t }) {
         <div>
           <div className="bg-pink-900/10 border border-pink-700/30 rounded-lg p-4 mb-3">
             <p className="text-gray-100 leading-relaxed">{text}</p>
-            <div className="mt-2 flex justify-end">
+            <div className="mt-2 flex items-center justify-between">
               <PlayButton text={text} language={language} />
+              {translation && <TranslationReveal translation={translation} />}
             </div>
           </div>
           <button
@@ -876,7 +892,17 @@ function ExerciseCard({ exercise, number, language, t }) {
   const [revealedCount, setRevealedCount] = useState(0)
   const [userAnswer, setUserAnswer] = useState('')
   const [selectedOption, setSelectedOption] = useState('')
+  const [checked, setChecked] = useState(false)
+  const [isCorrect, setIsCorrect] = useState(null)
   const inputRef = useRef(null)
+
+  const handleCheck = () => {
+    if (!userAnswer.trim()) return
+    const correct = String(exercise.answer || '').trim().toLowerCase()
+    const given = userAnswer.trim().toLowerCase()
+    setIsCorrect(given === correct || correct.includes(given) || given.includes(correct))
+    setChecked(true)
+  }
 
   const answerWords = exercise.answer ? String(exercise.answer).split(' ') : []
   const totalWords = answerWords.length
@@ -929,15 +955,32 @@ function ExerciseCard({ exercise, number, language, t }) {
         </div>
       ) : (
         <div>
-          <input
-            ref={inputRef}
-            type="text"
-            className="input-field text-sm"
-            placeholder={t('lesson.yourAnswer')}
-            value={userAnswer}
-            onChange={e => setUserAnswer(e.target.value)}
-            disabled={isAllRevealed}
-          />
+          <div className="flex gap-2">
+            <input
+              ref={inputRef}
+              type="text"
+              className={`input-field text-sm flex-1 ${checked ? (isCorrect ? 'border-emerald-500' : 'border-red-500') : ''}`}
+              placeholder={t('lesson.yourAnswer')}
+              value={userAnswer}
+              onChange={e => { setUserAnswer(e.target.value); setChecked(false); setIsCorrect(null) }}
+              onKeyDown={e => e.key === 'Enter' && !checked && handleCheck()}
+              disabled={isAllRevealed}
+            />
+            {!isAllRevealed && !checked && (
+              <button
+                onClick={handleCheck}
+                disabled={!userAnswer.trim()}
+                className="px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium disabled:opacity-50 transition-colors"
+              >
+                Sprawdź
+              </button>
+            )}
+          </div>
+          {checked && (
+            <p className={`text-xs mt-1 font-medium ${isCorrect ? 'text-emerald-400' : 'text-red-400'}`}>
+              {isCorrect ? '✓ Dobrze!' : '✗ Nie do końca — sprawdź odpowiedź poniżej'}
+            </p>
+          )}
           {!isAllRevealed && (
             <SpecialCharHelper
               language={language}

@@ -21,6 +21,7 @@ export default function Flashcards() {
   const [isFlipped, setIsFlipped] = useState(false)
   const [reviewDone, setReviewDone] = useState(new Set())
   const [dateFilter, setDateFilter] = useState('all') // 'all', 'today', 'week', 'month'
+  const [lessonFilter, setLessonFilter] = useState('all') // 'all' or lesson_day number
   const navigate = useNavigate()
   const userId = getUserId()
   const { t, targetLanguage } = useLanguage()
@@ -53,23 +54,24 @@ export default function Flashcards() {
     finally { setLoading(false) }
   }
 
-  const filterByDate = (cards) => {
-    if (dateFilter === 'all' || tab === TABS.DUE) return cards
+  const filterCards = (cards) => {
+    if (tab === TABS.DUE) return cards
     const now = new Date()
     return cards.filter(c => {
-      if (!c.created_at) return true
-      const created = new Date(c.created_at)
-      if (dateFilter === 'today') {
-        return created.toDateString() === now.toDateString()
-      } else if (dateFilter === 'week') {
-        return (now - created) <= 7 * 24 * 60 * 60 * 1000
-      } else if (dateFilter === 'month') {
-        return (now - created) <= 30 * 24 * 60 * 60 * 1000
+      // Date filter
+      if (dateFilter !== 'all') {
+        if (!c.created_at) return true
+        const created = new Date(c.created_at)
+        if (dateFilter === 'today' && created.toDateString() !== now.toDateString()) return false
+        if (dateFilter === 'week' && (now - created) > 7 * 24 * 60 * 60 * 1000) return false
+        if (dateFilter === 'month' && (now - created) > 30 * 24 * 60 * 60 * 1000) return false
       }
+      // Lesson day filter
+      if (lessonFilter !== 'all' && c.lesson_day !== parseInt(lessonFilter)) return false
       return true
     })
   }
-  const displayCards = filterByDate(tab === TABS.DUE ? dueCards : allCards)
+  const displayCards = filterCards(tab === TABS.DUE ? dueCards : allCards)
   const currentCard = displayCards[currentIndex]
 
   const handleFlip = () => setIsFlipped(!isFlipped)
@@ -303,24 +305,49 @@ export default function Flashcards() {
       {(tab === TABS.ALL || tab === TABS.DUE) && (
         <>
           {tab === TABS.ALL && (
-            <div className="flex gap-2 mb-4 flex-wrap">
-              <span className="text-gray-500 text-sm self-center">Filtruj:</span>
-              {[
-                { key: 'all', label: 'Wszystkie' },
-                { key: 'today', label: 'Dzisiaj' },
-                { key: 'week', label: 'Ten tydzień' },
-                { key: 'month', label: 'Ten miesiąc' },
-              ].map(({ key, label }) => (
-                <button
-                  key={key}
-                  onClick={() => { setDateFilter(key); setCurrentIndex(0) }}
-                  className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                    dateFilter === key ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-gray-200'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
+            <div className="mb-4 space-y-2">
+              <div className="flex gap-2 flex-wrap">
+                <span className="text-gray-500 text-sm self-center">Data:</span>
+                {[
+                  { key: 'all', label: 'Wszystkie' },
+                  { key: 'today', label: 'Dzisiaj' },
+                  { key: 'week', label: 'Ten tydzień' },
+                  { key: 'month', label: 'Ten miesiąc' },
+                ].map(({ key, label }) => (
+                  <button
+                    key={key}
+                    onClick={() => { setDateFilter(key); setCurrentIndex(0) }}
+                    className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                      dateFilter === key ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-gray-200'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {/* Lesson day filter */}
+              {(() => {
+                const days = [...new Set(allCards.filter(c => c.lesson_day).map(c => c.lesson_day))].sort((a, b) => a - b)
+                if (days.length === 0) return null
+                return (
+                  <div className="flex gap-2 flex-wrap">
+                    <span className="text-gray-500 text-sm self-center">Lekcja:</span>
+                    <button
+                      onClick={() => { setLessonFilter('all'); setCurrentIndex(0) }}
+                      className={`px-3 py-1 rounded text-xs font-medium transition-colors ${lessonFilter === 'all' ? 'bg-indigo-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-gray-200'}`}
+                    >Wszystkie</button>
+                    {days.map(day => (
+                      <button
+                        key={day}
+                        onClick={() => { setLessonFilter(String(day)); setCurrentIndex(0) }}
+                        className={`px-3 py-1 rounded text-xs font-medium transition-colors ${lessonFilter === String(day) ? 'bg-indigo-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-gray-200'}`}
+                      >
+                        Dzień {day}
+                      </button>
+                    ))}
+                  </div>
+                )
+              })()}
             </div>
           )}
           {displayCards.length === 0 ? (

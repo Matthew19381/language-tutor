@@ -1,9 +1,18 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Youtube, Search, RefreshCw, ExternalLink, Play, X, BookOpen, CheckCircle } from 'lucide-react'
+import { Youtube, Search, RefreshCw, ExternalLink, Play, X, BookOpen, CheckCircle, Heart } from 'lucide-react'
 import { getUserId, searchYouTube, addXP } from '../api/client'
 import { PageLoader } from '../components/LoadingSpinner'
 import { useLanguage } from '../hooks/useLanguage'
+
+const FAVS_KEY = 'video_favorites'
+
+function loadFavorites() {
+  try { return JSON.parse(localStorage.getItem(FAVS_KEY) || '[]') } catch { return [] }
+}
+function saveFavorites(favs) {
+  localStorage.setItem(FAVS_KEY, JSON.stringify(favs))
+}
 
 export default function Videos() {
   const navigate = useNavigate()
@@ -17,6 +26,20 @@ export default function Videos() {
   const [query, setQuery] = useState('')
   const [activeVideoId, setActiveVideoId] = useState(null)
   const [activityDone, setActivityDone] = useState(false)
+  const [favorites, setFavorites] = useState(loadFavorites)
+  const [showFavs, setShowFavs] = useState(false)
+
+  const toggleFavorite = (video) => {
+    setFavorites(prev => {
+      const exists = prev.some(f => f.video_id === video.video_id)
+      const next = exists
+        ? prev.filter(f => f.video_id !== video.video_id)
+        : [...prev, { video_id: video.video_id, title: video.title, channel: video.channel, thumbnail: video.thumbnail, url: video.url }]
+      saveFavorites(next)
+      return next
+    })
+  }
+  const isFav = (video_id) => favorites.some(f => f.video_id === video_id)
 
   useEffect(() => {
     if (!userId) { navigate('/placement'); return }
@@ -111,14 +134,23 @@ export default function Videos() {
             </p>
           </div>
         </div>
-        <button
-          onClick={loadSuggested}
-          disabled={loading || searching}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm transition-colors disabled:opacity-50"
-        >
-          <RefreshCw className={`w-4 h-4 ${(loading || searching) ? 'animate-spin' : ''}`} />
-          Odśwież
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowFavs(s => !s)}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-colors ${showFavs ? 'bg-red-700/40 text-red-300 border border-red-700/40' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'}`}
+          >
+            <Heart className={`w-4 h-4 ${showFavs ? 'fill-red-400 text-red-400' : ''}`} />
+            Ulubione {favorites.length > 0 && `(${favorites.length})`}
+          </button>
+          <button
+            onClick={loadSuggested}
+            disabled={loading || searching}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${(loading || searching) ? 'animate-spin' : ''}`} />
+            Odśwież
+          </button>
+        </div>
       </div>
 
       {!activityDone ? (
@@ -222,12 +254,37 @@ export default function Videos() {
         </div>
       )}
 
-      {videos.length === 0 && !error && (
+      {/* Favorites panel */}
+      {showFavs && (
+        <div className="mb-6">
+          <h2 className="text-sm font-semibold text-red-400 uppercase tracking-wide mb-3 flex items-center gap-2">
+            <Heart className="w-4 h-4 fill-red-400" /> Ulubione filmy ({favorites.length})
+          </h2>
+          {favorites.length === 0 ? (
+            <p className="text-gray-500 text-sm">Brak ulubionych. Kliknij serce na filmie żeby dodać.</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {favorites.map(video => (
+                <VideoCard
+                  key={video.video_id}
+                  video={video}
+                  isActive={activeVideoId === video.video_id}
+                  onPlay={() => setActiveVideoId(activeVideoId === video.video_id ? null : video.video_id)}
+                  isFav={true}
+                  onToggleFav={() => toggleFavorite(video)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {!showFavs && videos.length === 0 && !error && (
         <p className="text-center text-gray-500 mt-12">Brak wyników.</p>
       )}
 
       {/* Topic-related section */}
-      {topicVideos.length > 0 && (
+      {!showFavs && topicVideos.length > 0 && (
         <div className="mb-8">
           <h2 className="text-sm font-semibold text-indigo-400 uppercase tracking-wide mb-3 flex items-center gap-2">
             <BookOpen className="w-4 h-4" />
@@ -241,14 +298,15 @@ export default function Videos() {
                 isActive={activeVideoId === video.video_id}
                 onPlay={() => setActiveVideoId(activeVideoId === video.video_id ? null : video.video_id)}
                 highlight
+                isFav={isFav(video.video_id)}
+                onToggleFav={() => toggleFavorite(video)}
               />
             ))}
           </div>
         </div>
       )}
 
-      {/* General / all videos */}
-      {generalVideos.length > 0 && (
+      {!showFavs && generalVideos.length > 0 && (
         <div>
           {topicVideos.length > 0 && (
             <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
@@ -262,14 +320,15 @@ export default function Videos() {
                 video={video}
                 isActive={activeVideoId === video.video_id}
                 onPlay={() => setActiveVideoId(activeVideoId === video.video_id ? null : video.video_id)}
+                isFav={isFav(video.video_id)}
+                onToggleFav={() => toggleFavorite(video)}
               />
             ))}
           </div>
         </div>
       )}
 
-      {/* Custom search — no sections */}
-      {isCustomSearch && videos.length > 0 && (
+      {!showFavs && isCustomSearch && videos.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {videos.map(video => (
             <VideoCard
@@ -277,6 +336,8 @@ export default function Videos() {
               video={video}
               isActive={activeVideoId === video.video_id}
               onPlay={() => setActiveVideoId(activeVideoId === video.video_id ? null : video.video_id)}
+              isFav={isFav(video.video_id)}
+              onToggleFav={() => toggleFavorite(video)}
             />
           ))}
         </div>
@@ -285,7 +346,7 @@ export default function Videos() {
   )
 }
 
-function VideoCard({ video, isActive, onPlay, highlight }) {
+function VideoCard({ video, isActive, onPlay, highlight, isFav, onToggleFav }) {
   return (
     <div className={`card p-0 overflow-hidden transition-all ${
       isActive ? 'ring-2 ring-indigo-500' : highlight ? 'ring-1 ring-indigo-800/40' : ''
@@ -324,6 +385,13 @@ function VideoCard({ video, isActive, onPlay, highlight }) {
           >
             <Play className="w-3.5 h-3.5" />
             {isActive ? 'Zamknij' : 'Odtwórz'}
+          </button>
+          <button
+            onClick={onToggleFav}
+            className={`flex items-center justify-center px-2.5 py-1.5 rounded-lg text-xs transition-colors ${isFav ? 'bg-red-700/40 text-red-300 hover:bg-red-700/60' : 'bg-gray-800 hover:bg-gray-700 text-gray-500 hover:text-red-400'}`}
+            title={isFav ? 'Usuń z ulubionych' : 'Dodaj do ulubionych'}
+          >
+            <Heart className={`w-3.5 h-3.5 ${isFav ? 'fill-red-400' : ''}`} />
           </button>
           <a
             href={video.url}

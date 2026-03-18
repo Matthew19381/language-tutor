@@ -25,16 +25,21 @@ async def lifespan(app: FastAPI):
     from backend.models import achievement  # noqa
     Base.metadata.create_all(bind=engine)
 
-    # Add language_profiles column to users table if missing (SQLite migration)
-    try:
-        with engine.connect() as conn:
-            conn.execute(__import__('sqlalchemy').text(
-                "ALTER TABLE users ADD COLUMN language_profiles TEXT DEFAULT '{}'"
-            ))
-            conn.commit()
-            logger.info("Added language_profiles column to users table")
-    except Exception:
-        pass  # Column already exists
+    _sa = __import__('sqlalchemy')
+    # SQLite migrations — add missing columns safely
+    _migrations = [
+        ("users", "ALTER TABLE users ADD COLUMN language_profiles TEXT DEFAULT '{}'"),
+        ("flashcards", "ALTER TABLE flashcards ADD COLUMN lesson_id INTEGER"),
+        ("flashcards", "ALTER TABLE flashcards ADD COLUMN lesson_day INTEGER"),
+        ("flashcards", "ALTER TABLE flashcards ADD COLUMN lesson_topic TEXT"),
+    ]
+    with engine.connect() as conn:
+        for table, sql in _migrations:
+            try:
+                conn.execute(_sa.text(sql))
+                conn.commit()
+            except Exception:
+                pass  # Column already exists
 
     # Ensure audio and exports directories exist
     audio_dir = os.path.join(os.path.dirname(__file__), "audio")

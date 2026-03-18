@@ -46,7 +46,10 @@ async def get_flashcards(
                 "ease_factor": f.ease_factor,
                 "interval_days": f.interval_days,
                 "next_review_date": f.next_review_date.isoformat() if f.next_review_date else None,
-                "created_at": f.created_at.isoformat()
+                "created_at": f.created_at.isoformat(),
+                "lesson_id": f.lesson_id,
+                "lesson_day": f.lesson_day,
+                "lesson_topic": f.lesson_topic,
             }
             for f in flashcards
         ],
@@ -276,8 +279,25 @@ Return ONLY valid JSON:
     example = ""
     try:
         ai_result = await generate_json(prompt)
-        translation = ai_result.get("translation", "")
-        example = ai_result.get("example", "")
+        # Handle both direct dict and nested formats
+        if isinstance(ai_result, dict):
+            translation = (
+                ai_result.get("translation") or
+                ai_result.get("polish_translation") or
+                ai_result.get("meaning") or ""
+            )
+            example = (
+                ai_result.get("example") or
+                ai_result.get("example_sentence") or
+                ai_result.get("sentence") or ""
+            )
+            # If translation is a dict (nested), try to extract string
+            if isinstance(translation, dict):
+                translation = translation.get("polish", "") or str(translation)
+            if isinstance(example, dict):
+                example = example.get("sentence", "") or str(example)
+            translation = str(translation).strip()
+            example = str(example).strip()
     except Exception as e:
         logger.warning(f"AI flashcard generation failed: {e}")
         translation = ""

@@ -344,7 +344,8 @@ Generate a complete lesson with rich content. Return JSON:
     "interleaved_review": [],
     "output_forcing": {{
         "instruction": "Przeczytaj poniższy tekst, zakryj go i spróbuj odtworzyć go z pamięci. Zacznij od przeczytania całości, potem chowaj słowo po słowie.",
-        "text": "EXACTLY 1-2 SHORT sentences in {language} (max 20 words total) using today's grammar. Keep it extremely short and memorable."
+        "text": "EXACTLY 1-2 SHORT sentences in {language} (max 20 words total) using today's grammar. Keep it extremely short and memorable.",
+        "translation": "Polish translation of the text above"
     }}
 }}
 
