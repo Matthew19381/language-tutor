@@ -42,8 +42,8 @@ export default function NavBar({ dailyTabs: dailyTabsProp }) {
     { to: '/news', label: t('nav.news'), icon: Newspaper },
     { to: '/videos', label: t('nav.videos'), icon: Video },
     { to: '/quickmode', label: t('nav.quickmode'), icon: Timer },
-    { to: '/errors', label: 'Błędy', icon: AlertTriangle },
     { to: '/stats', label: t('nav.stats'), icon: BarChart3 },
+    { to: '/errors', label: 'Błędy', icon: AlertTriangle },
   ]
 
   useEffect(() => {
