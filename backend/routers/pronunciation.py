@@ -3,7 +3,14 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from backend.database import get_db
 from backend.models.user import User
-from backend.services.pronunciation_service import transcribe_audio, score_pronunciation
+
+try:
+    from backend.services.pronunciation_service import transcribe_audio, score_pronunciation
+    PRONUNCIATION_AVAILABLE = True
+except Exception:
+    PRONUNCIATION_AVAILABLE = False
+    transcribe_audio = None
+    score_pronunciation = None
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -17,6 +24,8 @@ async def analyze_pronunciation(
     db: Session = Depends(get_db),
 ):
     """Transcribe uploaded audio and compare to target_text. Returns pronunciation score."""
+    if not PRONUNCIATION_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Pronunciation service unavailable: faster-whisper not installed.")
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
