@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import {
   BookOpen, FlaskConical, MessageSquare,
   Flame, Star, TrendingUp, ChevronRight, Sparkles,
-  Target, Clock, CheckCircle, Brain, Mic, Newspaper, Youtube, Timer
+  Target, Clock, CheckCircle, Brain, Mic, Newspaper, Youtube, Timer, AlertTriangle
 } from 'lucide-react'
 import { getUserId, getStats, getDailyTips } from '../api/client'
 import { PageLoader } from '../components/LoadingSpinner'
@@ -188,6 +188,14 @@ export default function Home() {
           title="Timer"
           description="15-minutowy plan nauki ze stoperem"
           color="emerald"
+          xp=""
+        />
+        <ActionCard
+          to="/errors"
+          icon={<AlertTriangle className="w-8 h-8 text-yellow-400" />}
+          title="Przegląd błędów"
+          description="Ucz się na własnych błędach z testów"
+          color="yellow"
           xp=""
         />
       </div>
