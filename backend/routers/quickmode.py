@@ -31,7 +31,7 @@ async def get_quickmode_plan(user_id: int, db: Session = Depends(get_db)):
     if today_lesson and not today_lesson.is_completed:
         activities.append({
             "id": "lesson",
-            "title": "Today's Lesson",
+            "title": "Dzisiejsza lekcja",
             "description": today_lesson.title,
             "estimated_minutes": 8,
             "priority": 1,
@@ -48,8 +48,8 @@ async def get_quickmode_plan(user_id: int, db: Session = Depends(get_db)):
         if not today_test:
             activities.append({
                 "id": "test",
-                "title": "Daily Test",
-                "description": "Test your knowledge from today's lesson",
+                "title": "Dzienny test",
+                "description": "Sprawdź wiedzę z dzisiejszej lekcji",
                 "estimated_minutes": 5,
                 "priority": 1,
                 "route": "/test",
@@ -59,8 +59,8 @@ async def get_quickmode_plan(user_id: int, db: Session = Depends(get_db)):
         else:
             activities.append({
                 "id": "test",
-                "title": "Daily Test",
-                "description": "Already completed today",
+                "title": "Dzienny test",
+                "description": "Już ukończono dziś",
                 "estimated_minutes": 5,
                 "priority": 3,
                 "route": "/test",
@@ -70,8 +70,8 @@ async def get_quickmode_plan(user_id: int, db: Session = Depends(get_db)):
     else:
         activities.append({
             "id": "lesson",
-            "title": "Today's Lesson",
-            "description": "Start your daily lesson",
+            "title": "Dzisiejsza lekcja",
+            "description": "Zacznij dzienną lekcję",
             "estimated_minutes": 8,
             "priority": 1,
             "route": "/lesson",
@@ -82,8 +82,8 @@ async def get_quickmode_plan(user_id: int, db: Session = Depends(get_db)):
     # Pronunciation practice
     activities.append({
         "id": "pronunciation",
-        "title": "Pronunciation Practice",
-        "description": "Practice speaking and check your pronunciation",
+        "title": "Ćwiczenie wymowy",
+        "description": "Ćwicz wymowę i sprawdź poprawność",
         "estimated_minutes": 3,
         "priority": 3,
         "route": "/pronunciation",
@@ -94,8 +94,8 @@ async def get_quickmode_plan(user_id: int, db: Session = Depends(get_db)):
     # News reading
     activities.append({
         "id": "news",
-        "title": "News in Target Language",
-        "description": f"Read simplified {user.target_language} news",
+        "title": "Newsy w języku docelowym",
+        "description": f"Czytaj uproszczone wiadomości po {user.target_language}",
         "estimated_minutes": 4,
         "priority": 4,
         "route": "/news",

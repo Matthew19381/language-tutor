@@ -5,19 +5,20 @@ from functools import partial
 
 logger = logging.getLogger(__name__)
 
-LANGUAGE_CODES = {
-    "German": "de",
-    "English": "en",
-    "French": "fr",
-    "Spanish": "es",
-    "Italian": "it",
-    "Portuguese": "pt",
-    "Dutch": "nl",
-    "Polish": "pl",
-    "Russian": "ru",
-    "Japanese": "ja",
-    "Chinese": "zh-CN",
-    "Korean": "ko",
+# edge-tts voice mapping per language
+LANGUAGE_VOICES = {
+    "German": "de-DE-KatjaNeural",
+    "English": "en-US-JennyNeural",
+    "French": "fr-FR-DeniseNeural",
+    "Spanish": "es-ES-ElviraNeural",
+    "Italian": "it-IT-ElsaNeural",
+    "Portuguese": "pt-BR-FranciscaNeural",
+    "Dutch": "nl-NL-ColetteNeural",
+    "Polish": "pl-PL-ZofiaNeural",
+    "Russian": "ru-RU-SvetlanaNeural",
+    "Japanese": "ja-JP-NanamiNeural",
+    "Chinese": "zh-CN-XiaoxiaoNeural",
+    "Korean": "ko-KR-SunHiNeural",
 }
 
 AUDIO_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "audio")
@@ -27,20 +28,14 @@ def ensure_audio_dir():
     os.makedirs(AUDIO_DIR, exist_ok=True)
 
 
-def _generate_audio_sync(text: str, lang_code: str, output_path: str):
-    """Synchronous gTTS generation — run in thread pool."""
-    from gtts import gTTS
-    tts = gTTS(text=text, lang=lang_code, slow=False)
-    tts.save(output_path)
-
-
 async def generate_audio(text: str, language: str, output_path: str) -> str:
-    """Generate audio for the given text using gTTS."""
+    """Generate audio for the given text using edge-tts."""
+    import edge_tts
     ensure_audio_dir()
-    lang_code = LANGUAGE_CODES.get(language, "de")
-    loop = asyncio.get_event_loop()
+    voice = LANGUAGE_VOICES.get(language, "de-DE-KatjaNeural")
     try:
-        await loop.run_in_executor(None, partial(_generate_audio_sync, text, lang_code, output_path))
+        communicate = edge_tts.Communicate(text, voice)
+        await communicate.save(output_path)
         logger.info(f"Audio generated: {output_path}")
         return output_path
     except Exception as e:

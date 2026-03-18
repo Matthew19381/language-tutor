@@ -424,7 +424,7 @@ export default function DailyLesson() {
                         {item.example && <PlayButton text={item.example} language={lesson.language} />}
                       </div>
                       {item.example_translation && (
-                        <div className="text-gray-600 text-xs mt-0.5 italic">{item.example_translation}</div>
+                        <div className="text-gray-500 text-xs mt-0.5 italic">↳ {item.example_translation}</div>
                       )}
                     </td>
                   </tr>
@@ -449,20 +449,22 @@ export default function DailyLesson() {
             </p>
           )}
           <div className="space-y-3">
-            {(content.dialogue.lines || []).map((line, i) => (
+            {(content.dialogue.lines || []).map((line, i) => {
+              const isB = i % 2 === 1
+              return (
               <div
                 key={i}
-                className={`flex gap-3 ${line.speaker === 'B' ? 'flex-row-reverse' : ''}`}
+                className={`flex gap-3 ${isB ? 'flex-row-reverse' : ''}`}
               >
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${
-                  line.speaker === 'A' ? 'bg-indigo-700' : 'bg-purple-700'
+                  isB ? 'bg-purple-700' : 'bg-indigo-700'
                 }`}>
-                  {line.speaker}
+                  {line.speaker || (isB ? 'B' : 'A')}
                 </div>
                 <div className={`max-w-sm rounded-2xl px-4 py-2.5 ${
-                  line.speaker === 'A'
-                    ? 'bg-gray-800 rounded-tl-sm'
-                    : 'bg-gray-700 rounded-tr-sm'
+                  isB
+                    ? 'bg-gray-700 rounded-tr-sm'
+                    : 'bg-gray-800 rounded-tl-sm'
                 }`}>
                   <div className="flex items-start gap-1.5">
                     <p className="font-medium flex-1">{line.text}</p>
@@ -473,7 +475,8 @@ export default function DailyLesson() {
                   )}
                 </div>
               </div>
-            ))}
+              )
+            })}
           </div>
         </Section>
       )}
