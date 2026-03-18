@@ -59,13 +59,17 @@ export default function NavBar({ dailyTabs: dailyTabsProp }) {
     setFlashLoading(true)
     setFlashMsg('')
     try {
-      await addFlashcardAI(userId, flashWord.trim())
-      setFlashMsg('Dodano! ✓')
-      setFlashWord('')
-      setTimeout(() => {
-        setFlashMsg('')
-        setFlashOpen(false)
-      }, 1500)
+      const res = await addFlashcardAI(userId, flashWord.trim())
+      if (res && res.success === false) {
+        setFlashMsg(res.message || 'Już istnieje')
+      } else {
+        setFlashMsg('Dodano! ✓')
+        setFlashWord('')
+        setTimeout(() => {
+          setFlashMsg('')
+          setFlashOpen(false)
+        }, 1500)
+      }
     } catch (e) {
       setFlashMsg('Błąd: ' + e.message)
     } finally {
@@ -146,20 +150,34 @@ export default function NavBar({ dailyTabs: dailyTabsProp }) {
               </Link>
             )}
 
-            {/* Flash quick-add */}
+            {/* Flash quick-add — always visible on desktop */}
             {userId && (
-              <div className="relative">
-                <button onClick={() => setFlashOpen(o => !o)} className="w-9 h-9 rounded-lg bg-indigo-700 hover:bg-indigo-600 flex items-center justify-center" title="Dodaj fiszkę">
+              <div className="relative flex items-center gap-1.5">
+                {/* Desktop: inline input */}
+                <div className="hidden md:flex items-center gap-1.5 bg-gray-800 border border-gray-700 rounded-lg px-2 py-1">
+                  <BookmarkPlus className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                  <input
+                    className="bg-transparent text-sm text-gray-200 placeholder-gray-500 outline-none w-28"
+                    placeholder="Dodaj fiszkę..."
+                    value={flashWord}
+                    onChange={e => { setFlashWord(e.target.value); setFlashMsg('') }}
+                    onKeyDown={e => e.key === 'Enter' && handleQuickFlash()}
+                  />
+                  {flashLoading && <Loader2 className="w-3 h-3 animate-spin text-indigo-400 shrink-0" />}
+                  {flashMsg && <span className={`text-xs shrink-0 ${flashMsg.includes('Błąd') || flashMsg.includes('już istnieje') ? 'text-red-400' : 'text-emerald-400'}`}>{flashMsg.includes('Dodano') ? '✓' : '!'}</span>}
+                </div>
+                {/* Mobile: toggle button */}
+                <button onClick={() => setFlashOpen(o => !o)} className="md:hidden w-9 h-9 rounded-lg bg-indigo-700 hover:bg-indigo-600 flex items-center justify-center" title="Dodaj fiszkę">
                   <BookmarkPlus className="w-4 h-4 text-white" />
                 </button>
                 {flashOpen && (
-                  <div className="absolute right-0 top-11 bg-gray-800 border border-indigo-700/50 rounded-xl shadow-2xl p-3 w-60 z-50">
+                  <div className="absolute right-0 top-11 bg-gray-800 border border-indigo-700/50 rounded-xl shadow-2xl p-3 w-60 z-50 md:hidden">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-semibold text-indigo-300">Dodaj fiszkę (AI)</span>
                       <button onClick={() => { setFlashOpen(false); setFlashMsg(''); setFlashWord('') }}><X className="w-3.5 h-3.5 text-gray-500" /></button>
                     </div>
                     <input className="input-field text-sm mb-2" placeholder="Słowo..." value={flashWord} onChange={e => setFlashWord(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleQuickFlash()} autoFocus />
-                    {flashMsg && <p className={`text-xs mb-2 ${flashMsg.includes('Błąd') ? 'text-red-400' : 'text-emerald-400'}`}>{flashMsg}</p>}
+                    {flashMsg && <p className={`text-xs mb-2 ${flashMsg.includes('Błąd') || flashMsg.includes('już istnieje') ? 'text-red-400' : 'text-emerald-400'}`}>{flashMsg}</p>}
                     <button className="btn-primary w-full text-xs py-1.5 flex items-center justify-center gap-1" onClick={handleQuickFlash} disabled={flashLoading || !flashWord.trim()}>
                       {flashLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <BookmarkPlus className="w-3 h-3" />}
                       Dodaj z AI
