@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   ChevronRight, ChevronLeft, CheckCircle, User,
   Globe, BookOpen, AlertCircle
 } from 'lucide-react'
 import LoadingSpinner from '../components/LoadingSpinner'
 import {
-  startPlacementTest, submitPlacementTest, createUser, setUserId
+  startPlacementTest, submitPlacementTest, createUser, setUserId, getUserId
 } from '../api/client'
 import { useLanguage } from '../hooks/useLanguage'
 
@@ -22,13 +22,20 @@ const STEPS = {
 
 export default function PlacementTest() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { t } = useLanguage()
+
+  // If redirected from language change, reuse existing user
+  const existingUserId = parseInt(searchParams.get('userId') || '0') || getUserId()
+  const preselectedLang = searchParams.get('language') || 'German'
+  const isLanguageChange = !!searchParams.get('language')
+
   const [step, setStep] = useState(STEPS.SETUP)
   const [error, setError] = useState('')
 
   // Setup
-  const [name, setName] = useState('')
-  const [targetLanguage, setTargetLanguage] = useState('German')
+  const [name, setName] = useState(localStorage.getItem('userName') || '')
+  const [targetLanguage, setTargetLanguage] = useState(preselectedLang)
   const [nativeLanguage, setNativeLanguage] = useState('Polish')
 
   // Test data
@@ -39,10 +46,10 @@ export default function PlacementTest() {
 
   // Results
   const [results, setResults] = useState(null)
-  const [userId, setLocalUserId] = useState(null)
+  const [userId, setLocalUserId] = useState(existingUserId || null)
 
   const handleStartTest = async () => {
-    if (!name.trim()) {
+    if (!isLanguageChange && !name.trim()) {
       setError(t('place.enterName'))
       return
     }
@@ -50,14 +57,17 @@ export default function PlacementTest() {
     setLoadingTest(true)
 
     try {
-      // Create user first
-      const userRes = await createUser({
-        name: name.trim(),
-        native_language: nativeLanguage,
-        target_language: targetLanguage
-      })
-      const newUserId = userRes.user_id
-      setLocalUserId(newUserId)
+      let newUserId = userId
+      if (!isLanguageChange || !newUserId) {
+        // Create new user only if not changing language
+        const userRes = await createUser({
+          name: name.trim(),
+          native_language: nativeLanguage,
+          target_language: targetLanguage
+        })
+        newUserId = userRes.user_id
+        setLocalUserId(newUserId)
+      }
 
       // Start placement test
       const testRes = await startPlacementTest({
@@ -144,37 +154,46 @@ export default function PlacementTest() {
               </div>
             )}
 
+            {isLanguageChange && (
+              <div className="bg-indigo-900/20 border border-indigo-700/30 rounded-lg p-3 mb-4 text-sm text-indigo-300">
+                Test plasujący dla języka: <strong>{preselectedLang}</strong>
+              </div>
+            )}
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  <User className="w-4 h-4 inline mr-1" />
-                  {t('place.yourName')}
-                </label>
-                <input
-                  type="text"
-                  className="input-field"
-                  placeholder={t('place.namePlaceholder')}
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleStartTest()}
-                />
-              </div>
+              {!isLanguageChange && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    <User className="w-4 h-4 inline mr-1" />
+                    {t('place.yourName')}
+                  </label>
+                  <input
+                    type="text"
+                    className="input-field"
+                    placeholder={t('place.namePlaceholder')}
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleStartTest()}
+                  />
+                </div>
+              )}
 
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  <Globe className="w-4 h-4 inline mr-1" />
-                  {t('place.targetLanguage')}
-                </label>
-                <select
-                  className="input-field"
-                  value={targetLanguage}
-                  onChange={e => setTargetLanguage(e.target.value)}
-                >
-                  {LANGUAGES.map(lang => (
-                    <option key={lang} value={lang}>{lang}</option>
-                  ))}
-                </select>
-              </div>
+              {!isLanguageChange && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    <Globe className="w-4 h-4 inline mr-1" />
+                    {t('place.targetLanguage')}
+                  </label>
+                  <select
+                    className="input-field"
+                    value={targetLanguage}
+                    onChange={e => setTargetLanguage(e.target.value)}
+                  >
+                    {LANGUAGES.map(lang => (
+                      <option key={lang} value={lang}>{lang}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">

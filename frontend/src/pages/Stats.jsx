@@ -96,7 +96,7 @@ export default function Stats() {
       localStorage.removeItem('tips_date')
       localStorage.removeItem('tips_data')
       if (result.needs_placement) {
-        navigate('/placement')
+        navigate(`/placement?language=${encodeURIComponent(newLanguage)}&userId=${userId}`)
       } else {
         setLanguageMsg(`Zmieniono na ${newLanguage}. Odśwież stronę.`)
         setTimeout(() => window.location.reload(), 1500)

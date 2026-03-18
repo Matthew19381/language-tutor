@@ -89,8 +89,15 @@ async def submit_placement(
         if request.user_id:
             user = db.query(User).filter(User.id == request.user_id).first()
             if user:
-                # Update user's CEFR level
+                import json as _json
+                # Update user's CEFR level and save to language_profiles
                 user.cefr_level = cefr_level
+                try:
+                    profiles = _json.loads(user.language_profiles or "{}")
+                except Exception:
+                    profiles = {}
+                profiles[language] = cefr_level
+                user.language_profiles = _json.dumps(profiles)
                 db.commit()
 
                 # Save test result
