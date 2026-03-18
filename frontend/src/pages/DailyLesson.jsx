@@ -803,8 +803,11 @@ function TranslationReveal({ translation }) {
 }
 
 function OutputForcingCard({ instruction, text, translation, language, t }) {
-  const [phase, setPhase] = useState(1)
+  const words = text ? text.split(/\s+/) : []
+  const [revealedCount, setRevealedCount] = useState(0)
+  const [recallMode, setRecallMode] = useState(false)
   const [userRecall, setUserRecall] = useState('')
+  const [showFull, setShowFull] = useState(false)
 
   const similarity = () => {
     if (!userRecall || !text) return 0
@@ -814,26 +817,59 @@ function OutputForcingCard({ instruction, text, translation, language, t }) {
     return Math.round((matches / b.length) * 100)
   }
 
-  const score = phase === 2 && userRecall ? similarity() : null
+  const score = recallMode && userRecall ? similarity() : null
+
+  const revealNextWord = () => {
+    if (revealedCount < words.length) setRevealedCount(r => r + 1)
+  }
+
+  const revealAll = () => setRevealedCount(words.length)
 
   return (
     <div>
       <p className="text-gray-400 text-sm mb-3">{instruction}</p>
-      {phase === 1 ? (
+
+      {!recallMode ? (
         <div>
+          {/* Word-by-word reveal area */}
           <div className="bg-pink-900/10 border border-pink-700/30 rounded-lg p-4 mb-3">
-            <p className="text-gray-100 leading-relaxed">{text}</p>
-            <div className="mt-2 flex items-center justify-between">
+            <p className="text-gray-100 leading-relaxed text-lg">
+              {words.map((word, i) => (
+                <span key={i}>
+                  {i < revealedCount
+                    ? <span className="text-gray-100">{word} </span>
+                    : <span className="bg-pink-900/60 rounded px-1 text-transparent select-none cursor-pointer hover:bg-pink-800/60 transition-colors" onClick={revealNextWord}>{'_'.repeat(word.length)} </span>
+                  }
+                </span>
+              ))}
+            </p>
+            <div className="mt-3 flex items-center gap-2 flex-wrap">
               <PlayButton text={text} language={language} />
               {translation && <TranslationReveal translation={translation} />}
             </div>
           </div>
-          <button
-            onClick={() => setPhase(2)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-pink-700 hover:bg-pink-600 text-white text-sm transition-colors"
-          >
-            <EyeOff className="w-4 h-4" /> {t('lesson.hideTest')}
-          </button>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={revealNextWord}
+              disabled={revealedCount >= words.length}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-pink-700 hover:bg-pink-600 disabled:opacity-40 text-white text-sm transition-colors"
+            >
+              <Eye className="w-4 h-4" /> Pokaż słowo ({revealedCount}/{words.length})
+            </button>
+            <button
+              onClick={revealAll}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-white text-sm transition-colors"
+            >
+              Pokaż wszystko
+            </button>
+            <button
+              onClick={() => { setRevealedCount(0); setRecallMode(true) }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm transition-colors"
+            >
+              <EyeOff className="w-4 h-4" /> {t('lesson.hideTest')}
+            </button>
+          </div>
         </div>
       ) : (
         <div>
@@ -844,7 +880,7 @@ function OutputForcingCard({ instruction, text, translation, language, t }) {
             value={userRecall}
             onChange={e => setUserRecall(e.target.value)}
           />
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             {score !== null && (
               <span className={`text-sm font-bold ${
                 score >= 70 ? 'text-emerald-400' : score >= 40 ? 'text-yellow-400' : 'text-red-400'
@@ -853,7 +889,7 @@ function OutputForcingCard({ instruction, text, translation, language, t }) {
               </span>
             )}
             <button
-              onClick={() => setPhase(1)}
+              onClick={() => { setRecallMode(false); setRevealedCount(0) }}
               className="flex items-center gap-1 text-gray-400 hover:text-gray-200 text-sm"
             >
               <Eye className="w-4 h-4" /> {t('lesson.showOriginal')}
