@@ -37,6 +37,12 @@ export const startPlacementTest = (data = {}) =>
 export const submitPlacementTest = (data) =>
   api.post('/placement/submit', data)
 
+export const updateUserLanguage = (userId, targetLanguage) =>
+  api.patch(`/placement/${userId}/language`, { target_language: targetLanguage })
+
+export const getLanguageProfiles = (userId) =>
+  api.get(`/placement/${userId}/languages`)
+
 // ===== Lessons =====
 
 export const getTodayLesson = (userId) =>
@@ -48,11 +54,29 @@ export const getLesson = (lessonId) =>
 export const completeLesson = (lessonId, userId) =>
   api.post(`/lessons/${lessonId}/complete`, { user_id: userId })
 
+export const evaluateProduction = (lessonId, data) =>
+  api.post(`/lessons/${lessonId}/evaluate-production`, data)
+
+export const generateTTS = (text, language) =>
+  api.post(`/audio/tts`, { text, language })
+
 export const getLessonAudio = (lessonId) =>
   api.get(`/lessons/audio/${lessonId}`)
 
 export const listLessons = (userId) =>
   api.get(`/lessons/list/${userId}`)
+
+export const getLessonHistory = (userId) =>
+  api.get(`/lessons/history/${userId}`)
+
+export const generateNextLesson = (userId) =>
+  api.post(`/lessons/next/${userId}`)
+
+export const generateConceptFlashcards = (lessonId) =>
+  api.post(`/lessons/${lessonId}/concept-flashcards`)
+
+export const recordExerciseError = (lessonId, data) =>
+  api.post(`/lessons/${lessonId}/exercise-error`, data)
 
 // ===== Tests =====
 
@@ -88,6 +112,9 @@ export const exportAnki = (userId) =>
 export const addFlashcard = (userId, data) =>
   api.post(`/flashcards/${userId}/add`, data)
 
+export const addFlashcardAI = (userId, word) =>
+  api.post(`/flashcards/${userId}/add-ai`, { word })
+
 // ===== Conversation =====
 
 export const startConversation = (userId, topic) =>
@@ -98,6 +125,12 @@ export const sendMessage = (sessionId, userMessage) =>
 
 export const analyzeConversation = (sessionId, userId) =>
   api.post('/conversation/analyze', { session_id: sessionId, user_id: userId })
+
+export const analyzePastedConversation = (userId, pastedText) =>
+  api.post('/conversation/analyze-text', { user_id: userId, pasted_text: pastedText })
+
+export const getGrokPrompt = (userId) =>
+  api.get(`/conversation/grok-prompt`, { params: { user_id: userId } })
 
 export const askQuestion = (question, userId) =>
   api.post('/conversation/question', { question, user_id: userId })
@@ -139,6 +172,11 @@ export const analyzePronunciation = (formData) =>
     timeout: 30000,
   })
 
+// ===== YouTube =====
+
+export const searchYouTube = (userId, query = '') =>
+  api.get(`/youtube/search`, { params: { user_id: userId, query } })
+
 // ===== Achievements =====
 
 export const getAchievements = (userId) =>
@@ -173,3 +211,8 @@ export const exportObsidian = (lessonId, dayOffset = 0, upload = false) =>
     params: { day_offset: dayOffset, upload },
     responseType: upload ? 'json' : 'blob',
   })
+
+// ===== Study Plan =====
+
+export const getStudyPlan = (userId) =>
+  api.get(`/lessons/study-plan/${userId}`)

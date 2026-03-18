@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Newspaper, BookOpen, ChevronDown, ChevronUp, ExternalLink, Plus } from 'lucide-react'
-import { getUserId, addFlashcard } from '../api/client'
+import { Newspaper, BookOpen, ChevronDown, ChevronUp, ExternalLink, Plus, CheckCircle } from 'lucide-react'
+import { getUserId, addFlashcard, addXP } from '../api/client'
 import { PageLoader } from '../components/LoadingSpinner'
 import { useLanguage } from '../hooks/useLanguage'
+import PlayButton from '../components/PlayButton'
 import axios from 'axios'
 
 export default function News() {
@@ -12,9 +13,10 @@ export default function News() {
   const [error, setError] = useState('')
   const [expanded, setExpanded] = useState({})
   const [addedWords, setAddedWords] = useState({})
+  const [activityDone, setActivityDone] = useState(false)
   const navigate = useNavigate()
   const userId = getUserId()
-  const { t } = useLanguage()
+  const { t, targetLanguage } = useLanguage()
 
   useEffect(() => {
     if (!userId) { navigate('/placement'); return }
@@ -23,6 +25,25 @@ export default function News() {
       .catch(e => setError(e.response?.data?.detail || e.message))
       .finally(() => setLoading(false))
   }, [userId])
+
+  const markTabComplete = (tabKey) => {
+    try {
+      const today = new Date().toISOString().slice(0, 10)
+      const raw = localStorage.getItem('daily_tabs')
+      const stored = raw ? JSON.parse(raw) : { date: today, tabs: [] }
+      const current = stored.date === today ? stored : { date: today, tabs: [] }
+      if (!current.tabs.includes(tabKey)) {
+        current.tabs.push(tabKey)
+        localStorage.setItem('daily_tabs', JSON.stringify(current))
+      }
+    } catch {}
+  }
+
+  const handleMarkDone = async () => {
+    markTabComplete('news')
+    setActivityDone(true)
+    try { await addXP(userId, 10, 'news_read') } catch {}
+  }
 
   const toggleArticle = (i) => setExpanded(prev => ({ ...prev, [i]: !prev[i] }))
 
@@ -63,6 +84,21 @@ export default function News() {
         </div>
       </div>
 
+      {!activityDone ? (
+        <button
+          onClick={handleMarkDone}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-700/30 hover:bg-emerald-700/50 border border-emerald-700/40 text-emerald-300 text-sm font-medium transition-colors mb-4"
+        >
+          <CheckCircle className="w-4 h-4" />
+          Oznacz Newsy jako ukończone (+10 XP)
+        </button>
+      ) : (
+        <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-900/30 border border-emerald-700/40 text-emerald-400 text-sm font-medium mb-4">
+          <CheckCircle className="w-4 h-4" />
+          Newsy ukończone dziś ✓
+        </div>
+      )}
+
       {articles.length === 0 && (
         <div className="card text-center text-gray-400">
           {t('news.noArticles')}
@@ -99,7 +135,10 @@ export default function News() {
                   <h3 className="text-sm font-semibold text-gray-400 mb-2 flex items-center gap-1">
                     <BookOpen className="w-4 h-4" /> {t('news.simplified')}
                   </h3>
-                  <p className="text-gray-200 leading-relaxed">{article.simplified_text}</p>
+                  <div className="flex items-start gap-2">
+                    <p className="text-gray-200 leading-relaxed flex-1">{article.simplified_text}</p>
+                    <PlayButton text={article.simplified_text} language={targetLanguage} />
+                  </div>
                 </div>
 
                 {/* Vocabulary */}

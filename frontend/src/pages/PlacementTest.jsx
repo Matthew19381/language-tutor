@@ -10,7 +10,7 @@ import {
 } from '../api/client'
 import { useLanguage } from '../hooks/useLanguage'
 
-const LANGUAGES = ['German', 'English', 'French', 'Spanish', 'Italian', 'Portuguese', 'Russian']
+const LANGUAGES = ['German', 'English', 'Spanish', 'Russian', 'Chinese']
 const NATIVE_LANGUAGES = ['Polish', 'English', 'German', 'French', 'Spanish', 'Russian', 'Other']
 
 const STEPS = {
@@ -135,7 +135,7 @@ export default function PlacementTest() {
         {/* Setup Step */}
         {step === STEPS.SETUP && (
           <div className="card">
-            <h2 className="text-xl font-semibold mb-6">Tell us about yourself</h2>
+            <h2 className="text-xl font-semibold mb-6">{t('place.tellUs')}</h2>
 
             {error && (
               <div className="flex items-center gap-2 bg-red-900/30 border border-red-700 rounded-lg p-3 mb-4 text-red-300">

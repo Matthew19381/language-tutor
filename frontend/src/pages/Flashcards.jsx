@@ -4,11 +4,12 @@ import {
   Brain, ChevronLeft, ChevronRight, Download, Eye,
   CheckCircle, AlertCircle, Clock, Plus
 } from 'lucide-react'
-import { getUserId, getFlashcards, getDueFlashcards, reviewFlashcard, exportAnki, addFlashcard } from '../api/client'
+import { getUserId, getFlashcards, getDueFlashcards, reviewFlashcard, exportAnki, addFlashcard, addFlashcardAI } from '../api/client'
 import { PageLoader } from '../components/LoadingSpinner'
 import { useLanguage } from '../hooks/useLanguage'
+import PlayButton from '../components/PlayButton'
 
-const TABS = { ALL: 'all', DUE: 'due', ADD: 'add' }
+const TABS = { ALL: 'all', DUE: 'due' }
 
 export default function Flashcards() {
   const [tab, setTab] = useState(TABS.DUE)
@@ -19,15 +20,20 @@ export default function Flashcards() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isFlipped, setIsFlipped] = useState(false)
   const [reviewDone, setReviewDone] = useState(new Set())
+  const [dateFilter, setDateFilter] = useState('all') // 'all', 'today', 'week', 'month'
   const navigate = useNavigate()
   const userId = getUserId()
-  const { t } = useLanguage()
+  const { t, targetLanguage } = useLanguage()
+
+  const [showAddForm, setShowAddForm] = useState(false)
 
   // Add card form
   const [newWord, setNewWord] = useState('')
   const [newTranslation, setNewTranslation] = useState('')
   const [newExample, setNewExample] = useState('')
   const [addMsg, setAddMsg] = useState('')
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiPreview, setAiPreview] = useState(null)
 
   useEffect(() => {
     if (!userId) { navigate('/placement'); return }
@@ -47,7 +53,23 @@ export default function Flashcards() {
     finally { setLoading(false) }
   }
 
-  const displayCards = tab === TABS.DUE ? dueCards : allCards
+  const filterByDate = (cards) => {
+    if (dateFilter === 'all' || tab === TABS.DUE) return cards
+    const now = new Date()
+    return cards.filter(c => {
+      if (!c.created_at) return true
+      const created = new Date(c.created_at)
+      if (dateFilter === 'today') {
+        return created.toDateString() === now.toDateString()
+      } else if (dateFilter === 'week') {
+        return (now - created) <= 7 * 24 * 60 * 60 * 1000
+      } else if (dateFilter === 'month') {
+        return (now - created) <= 30 * 24 * 60 * 60 * 1000
+      }
+      return true
+    })
+  }
+  const displayCards = filterByDate(tab === TABS.DUE ? dueCards : allCards)
   const currentCard = displayCards[currentIndex]
 
   const handleFlip = () => setIsFlipped(!isFlipped)
@@ -140,11 +162,10 @@ export default function Flashcards() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-6">
+      <div className="flex items-center gap-2 mb-4">
         {[
           { key: TABS.DUE, label: `${t('flash.dueTab')} (${dueCards.length})`, icon: <Clock className="w-4 h-4" /> },
           { key: TABS.ALL, label: `${t('flash.allTab')} (${allCards.length})`, icon: <Eye className="w-4 h-4" /> },
-          { key: TABS.ADD, label: t('flash.addTab'), icon: <Plus className="w-4 h-4" /> },
         ].map(({ key, label, icon }) => (
           <button
             key={key}
@@ -158,15 +179,24 @@ export default function Flashcards() {
             {icon}{label}
           </button>
         ))}
+        <button
+          onClick={() => setShowAddForm(s => !s)}
+          className={`ml-auto flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${showAddForm ? 'bg-indigo-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-gray-100'}`}
+        >
+          <Plus className="w-4 h-4" />{t('flash.addTab')}
+        </button>
       </div>
 
-      {/* Add Card Tab */}
-      {tab === TABS.ADD && (
-        <div className="card max-w-lg mx-auto">
-          <h2 className="text-xl font-semibold mb-4">{t('flash.addNew')}</h2>
+      {/* Add Card Panel */}
+      {showAddForm && (
+        <div className="card mb-6 max-w-lg">
+          <h2 className="text-xl font-semibold mb-2">{t('flash.addNew')}</h2>
+          <p className="text-gray-500 text-sm mb-4">Wpisz słowo — AI automatycznie doda tłumaczenie i przykład.</p>
           {addMsg && (
             <div className={`p-3 rounded-lg mb-4 text-sm ${
-              addMsg.includes('successfully') || addMsg.includes('dodana') ? 'bg-emerald-900/30 text-emerald-300' : 'bg-yellow-900/30 text-yellow-300'
+              addMsg.includes('successfully') || addMsg.includes('dodana') || addMsg.includes('AI')
+                ? 'bg-emerald-900/30 text-emerald-300'
+                : 'bg-yellow-900/30 text-yellow-300'
             }`}>
               {addMsg}
             </div>
@@ -178,34 +208,93 @@ export default function Flashcards() {
                 className="input-field"
                 placeholder={t('flash.wordPlaceholder')}
                 value={newWord}
-                onChange={e => setNewWord(e.target.value)}
+                onChange={e => { setNewWord(e.target.value); setAiPreview(null) }}
               />
             </div>
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">{t('flash.translationLabel')}</label>
-              <input
-                className="input-field"
-                placeholder={t('flash.translationPlaceholder')}
-                value={newTranslation}
-                onChange={e => setNewTranslation(e.target.value)}
-              />
+
+            {aiPreview && (
+              <div className="bg-gray-800 rounded-lg p-3 border border-indigo-700/40">
+                <p className="text-xs text-gray-500 mb-2">Podgląd fiszki (wygenerowane przez AI):</p>
+                <div className="space-y-1 text-sm">
+                  <p><span className="text-gray-500">Słowo:</span> <span className="text-indigo-300 font-medium">{newWord}</span></p>
+                  <p><span className="text-gray-500">Tłumaczenie:</span> <span className="text-emerald-300">{aiPreview.translation || '(brak)'}</span></p>
+                  <p><span className="text-gray-500">Przykład:</span> <span className="text-gray-300 italic">{aiPreview.example || '(brak)'}</span></p>
+                </div>
+              </div>
+            )}
+
+            {!aiPreview ? (
+              <button
+                className="btn-primary w-full flex items-center justify-center gap-2"
+                onClick={async () => {
+                  if (!newWord.trim()) return
+                  setAiLoading(true)
+                  setAddMsg('')
+                  try {
+                    const res = await addFlashcardAI(userId, newWord.trim())
+                    if (res.success) {
+                      setAiPreview({ translation: res.translation, example: res.example })
+                      setAddMsg('AI wygenerowało fiszkę. Sprawdź podgląd poniżej.')
+                    } else {
+                      setAddMsg(res.message || t('flash.cardExists'))
+                      setNewWord('')
+                    }
+                  } catch (e) {
+                    setAddMsg('Błąd: ' + e.message)
+                  } finally {
+                    setAiLoading(false)
+                  }
+                }}
+                disabled={!newWord.trim() || aiLoading}
+              >
+                {aiLoading ? <><Plus className="w-4 h-4 animate-spin" /> Generowanie AI...</> : <><Plus className="w-4 h-4" /> Dodaj z AI</>}
+              </button>
+            ) : (
+              <div className="flex gap-2">
+                <button
+                  className="btn-primary flex-1"
+                  onClick={() => {
+                    setAddMsg('Fiszka dodana! ✓')
+                    setNewWord('')
+                    setAiPreview(null)
+                    loadCards()
+                  }}
+                >
+                  Zapisz fiszkę
+                </button>
+                <button
+                  className="btn-secondary"
+                  onClick={() => { setAiPreview(null); setAddMsg('') }}
+                >
+                  Anuluj
+                </button>
+              </div>
+            )}
+
+            <div className="border-t border-gray-700 pt-3">
+              <p className="text-xs text-gray-600 mb-2">Lub dodaj ręcznie:</p>
+              <div className="space-y-2">
+                <input
+                  className="input-field text-sm"
+                  placeholder={t('flash.translationPlaceholder')}
+                  value={newTranslation}
+                  onChange={e => setNewTranslation(e.target.value)}
+                />
+                <input
+                  className="input-field text-sm"
+                  placeholder={t('flash.examplePlaceholder')}
+                  value={newExample}
+                  onChange={e => setNewExample(e.target.value)}
+                />
+                <button
+                  className="btn-secondary w-full text-sm"
+                  onClick={handleAddCard}
+                  disabled={!newWord || !newTranslation}
+                >
+                  {t('flash.addButton')}
+                </button>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">{t('flash.exampleOptional')}</label>
-              <input
-                className="input-field"
-                placeholder={t('flash.examplePlaceholder')}
-                value={newExample}
-                onChange={e => setNewExample(e.target.value)}
-              />
-            </div>
-            <button
-              className="btn-primary w-full"
-              onClick={handleAddCard}
-              disabled={!newWord || !newTranslation}
-            >
-              {t('flash.addButton')}
-            </button>
           </div>
         </div>
       )}
@@ -213,6 +302,27 @@ export default function Flashcards() {
       {/* Flashcard Viewer */}
       {(tab === TABS.ALL || tab === TABS.DUE) && (
         <>
+          {tab === TABS.ALL && (
+            <div className="flex gap-2 mb-4 flex-wrap">
+              <span className="text-gray-500 text-sm self-center">Filtruj:</span>
+              {[
+                { key: 'all', label: 'Wszystkie' },
+                { key: 'today', label: 'Dzisiaj' },
+                { key: 'week', label: 'Ten tydzień' },
+                { key: 'month', label: 'Ten miesiąc' },
+              ].map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => { setDateFilter(key); setCurrentIndex(0) }}
+                  className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                    dateFilter === key ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-gray-200'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
           {displayCards.length === 0 ? (
             <div className="card text-center py-12">
               {tab === TABS.DUE ? (
@@ -252,7 +362,12 @@ export default function Flashcards() {
                         <p className="text-gray-400 text-xs mb-2 uppercase tracking-wider">
                           {isFlipped ? t('flash.translationSide') : t('flash.wordSide')}
                         </p>
-                        <p className="text-3xl font-bold text-indigo-300">{currentCard.word}</p>
+                        <div className="flex items-center justify-center gap-2">
+                          <p className="text-3xl font-bold text-indigo-300">{currentCard.word}</p>
+                          <div onClick={e => e.stopPropagation()}>
+                            <PlayButton text={currentCard.word} language={currentCard.language || targetLanguage} />
+                          </div>
+                        </div>
                         <p className="text-gray-500 text-xs mt-3">{t('flash.clickReveal')}</p>
                       </div>
                     </div>

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime
+from sqlalchemy import Column, Integer, String, Float, DateTime, Text
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from backend.database import Base
@@ -15,6 +15,8 @@ class User(Base):
     streak_days = Column(Integer, default=0)
     total_xp = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
+    # JSON: {"German": "B1", "Spanish": "A2", ...} — CEFR per language
+    language_profiles = Column(Text, default="{}")
 
     lessons = relationship("Lesson", back_populates="user")
     test_results = relationship("TestResult", back_populates="user")

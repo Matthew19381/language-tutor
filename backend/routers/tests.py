@@ -27,17 +27,25 @@ async def get_daily_test(user_id: int, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Find today's lesson
+    # Find today's lesson for the user's current language
     today_start = datetime.combine(date.today(), datetime.min.time())
     today_lesson = db.query(Lesson).filter(
         Lesson.user_id == user_id,
+        Lesson.language == user.target_language,
         Lesson.created_at >= today_start
     ).first()
 
     if not today_lesson:
+        # Fallback: try latest lesson for this language regardless of date
+        today_lesson = db.query(Lesson).filter(
+            Lesson.user_id == user_id,
+            Lesson.language == user.target_language
+        ).order_by(Lesson.created_at.desc()).first()
+
+    if not today_lesson:
         raise HTTPException(
             status_code=404,
-            detail="No lesson found for today. Please complete today's lesson first."
+            detail="Brak lekcji. Najpierw wygeneruj dzisiejszą lekcję."
         )
 
     lesson_content = json.loads(today_lesson.content)

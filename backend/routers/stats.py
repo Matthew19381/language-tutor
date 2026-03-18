@@ -61,8 +61,9 @@ async def get_stats(user_id: int, db: Session = Depends(get_db)):
                 else:
                     break
 
-    # Calculate error categories
+    # Calculate error categories with examples
     error_categories = {}
+    error_examples = {}  # category -> list of example errors (up to 3)
     for test in test_results:
         if test.errors:
             try:
@@ -70,6 +71,15 @@ async def get_stats(user_id: int, db: Session = Depends(get_db)):
                 for error in errors:
                     error_type = error.get("type", "unknown")
                     error_categories[error_type] = error_categories.get(error_type, 0) + 1
+                    if error_type not in error_examples:
+                        error_examples[error_type] = []
+                    if len(error_examples[error_type]) < 3:
+                        example = {
+                            "question": error.get("question", error.get("error", "")),
+                            "correct": error.get("correct_answer", error.get("correction", "")),
+                        }
+                        if example["question"] and example not in error_examples[error_type]:
+                            error_examples[error_type].append(example)
             except Exception:
                 pass
 
@@ -127,6 +137,7 @@ async def get_stats(user_id: int, db: Session = Depends(get_db)):
             "due_today": len(due_flashcards)
         },
         "error_categories": error_categories,
+        "error_examples": error_examples,
         "achievements": achievements_data,
         "new_achievements": unnotified,
     }

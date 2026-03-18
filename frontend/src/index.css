@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes timer-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.animate-blink {
+  animation: timer-blink 0.5s step-end infinite;
+}
+
 @layer base {
   * {
     box-sizing: border-box;

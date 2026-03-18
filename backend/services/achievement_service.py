@@ -61,25 +61,25 @@ def calculate_level_from_xp(xp: int) -> dict:
 
 def _get_level_name(level: int) -> str:
     if level <= 5:
-        return "Beginner"
+        return "Początkujący"
     elif level <= 10:
-        return "Elementary"
+        return "Elementarny"
     elif level <= 15:
-        return "Pre-Intermediate"
+        return "Przedśredniozaawansowany"
     elif level <= 20:
-        return "Intermediate"
+        return "Średniozaawansowany"
     elif level <= 25:
-        return "Upper-Intermediate"
+        return "Wyższy średniozaawansowany"
     elif level <= 30:
-        return "Advanced"
+        return "Zaawansowany"
     elif level <= 35:
-        return "Proficient"
+        return "Biegły"
     elif level <= 40:
-        return "Expert"
+        return "Ekspert"
     elif level <= 45:
-        return "Master"
+        return "Mistrz"
     else:
-        return "Grand Master"
+        return "Wielki Mistrz"
 
 
 def check_and_award_achievements(user, db: Session) -> list:

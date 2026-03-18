@@ -7,9 +7,11 @@ from sqlalchemy.orm import Session
 from backend.database import get_db
 from backend.models.user import User
 from backend.models.test_result import TestResult
+from backend.models.lesson import Lesson
 from backend.services.lesson_generator import (
     generate_conversation_scenario,
     analyze_conversation,
+    analyze_pasted_conversation,
     answer_language_question
 )
 from backend.services.gemini_service import generate_text
@@ -40,6 +42,11 @@ class AnalyzeRequest(BaseModel):
 class QuestionRequest(BaseModel):
     question: str
     user_id: Optional[int] = None
+
+
+class AnalyzePastedRequest(BaseModel):
+    user_id: int
+    pasted_text: str
 
 
 @router.post("/api/conversation/start/{user_id}")
@@ -267,4 +274,104 @@ async def ask_question(
         }
     except Exception as e:
         logger.error(f"Error answering question: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/api/conversation/grok-prompt")
+async def get_grok_prompt(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Get latest lesson topic
+    latest_lesson = db.query(Lesson).filter(
+        Lesson.user_id == user_id
+    ).order_by(Lesson.created_at.desc()).first()
+
+    topic = latest_lesson.topic if latest_lesson else "everyday conversation"
+    lesson_title = latest_lesson.title if latest_lesson else "General"
+
+    # Get recent errors
+    recent_tests = db.query(TestResult).filter(
+        TestResult.user_id == user_id
+    ).order_by(TestResult.created_at.desc()).limit(3).all()
+
+    weak_areas_seen = set()
+    weak_areas = []
+    for test in recent_tests:
+        if test.errors:
+            try:
+                import json as json_module
+                errors = json_module.loads(test.errors)
+                for err in errors[:2]:
+                    if isinstance(err, dict):
+                        err_type = err.get("type", err.get("error", ""))
+                        if err_type and err_type not in weak_areas_seen:
+                            weak_areas.append(str(err_type)[:60])
+                            weak_areas_seen.add(err_type)
+            except Exception:
+                pass
+
+    weak_areas_text = ", ".join(weak_areas[:4]) if weak_areas else "general grammar"
+
+    prompt = f"""Jesteś nauczycielem języka {user.target_language}. Mój język ojczysty to polski.
+Mój aktualny poziom: {user.cefr_level}
+Dzisiaj uczyłem/am się: {topic} ({lesson_title})
+Moje słabe obszary: {weak_areas_text}
+
+Proszę, rozmawiaj ze mną po {user.target_language} na poziomie {user.cefr_level}. Poprawiaj moje błędy delikatnie (pokazuj poprawną formę w nawiasach kwadratowych). Pomóż mi ćwiczyć: {topic}. Zacznij od krótkiego wprowadzenia do dzisiejszego tematu, a następnie zaangażuj mnie w rozmowę."""
+
+    return {
+        "success": True,
+        "prompt": prompt,
+        "level": user.cefr_level,
+        "language": user.target_language,
+        "topic": topic,
+        "weak_areas": weak_areas[:4]
+    }
+
+
+@router.post("/api/conversation/analyze-text")
+async def analyze_pasted_text(
+    request: AnalyzePastedRequest,
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.id == request.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if not request.pasted_text.strip():
+        raise HTTPException(status_code=400, detail="No text provided")
+
+    try:
+        analysis = await analyze_pasted_conversation(
+            pasted_text=request.pasted_text,
+            cefr_level=user.cefr_level,
+            language=user.target_language,
+            native_language=user.native_language
+        )
+
+        # Save to TestResult
+        errors = analysis.get("errors", [])
+        test_result = TestResult(
+            user_id=request.user_id,
+            test_type="conversation_paste",
+            score=analysis.get("score", 0),
+            answers=json.dumps({"source": "pasted_text", "length": len(request.pasted_text)}),
+            errors=json.dumps(errors),
+            cefr_level=user.cefr_level,
+            language=user.target_language
+        )
+        db.add(test_result)
+
+        xp = min(20, int(analysis.get("score", 0) * 0.2))
+        user.total_xp += xp
+        db.commit()
+
+        analysis["xp_earned"] = xp
+        return {"success": True, **analysis}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error analyzing pasted text: {e}")
         raise HTTPException(status_code=500, detail=str(e))

@@ -1,12 +1,14 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import {
   BookOpen, CheckCircle, ChevronDown, ChevronUp,
   AlertTriangle, MessageSquare, PenTool, Star, Download,
-  RefreshCw, Eye, EyeOff, FileText
+  RefreshCw, Eye, EyeOff, FileText, BookmarkPlus, Loader2,
+  History, ArrowRight
 } from 'lucide-react'
 import axios from 'axios'
-import { getUserId, getTodayLesson, completeLesson } from '../api/client'
+import { getUserId, getTodayLesson, getLesson, completeLesson, addFlashcardAI, evaluateProduction, generateNextLesson, generateConceptFlashcards } from '../api/client'
+import PlayButton from '../components/PlayButton'
 import { PageLoader } from '../components/LoadingSpinner'
 import { useLanguage } from '../hooks/useLanguage'
 
@@ -39,7 +41,17 @@ export default function DailyLesson() {
   const [obsidianOffset, setObsidianOffset] = useState(0)
   const [obsidianUpload, setObsidianUpload] = useState(false)
   const [showObsidianMenu, setShowObsidianMenu] = useState(false)
+  const [addedWords, setAddedWords] = useState(new Set())
+  const [addingWord, setAddingWord] = useState(null)
+  const [flashToast, setFlashToast] = useState('')
+  const [productionAnswer, setProductionAnswer] = useState('')
+  const [evaluating, setEvaluating] = useState(false)
+  const [productionResult, setProductionResult] = useState(null)
+  const [generatingNext, setGeneratingNext] = useState(false)
+  const [conceptsLoading, setConceptsLoading] = useState(false)
+  const [conceptsMsg, setConceptsMsg] = useState('')
   const navigate = useNavigate()
+  const { lessonId } = useParams()
   const userId = getUserId()
   const { t } = useLanguage()
 
@@ -49,14 +61,17 @@ export default function DailyLesson() {
       return
     }
     setLoading(true)
-    getTodayLesson(userId)
+    const fetch = lessonId
+      ? getLesson(parseInt(lessonId))
+      : getTodayLesson(userId)
+    fetch
       .then(data => {
         setLesson(data)
         setCompleted(data.is_completed)
       })
       .catch(e => setError(e.message))
       .finally(() => setLoading(false))
-  }, [userId])
+  }, [userId, lessonId])
 
   const toggleSection = (key) => {
     setExpandedSections(prev => ({ ...prev, [key]: !prev[key] }))
@@ -68,10 +83,60 @@ export default function DailyLesson() {
     try {
       await completeLesson(lesson.lesson_id, userId)
       setCompleted(true)
+      // Mark lesson as completed in daily tabs
+      const today = new Date().toISOString().slice(0, 10)
+      try {
+        const raw = localStorage.getItem('daily_tabs')
+        const stored = raw ? JSON.parse(raw) : { date: today, tabs: [] }
+        if (stored.date !== today) stored.tabs = []
+        if (!stored.tabs.includes('lesson')) {
+          stored.tabs.push('lesson')
+          localStorage.setItem('daily_tabs', JSON.stringify({ date: today, tabs: stored.tabs }))
+        }
+      } catch {}
     } catch (e) {
       setError(e.message)
     } finally {
       setCompleting(false)
+    }
+  }
+
+  const handleGenerateNext = async () => {
+    if (!userId) return
+    setGeneratingNext(true)
+    try {
+      const data = await generateNextLesson(userId)
+      setLesson(data)
+      setCompleted(data.is_completed)
+      setExpandedSections({
+        explanation: true, vocabulary: true, dialogue: false,
+        exercises: false, production: false, errorReview: false,
+        comprehensibleInput: false, interleaved: false, outputForcing: false,
+      })
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setGeneratingNext(false)
+    }
+  }
+
+  const handleConceptFlashcards = async () => {
+    if (!lesson) return
+    setConceptsLoading(true)
+    setConceptsMsg('')
+    try {
+      const res = await generateConceptFlashcards(lesson.lesson_id)
+      if (res.created > 0) {
+        setConceptsMsg(`Dodano ${res.created} fiszek z koncepcjami ✓`)
+      } else if (!res.success) {
+        setConceptsMsg(res.message || 'Brak gramatyki w tej lekcji.')
+      } else {
+        setConceptsMsg('Koncepcje już istnieją w fiszkach.')
+      }
+    } catch (e) {
+      setConceptsMsg('Błąd: ' + e.message)
+    } finally {
+      setConceptsLoading(false)
     }
   }
 
@@ -125,6 +190,42 @@ export default function DailyLesson() {
     }
   }
 
+  const handleAddFlashcard = async (word) => {
+    if (!word || addedWords.has(word)) return
+    setAddingWord(word)
+    try {
+      await addFlashcardAI(userId, word)
+      setAddedWords(prev => new Set([...prev, word]))
+      setFlashToast(`"${word}" ${t('lesson.addedToFlash')}`)
+      setTimeout(() => setFlashToast(''), 2500)
+    } catch (e) {
+      console.error('Failed to add flashcard:', e)
+      setFlashToast(t('lesson.addFlashError'))
+      setTimeout(() => setFlashToast(''), 2500)
+    } finally {
+      setAddingWord(null)
+    }
+  }
+
+  const handleEvaluateProduction = async () => {
+    if (!productionAnswer.trim() || !lesson) return
+    setEvaluating(true)
+    setProductionResult(null)
+    try {
+      const result = await evaluateProduction(lesson.lesson_id, {
+        user_answer: productionAnswer,
+        instruction: content.production_task?.instruction || '',
+        language: lesson.content?.language || 'German',
+        cefr_level: lesson.content?.cefr_level || 'B1',
+      })
+      setProductionResult(result)
+    } catch (e) {
+      setProductionResult({ success: false, feedback: 'Błąd: ' + e.message, score: 0, corrections: [], improved_version: '' })
+    } finally {
+      setEvaluating(false)
+    }
+  }
+
   if (loading) return <PageLoader text={t('lesson.loading')} />
 
   if (error) {
@@ -163,6 +264,14 @@ export default function DailyLesson() {
           <p className="text-gray-400 mt-1">{lesson.topic}</p>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate('/lesson/history')}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm transition-colors"
+            title={t('history.title')}
+          >
+            <History className="w-4 h-4" />
+            <span className="hidden sm:block">{t('history.title')}</span>
+          </button>
           <button
             onClick={handleDownloadPDF}
             disabled={pdfLoading}
@@ -251,6 +360,17 @@ export default function DailyLesson() {
         <div className="prose prose-invert max-w-none">
           <p className="text-gray-300 leading-relaxed whitespace-pre-line">{content.explanation}</p>
         </div>
+        <div className="mt-3">
+          <button
+            onClick={handleConceptFlashcards}
+            disabled={conceptsLoading}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-900/30 hover:bg-purple-900/50 border border-purple-700/40 text-purple-300 text-xs font-medium transition-colors disabled:opacity-50"
+          >
+            <BookmarkPlus className="w-3.5 h-3.5" />
+            {conceptsLoading ? 'Generowanie...' : 'Dodaj koncepcje do fiszek'}
+          </button>
+          {conceptsMsg && <p className="text-xs text-emerald-400 mt-1">{conceptsMsg}</p>}
+        </div>
       </Section>
 
       {/* Vocabulary */}
@@ -274,13 +394,38 @@ export default function DailyLesson() {
                 {content.vocabulary.map((item, i) => (
                   <tr key={i} className="hover:bg-gray-800/50">
                     <td className="py-2.5 pr-4">
-                      <span className="font-medium text-indigo-300">{item.word}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-medium text-indigo-300">{item.word}</span>
+                        <PlayButton text={item.word} language={lesson.language} />
+                        <button
+                          onClick={() => handleAddFlashcard(item.word)}
+                          disabled={addingWord === item.word}
+                          title={t('lesson.addToFlash')}
+                          className={`inline-flex items-center justify-center w-5 h-5 rounded hover:bg-gray-700 transition-colors ${
+                            addedWords.has(item.word) ? 'text-emerald-400' : 'text-gray-500 hover:text-indigo-300'
+                          } ${addingWord === item.word ? 'opacity-50' : ''}`}
+                        >
+                          {addingWord === item.word ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : addedWords.has(item.word) ? (
+                            <CheckCircle className="w-3 h-3" />
+                          ) : (
+                            <BookmarkPlus className="w-3 h-3" />
+                          )}
+                        </button>
+                      </div>
                     </td>
                     <td className="py-2.5 pr-4">
                       <span className="text-emerald-300">{item.translation}</span>
                     </td>
                     <td className="py-2.5 text-gray-400 text-sm hidden md:table-cell">
-                      {item.example}
+                      <div className="flex items-center gap-1">
+                        <span>{item.example}</span>
+                        {item.example && <PlayButton text={item.example} language={lesson.language} />}
+                      </div>
+                      {item.example_translation && (
+                        <div className="text-gray-600 text-xs mt-0.5 italic">{item.example_translation}</div>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -319,7 +464,10 @@ export default function DailyLesson() {
                     ? 'bg-gray-800 rounded-tl-sm'
                     : 'bg-gray-700 rounded-tr-sm'
                 }`}>
-                  <p className="font-medium">{line.text}</p>
+                  <div className="flex items-start gap-1.5">
+                    <p className="font-medium flex-1">{line.text}</p>
+                    <PlayButton text={line.text} language={lesson.language} />
+                  </div>
                   {line.translation && (
                     <p className="text-gray-400 text-sm mt-0.5 italic">{line.translation}</p>
                   )}
@@ -340,7 +488,7 @@ export default function DailyLesson() {
         >
           <div className="space-y-4">
             {content.exercises.map((ex, i) => (
-              <ExerciseCard key={i} exercise={ex} number={i + 1} t={t} />
+              <ExerciseCard key={i} exercise={ex} number={i + 1} language={lesson.language} t={t} />
             ))}
           </div>
         </Section>
@@ -365,7 +513,49 @@ export default function DailyLesson() {
           <textarea
             className="input-field mt-3 h-24 resize-none"
             placeholder={t('lesson.writeResponse')}
+            value={productionAnswer}
+            onChange={e => setProductionAnswer(e.target.value)}
           />
+          <p className="text-xs text-gray-500 mb-2">{t('lesson.aiWillEvaluate')}</p>
+          <button
+            onClick={handleEvaluateProduction}
+            disabled={evaluating || !productionAnswer.trim()}
+            className="mt-2 flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-700 hover:bg-indigo-600 text-white text-sm font-medium transition-colors disabled:opacity-50"
+          >
+            {evaluating ? <><Loader2 className="w-4 h-4 animate-spin" /> {t('lesson.evaluating')}</> : t('lesson.checkAnswer')}
+          </button>
+          {productionResult && (
+            <div className={`mt-3 rounded-lg p-4 ${productionResult.success !== false ? 'bg-emerald-900/10 border border-emerald-700/30' : 'bg-red-900/10 border border-red-700/30'}`}>
+              <div className="flex items-center gap-2 mb-2">
+                <span className={`text-2xl font-bold ${
+                  productionResult.score >= 70 ? 'text-emerald-400' :
+                  productionResult.score >= 40 ? 'text-yellow-400' : 'text-red-400'
+                }`}>{productionResult.score}/100</span>
+                <span className="text-gray-400 text-sm">{t('lesson.pts')}</span>
+              </div>
+              {productionResult.feedback && (
+                <p className="text-gray-300 text-sm mb-2">{productionResult.feedback}</p>
+              )}
+              {productionResult.corrections?.length > 0 && (
+                <div className="mb-2">
+                  <p className="text-xs text-gray-500 mb-1">{t('lesson.corrections')}</p>
+                  {productionResult.corrections.map((c, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm">
+                      <span className="text-red-400 line-through">{c.error}</span>
+                      <span className="text-gray-500">→</span>
+                      <span className="text-emerald-400">{c.correction}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {productionResult.improved_version && (
+                <div className="bg-gray-800 rounded p-2">
+                  <p className="text-xs text-gray-500 mb-1">{t('lesson.betterVersion')}</p>
+                  <p className="text-gray-200 text-sm">{productionResult.improved_version}</p>
+                </div>
+              )}
+            </div>
+          )}
         </Section>
       )}
 
@@ -380,14 +570,23 @@ export default function DailyLesson() {
           <div className="space-y-3">
             {content.error_review.map((err, i) => (
               <div key={i} className="bg-yellow-900/10 border border-yellow-700/30 rounded-lg p-4">
-                <div className="flex items-start gap-2 mb-2">
-                  <span className="text-red-400 font-medium line-through">{err.error}</span>
+                <div className="flex items-start gap-2 mb-2 flex-wrap">
+                  <div className="flex items-center gap-1">
+                    <span className="text-red-400 font-medium line-through">{err.error}</span>
+                    <PlayButton text={err.error} language={lesson.language} />
+                  </div>
                   <span className="text-gray-500">→</span>
-                  <span className="text-emerald-400 font-medium">{err.correction}</span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-emerald-400 font-medium">{err.correction}</span>
+                    <PlayButton text={err.correction} language={lesson.language} />
+                  </div>
                 </div>
                 <p className="text-gray-400 text-sm">{err.explanation}</p>
                 {err.practice && (
-                  <p className="text-yellow-300 text-sm mt-2 italic">{t('lesson.practiceLabel')} {err.practice}</p>
+                  <div className="flex items-center gap-1 mt-2">
+                    <p className="text-yellow-300 text-sm italic">{t('lesson.practiceLabel')} {err.practice}</p>
+                    <PlayButton text={err.practice} language={lesson.language} />
+                  </div>
                 )}
               </div>
             ))}
@@ -403,7 +602,7 @@ export default function DailyLesson() {
           expanded={expandedSections.comprehensibleInput}
           onToggle={() => toggleSection('comprehensibleInput')}
         >
-          <div className="bg-teal-900/10 border border-teal-700/30 rounded-lg p-4 mb-3">
+          <div className="bg-teal-900/10 border border-teal-700/30 rounded-lg p-4 mb-3 relative">
             <p className="text-gray-200 leading-relaxed">
               {content.comprehensible_input.text.split(/(\b\S+\b)/).map((part, i) => {
                 const newWords = content.comprehensible_input.new_words || []
@@ -413,13 +612,27 @@ export default function DailyLesson() {
                   : <span key={i}>{part}</span>
               })}
             </p>
+            <div className="mt-2 flex justify-end">
+              <PlayButton text={content.comprehensible_input.text} language={lesson.language} />
+            </div>
           </div>
           {content.comprehensible_input.new_words?.length > 0 && (
             <div className="mb-3">
               <p className="text-sm text-gray-400 mb-1">{t('lesson.newWords')}</p>
               <div className="flex flex-wrap gap-2">
                 {content.comprehensible_input.new_words.map((w, i) => (
-                  <span key={i} className="bg-yellow-500/20 text-yellow-300 px-2 py-0.5 rounded text-sm">{w}</span>
+                  <div key={i} className="flex items-center gap-1 bg-yellow-500/20 text-yellow-300 px-2 py-0.5 rounded text-sm">
+                    <span>{w}</span>
+                    <PlayButton text={w} language={lesson.language} />
+                    <button
+                      onClick={() => handleAddFlashcard(w)}
+                      disabled={addingWord === w}
+                      title={t('lesson.addToFlash')}
+                      className={`transition-colors ${addedWords.has(w) ? 'text-emerald-400' : 'text-yellow-500 hover:text-yellow-200'}`}
+                    >
+                      {addingWord === w ? <Loader2 className="w-3 h-3 animate-spin" /> : addedWords.has(w) ? <CheckCircle className="w-3 h-3" /> : <BookmarkPlus className="w-3 h-3" />}
+                    </button>
+                  </div>
                 ))}
               </div>
             </div>
@@ -468,6 +681,7 @@ export default function DailyLesson() {
           <OutputForcingCard
             instruction={content.output_forcing.instruction}
             text={content.output_forcing.text}
+            language={lesson.language}
             t={t}
           />
         </Section>
@@ -494,12 +708,34 @@ export default function DailyLesson() {
           <CheckCircle className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
           <p className="text-emerald-300 font-semibold">{t('lesson.lessonCompleted')}</p>
           <p className="text-gray-400 text-sm mt-1">{t('lesson.earnedXP')}</p>
-          <button
-            className="btn-primary mt-3"
-            onClick={() => navigate('/test')}
-          >
-            {t('lesson.takeDailyTest')}
-          </button>
+          <div className="flex flex-wrap gap-2 justify-center mt-3">
+            <button
+              className="btn-primary flex items-center gap-2"
+              onClick={() => navigate('/test')}
+            >
+              {t('lesson.takeDailyTest')}
+            </button>
+            <button
+              className="btn-secondary flex items-center gap-2"
+              onClick={handleGenerateNext}
+              disabled={generatingNext}
+            >
+              {generatingNext ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+              {t('lesson.nextLesson') || 'Następna lekcja'}
+            </button>
+            <button
+              className="btn-secondary flex items-center gap-2"
+              onClick={() => navigate('/lesson/history')}
+            >
+              <History className="w-4 h-4" />
+              {t('history.title')}
+            </button>
+          </div>
+        </div>
+      )}
+      {flashToast && (
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-emerald-700 text-white px-4 py-2 rounded-xl shadow-lg text-sm font-medium animate-fade-in">
+          {flashToast}
         </div>
       )}
     </div>
@@ -548,7 +784,7 @@ function ComprehensionQ({ question, answer, t }) {
   )
 }
 
-function OutputForcingCard({ instruction, text, t }) {
+function OutputForcingCard({ instruction, text, language, t }) {
   const [phase, setPhase] = useState(1)
   const [userRecall, setUserRecall] = useState('')
 
@@ -569,6 +805,9 @@ function OutputForcingCard({ instruction, text, t }) {
         <div>
           <div className="bg-pink-900/10 border border-pink-700/30 rounded-lg p-4 mb-3">
             <p className="text-gray-100 leading-relaxed">{text}</p>
+            <div className="mt-2 flex justify-end">
+              <PlayButton text={text} language={language} />
+            </div>
           </div>
           <button
             onClick={() => setPhase(2)}
@@ -607,10 +846,55 @@ function OutputForcingCard({ instruction, text, t }) {
   )
 }
 
-function ExerciseCard({ exercise, number, t }) {
-  const [showAnswer, setShowAnswer] = useState(false)
+const SPECIAL_CHARS = {
+  German: ['ä', 'ö', 'ü', 'ß', 'Ä', 'Ö', 'Ü'],
+  Spanish: ['á', 'é', 'í', 'ó', 'ú', 'ñ', 'ü', '¿', '¡'],
+  Russian: null, // Cyrillic — keyboard handles it
+  Chinese: null,
+}
+
+function SpecialCharHelper({ language, onInsert }) {
+  const chars = SPECIAL_CHARS[language]
+  if (!chars) return null
+  return (
+    <div className="flex flex-wrap gap-1 mt-1">
+      {chars.map(ch => (
+        <button
+          key={ch}
+          type="button"
+          onClick={() => onInsert(ch)}
+          className="px-2 py-0.5 rounded bg-gray-700 hover:bg-indigo-700 text-gray-200 text-sm font-mono transition-colors"
+        >
+          {ch}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function ExerciseCard({ exercise, number, language, t }) {
+  const [revealedCount, setRevealedCount] = useState(0)
   const [userAnswer, setUserAnswer] = useState('')
   const [selectedOption, setSelectedOption] = useState('')
+  const inputRef = useRef(null)
+
+  const answerWords = exercise.answer ? String(exercise.answer).split(' ') : []
+  const totalWords = answerWords.length
+  const isAllRevealed = revealedCount >= totalWords && totalWords > 0
+
+  const handleRevealClick = () => {
+    if (isAllRevealed) {
+      setRevealedCount(0)
+    } else {
+      setRevealedCount(c => Math.min(c + 1, totalWords))
+    }
+  }
+
+  const revealBtnLabel = revealedCount === 0
+    ? t('lesson.showExerciseAnswer')
+    : isAllRevealed
+    ? t('lesson.hideExerciseAnswer')
+    : (t('lesson.nextWord') || 'Następne słowo')
 
   return (
     <div className="bg-gray-800 rounded-lg p-4">
@@ -628,15 +912,15 @@ function ExerciseCard({ exercise, number, t }) {
           {exercise.options.map((opt, i) => {
             const letter = opt.split('.')[0]?.trim()
             const isSelected = selectedOption === letter
-            const isCorrect = showAnswer && letter === exercise.answer
-            const isWrong = showAnswer && isSelected && letter !== exercise.answer
+            const isCorrect = isAllRevealed && letter === exercise.answer
+            const isWrong = isAllRevealed && isSelected && letter !== exercise.answer
             return (
               <div
                 key={i}
                 className={`answer-option text-sm ${
                   isSelected ? 'selected' : ''
                 } ${isCorrect ? 'correct' : ''} ${isWrong ? 'incorrect' : ''}`}
-                onClick={() => !showAnswer && setSelectedOption(letter)}
+                onClick={() => !isAllRevealed && setSelectedOption(letter)}
               >
                 <span>{opt}</span>
               </div>
@@ -644,25 +928,43 @@ function ExerciseCard({ exercise, number, t }) {
           })}
         </div>
       ) : (
-        <input
-          type="text"
-          className="input-field text-sm"
-          placeholder={t('lesson.yourAnswer')}
-          value={userAnswer}
-          onChange={e => setUserAnswer(e.target.value)}
-          disabled={showAnswer}
-        />
+        <div>
+          <input
+            ref={inputRef}
+            type="text"
+            className="input-field text-sm"
+            placeholder={t('lesson.yourAnswer')}
+            value={userAnswer}
+            onChange={e => setUserAnswer(e.target.value)}
+            disabled={isAllRevealed}
+          />
+          {!isAllRevealed && (
+            <SpecialCharHelper
+              language={language}
+              onInsert={(ch) => {
+                const el = inputRef.current
+                const pos = el ? el.selectionStart : userAnswer.length
+                const newVal = userAnswer.slice(0, pos) + ch + userAnswer.slice(pos)
+                setUserAnswer(newVal)
+                setTimeout(() => {
+                  if (el) { el.selectionStart = pos + 1; el.selectionEnd = pos + 1; el.focus() }
+                }, 0)
+              }}
+            />
+          )}
+        </div>
       )}
 
       <button
         className="text-indigo-400 hover:text-indigo-300 text-sm mt-3 flex items-center gap-1"
-        onClick={() => setShowAnswer(!showAnswer)}
+        onClick={handleRevealClick}
       >
-        {showAnswer ? t('lesson.hideExerciseAnswer') : t('lesson.showExerciseAnswer')}
+        {revealBtnLabel}
       </button>
-      {showAnswer && (
+      {revealedCount > 0 && (
         <div className="mt-2 p-2 bg-emerald-900/20 border border-emerald-700/30 rounded text-sm text-emerald-300">
-          {t('lesson.answerLabel')} {exercise.answer}
+          {t('lesson.answerLabel')} {answerWords.slice(0, revealedCount).join(' ')}
+          {!isAllRevealed && <span className="text-gray-500"> ...</span>}
         </div>
       )}
     </div>

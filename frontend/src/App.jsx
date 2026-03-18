@@ -10,6 +10,8 @@ import Stats from './pages/Stats'
 import QuickMode from './pages/QuickMode'
 import News from './pages/News'
 import PronunciationTrainer from './pages/PronunciationTrainer'
+import LessonHistory from './pages/LessonHistory'
+import Videos from './pages/Videos'
 
 function App() {
   return (
@@ -17,6 +19,8 @@ function App() {
       <Route path="/" element={<Layout />}>
         <Route index element={<Home />} />
         <Route path="lesson" element={<DailyLesson />} />
+        <Route path="lesson/history" element={<LessonHistory />} />
+        <Route path="lesson/:lessonId" element={<DailyLesson />} />
         <Route path="test" element={<DailyTest />} />
         <Route path="flashcards" element={<Flashcards />} />
         <Route path="conversation" element={<Conversation />} />
@@ -24,6 +28,7 @@ function App() {
         <Route path="quickmode" element={<QuickMode />} />
         <Route path="news" element={<News />} />
         <Route path="pronunciation" element={<PronunciationTrainer />} />
+        <Route path="videos" element={<Videos />} />
       </Route>
       <Route path="/placement" element={<PlacementTest />} />
     </Routes>

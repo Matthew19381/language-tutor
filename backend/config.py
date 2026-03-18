@@ -7,9 +7,16 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "changeme"
     TARGET_LANGUAGE: str = "German"
     NATIVE_LANGUAGE: str = "Polish"
+    DISCORD_WEBHOOK_URL: str = ""
+    NOTIFY_LESSON_HOUR: int = 8
+    NOTIFY_REVIEW_HOUR: int = 18
+    GDRIVE_FOLDER_ID: str = ""
+    GDRIVE_CLIENT_SECRETS_FILE: str = "backend/gdrive_credentials.json"
+    YOUTUBE_API_KEY: str = ""
 
     class Config:
-        env_file = ".env"
+        env_file = "backend/.env"
+        extra = "ignore"
 
 
 settings = Settings()

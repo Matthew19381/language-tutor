@@ -1,17 +1,17 @@
-import google.generativeai as genai
 import json
 import logging
+from google import genai
 from backend.config import settings
 
 logger = logging.getLogger(__name__)
 
-genai.configure(api_key=settings.GEMINI_API_KEY)
-model = genai.GenerativeModel("gemini-2.0-flash")
+client = genai.Client(api_key=settings.GEMINI_API_KEY)
+MODEL = "gemini-2.5-flash"
 
 
 async def generate_text(prompt: str) -> str:
     try:
-        response = model.generate_content(prompt)
+        response = await client.aio.models.generate_content(model=MODEL, contents=prompt)
         return response.text
     except Exception as e:
         logger.error(f"Error generating text: {e}")
@@ -21,7 +21,7 @@ async def generate_text(prompt: str) -> str:
 async def generate_json(prompt: str) -> dict:
     full_prompt = prompt + "\n\nRespond ONLY with valid JSON, no markdown, no code blocks."
     try:
-        response = model.generate_content(full_prompt)
+        response = await client.aio.models.generate_content(model=MODEL, contents=full_prompt)
         text = response.text.strip()
 
         # Clean up if model adds markdown code blocks
@@ -36,7 +36,6 @@ async def generate_json(prompt: str) -> dict:
 
         text = text.strip()
 
-        # Remove any trailing backticks
         if text.endswith("```"):
             text = text[:-3].strip()
 

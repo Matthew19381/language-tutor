@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session
 from backend.database import get_db
 from backend.models.user import User
 from backend.models.lesson import Lesson
-from backend.models.flashcard import Flashcard
 from backend.models.test_result import TestResult
 
 logger = logging.getLogger(__name__)
@@ -77,26 +76,6 @@ async def get_quickmode_plan(user_id: int, db: Session = Depends(get_db)):
             "priority": 1,
             "route": "/lesson",
             "icon": "BookOpen",
-            "completed": False,
-        })
-
-    # Check flashcards due
-    now = datetime.utcnow()
-    due_cards = db.query(Flashcard).filter(
-        Flashcard.user_id == user_id,
-        Flashcard.is_active == True,
-        Flashcard.next_review_date <= now
-    ).count()
-
-    if due_cards > 0:
-        activities.append({
-            "id": "flashcards",
-            "title": f"Flashcard Review",
-            "description": f"{due_cards} card{'s' if due_cards != 1 else ''} due today",
-            "estimated_minutes": min(5, max(2, due_cards // 3)),
-            "priority": 2,
-            "route": "/flashcards",
-            "icon": "Brain",
             "completed": False,
         })
 

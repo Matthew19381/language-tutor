@@ -9,6 +9,7 @@ from backend.models.user import User
 from backend.models.test_result import TestResult
 from backend.models.study_plan import StudyPlan
 from backend.models.flashcard import Flashcard
+from backend.models.lesson import Lesson
 from backend.services.lesson_generator import (
     generate_placement_test,
     analyze_placement_results,
@@ -75,7 +76,8 @@ async def submit_placement(
         analysis = await analyze_placement_results(
             questions=request.questions,
             answers=request.answers,
-            language=language
+            language=language,
+            native_language=native_language
         )
 
         cefr_level = analysis.get("cefr_level", "A1")
@@ -193,3 +195,93 @@ async def get_user(user_id: int, db: Session = Depends(get_db)):
         "total_xp": user.total_xp,
         "created_at": user.created_at.isoformat()
     }
+
+
+class UpdateLanguageRequest(BaseModel):
+    target_language: str
+
+
+SUPPORTED_LANGUAGES = ["German", "English", "Spanish", "Russian", "Chinese"]
+
+
+@router.patch("/api/placement/{user_id}/language")
+async def update_user_language(
+    user_id: int,
+    request: UpdateLanguageRequest,
+    db: Session = Depends(get_db)
+):
+    import json as _json
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    new_lang = request.target_language
+    if new_lang not in SUPPORTED_LANGUAGES:
+        raise HTTPException(status_code=400, detail=f"Unsupported language. Supported: {SUPPORTED_LANGUAGES}")
+
+    # Load existing language profiles
+    try:
+        profiles = _json.loads(user.language_profiles or "{}")
+    except Exception:
+        profiles = {}
+
+    # Save current language's CEFR level before switching
+    if user.target_language:
+        profiles[user.target_language] = user.cefr_level
+
+    # Restore CEFR for the new language (default A1 if never studied)
+    new_cefr = profiles.get(new_lang, "A1")
+
+    # Save profiles back
+    profiles[new_lang] = new_cefr
+    user.language_profiles = _json.dumps(profiles)
+    user.target_language = new_lang
+    user.cefr_level = new_cefr
+
+    # Deactivate study plans for other languages, keep new language's plan active
+    all_plans = db.query(StudyPlan).filter(StudyPlan.user_id == user_id).all()
+    for plan in all_plans:
+        plan.is_active = (plan.language == new_lang)
+
+    db.commit()
+
+    return {
+        "success": True,
+        "user_id": user_id,
+        "target_language": new_lang,
+        "cefr_level": new_cefr,
+        "language_profiles": profiles,
+        "needs_placement": new_lang not in profiles or profiles.get(new_lang) == "A1"
+    }
+
+
+@router.get("/api/placement/{user_id}/languages")
+async def get_language_profiles(user_id: int, db: Session = Depends(get_db)):
+    """Return all language progress profiles for the user."""
+    import json as _json
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    try:
+        profiles = _json.loads(user.language_profiles or "{}")
+    except Exception:
+        profiles = {}
+
+    # Enrich with lesson/test counts per language
+    result = []
+    for lang in SUPPORTED_LANGUAGES:
+        lessons_count = db.query(Lesson).filter(
+            Lesson.user_id == user_id,
+            Lesson.language == lang,
+            Lesson.is_completed == True
+        ).count()
+        result.append({
+            "language": lang,
+            "cefr_level": profiles.get(lang),
+            "is_active": user.target_language == lang,
+            "lessons_completed": lessons_count,
+            "started": lang in profiles or user.target_language == lang,
+        })
+
+    return {"languages": result, "current": user.target_language}

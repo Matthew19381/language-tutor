@@ -11,6 +11,7 @@ from backend.models.user import User
 from backend.models.flashcard import Flashcard
 from backend.services.anki_service import generate_anki_deck
 from backend.services.audio_service import generate_flashcard_audio
+from backend.services.gemini_service import generate_json
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -218,7 +219,7 @@ async def add_flashcard(
     ).first()
 
     if existing:
-        return {"success": False, "message": "Flashcard already exists", "id": existing.id}
+        return {"success": False, "message": f"Fiszka '{request.word}' już istnieje w Twojej kolekcji.", "id": existing.id}
 
     flashcard = Flashcard(
         user_id=user_id,
@@ -233,3 +234,72 @@ async def add_flashcard(
     db.refresh(flashcard)
 
     return {"success": True, "id": flashcard.id, "message": "Flashcard added successfully"}
+
+
+class AddFlashcardAIRequest(BaseModel):
+    word: str
+
+
+@router.post("/api/flashcards/{user_id}/add-ai")
+async def add_flashcard_ai(
+    user_id: int,
+    request: AddFlashcardAIRequest,
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Check for duplicate
+    existing = db.query(Flashcard).filter(
+        Flashcard.user_id == user_id,
+        Flashcard.word == request.word
+    ).first()
+
+    if existing:
+        return {"success": False, "message": f"Fiszka '{request.word}' już istnieje w Twojej kolekcji.", "id": existing.id}
+
+    # Use AI to generate translation and example
+    prompt = f"""Given the {user.target_language} word or phrase '{request.word}', provide:
+- Polish translation
+- An example sentence in {user.target_language} (at {user.cefr_level} level)
+- Polish translation of that example sentence
+
+Return ONLY valid JSON:
+{{
+    "translation": "Polish translation here",
+    "example": "Example sentence in {user.target_language}",
+    "example_translation": "Polish translation of the example"
+}}"""
+
+    translation = ""
+    example = ""
+    try:
+        ai_result = await generate_json(prompt)
+        translation = ai_result.get("translation", "")
+        example = ai_result.get("example", "")
+    except Exception as e:
+        logger.warning(f"AI flashcard generation failed: {e}")
+        translation = ""
+        example = ""
+
+    flashcard = Flashcard(
+        user_id=user_id,
+        word=request.word,
+        translation=translation,
+        example_sentence=example,
+        language=user.target_language,
+        cefr_level=user.cefr_level
+    )
+    db.add(flashcard)
+    db.commit()
+    db.refresh(flashcard)
+
+    return {
+        "success": True,
+        "id": flashcard.id,
+        "word": flashcard.word,
+        "translation": translation,
+        "example": example,
+        "message": "Flashcard added with AI"
+    }

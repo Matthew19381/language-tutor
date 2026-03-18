@@ -15,13 +15,34 @@ const ICON_MAP = {
 }
 
 const TIMER_SECONDS = 15 * 60
+const STORAGE_KEY_START = 'quickmode_start'
+const STORAGE_KEY_DURATION = 'quickmode_duration'
 
 export default function QuickMode() {
   const [plan, setPlan] = useState(null)
   const [loading, setLoading] = useState(true)
   const [checked, setChecked] = useState({})
-  const [timerActive, setTimerActive] = useState(false)
-  const [secondsLeft, setSecondsLeft] = useState(TIMER_SECONDS)
+  const [customMinutes, setCustomMinutes] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEY_DURATION)
+    return saved ? parseInt(saved) : 15
+  })
+  const [timerActive, setTimerActive] = useState(() => {
+    const startTime = localStorage.getItem(STORAGE_KEY_START)
+    if (!startTime) return false
+    const duration = parseInt(localStorage.getItem(STORAGE_KEY_DURATION) || '15') * 60
+    const elapsed = Math.floor((Date.now() - parseInt(startTime)) / 1000)
+    return elapsed > 0 && elapsed < duration
+  })
+  const [secondsLeft, setSecondsLeft] = useState(() => {
+    const startTime = localStorage.getItem(STORAGE_KEY_START)
+    const duration = parseInt(localStorage.getItem(STORAGE_KEY_DURATION) || '15') * 60
+    if (startTime) {
+      const elapsed = Math.floor((Date.now() - parseInt(startTime)) / 1000)
+      const remaining = duration - elapsed
+      return remaining > 0 ? remaining : 0
+    }
+    return parseInt(localStorage.getItem(STORAGE_KEY_DURATION) || '15') * 60
+  })
   const intervalRef = useRef(null)
   const navigate = useNavigate()
   const userId = getUserId()
@@ -53,8 +74,22 @@ export default function QuickMode() {
     return () => clearInterval(intervalRef.current)
   }, [timerActive])
 
-  const toggleTimer = () => setTimerActive(a => !a)
-  const resetTimer = () => { setTimerActive(false); setSecondsLeft(TIMER_SECONDS) }
+  const toggleTimer = () => {
+    setTimerActive(a => {
+      if (!a) {
+        localStorage.setItem(STORAGE_KEY_START, String(Date.now() - (customMinutes * 60 - secondsLeft) * 1000))
+        localStorage.setItem(STORAGE_KEY_DURATION, String(customMinutes))
+      } else {
+        localStorage.removeItem(STORAGE_KEY_START)
+      }
+      return !a
+    })
+  }
+  const resetTimer = () => {
+    setTimerActive(false)
+    localStorage.removeItem(STORAGE_KEY_START)
+    setSecondsLeft(customMinutes * 60)
+  }
 
   const toggleCheck = (id) => setChecked(prev => ({ ...prev, [id]: !prev[id] }))
 
@@ -77,14 +112,38 @@ export default function QuickMode() {
         <Timer className="w-7 h-7 text-emerald-400" />
         <div>
           <h1 className="text-2xl font-bold">{t('quick.title')}</h1>
-          <p className="text-gray-400">Quick daily practice — {plan.target_language} · {plan.cefr_level}</p>
+          <p className="text-gray-400">{t('quick.subtitle')} — {plan.target_language} · {plan.cefr_level}</p>
         </div>
       </div>
 
+      {/* Custom duration */}
+      {!timerActive && secondsLeft === customMinutes * 60 && (
+        <div className="flex items-center justify-center gap-3 mb-4">
+          <span className="text-gray-400 text-sm">{t('quick.duration')}</span>
+          {[5, 10, 15, 20, 30].map(min => (
+            <button
+              key={min}
+              onClick={() => {
+                setCustomMinutes(min)
+                setSecondsLeft(min * 60)
+                localStorage.setItem(STORAGE_KEY_DURATION, String(min))
+              }}
+              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                customMinutes === min ? 'bg-emerald-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              {min} min
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Timer */}
       <div className="card mb-6 text-center bg-gradient-to-r from-emerald-900/30 to-teal-900/30 border-emerald-700/30">
-        <div className={`text-6xl font-mono font-bold mb-4 ${
-          secondsLeft < 60 ? 'text-red-400' : secondsLeft < 300 ? 'text-yellow-400' : 'text-emerald-400'
+        <div className={`font-mono font-bold mb-4 ${
+          secondsLeft <= 5 && secondsLeft > 0 ? 'text-red-500 animate-blink text-7xl' :
+          secondsLeft < 60 ? 'text-red-400 text-6xl' :
+          secondsLeft < 300 ? 'text-yellow-400 text-6xl' : 'text-emerald-400 text-6xl'
         }`}>
           {formatTime(secondsLeft)}
         </div>

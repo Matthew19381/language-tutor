@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Mic, MicOff, RotateCcw, ChevronRight } from 'lucide-react'
-import { getUserId } from '../api/client'
+import { Mic, MicOff, RotateCcw, ChevronRight, BarChart3, Trophy, CheckCircle } from 'lucide-react'
+import { getUserId, addXP } from '../api/client'
 import { PageLoader } from '../components/LoadingSpinner'
 import { useLanguage } from '../hooks/useLanguage'
+import PlayButton from '../components/PlayButton'
 import axios from 'axios'
 
 export default function PronunciationTrainer() {
@@ -16,11 +17,14 @@ export default function PronunciationTrainer() {
   const [loading, setLoading] = useState(true)
   const [customPhrase, setCustomPhrase] = useState('')
   const [useCustom, setUseCustom] = useState(false)
+  const [sessionResults, setSessionResults] = useState([])
+  const [showSummary, setShowSummary] = useState(false)
+  const [activityDone, setActivityDone] = useState(false)
   const mediaRecorderRef = useRef(null)
   const audioChunksRef = useRef([])
   const navigate = useNavigate()
   const userId = getUserId()
-  const { t } = useLanguage()
+  const { t, targetLanguage } = useLanguage()
 
   useEffect(() => {
     if (!userId) { navigate('/placement'); return }
@@ -29,6 +33,25 @@ export default function PronunciationTrainer() {
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [userId])
+
+  const markTabComplete = (tabKey) => {
+    try {
+      const today = new Date().toISOString().slice(0, 10)
+      const raw = localStorage.getItem('daily_tabs')
+      const stored = raw ? JSON.parse(raw) : { date: today, tabs: [] }
+      const current = stored.date === today ? stored : { date: today, tabs: [] }
+      if (!current.tabs.includes(tabKey)) {
+        current.tabs.push(tabKey)
+        localStorage.setItem('daily_tabs', JSON.stringify(current))
+      }
+    } catch {}
+  }
+
+  const handleMarkDone = async () => {
+    markTabComplete('pronunciation')
+    setActivityDone(true)
+    try { await addXP(userId, 10, 'activity_complete') } catch {}
+  }
 
   const currentPhrase = useCustom ? customPhrase : phrases[currentIdx]?.text || ''
 
@@ -83,6 +106,7 @@ export default function PronunciationTrainer() {
         timeout: 30000,
       })
       setResult(response.data)
+      setSessionResults(prev => [...prev, { phrase: currentPhrase, score: response.data.score, word_scores: response.data.word_scores || [] }])
     } catch (e) {
       const detail = e.response?.data?.detail || e.message
       setError(`${t('pronun.analysisFailed')} ${detail}`)
@@ -114,6 +138,21 @@ export default function PronunciationTrainer() {
         </div>
       </div>
 
+      {!activityDone ? (
+        <button
+          onClick={handleMarkDone}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-700/30 hover:bg-emerald-700/50 border border-emerald-700/40 text-emerald-300 text-sm font-medium transition-colors mb-4"
+        >
+          <CheckCircle className="w-4 h-4" />
+          Oznacz Wymowę jako ukończoną (+10 XP)
+        </button>
+      ) : (
+        <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-900/30 border border-emerald-700/40 text-emerald-400 text-sm font-medium mb-4">
+          <CheckCircle className="w-4 h-4" />
+          Wymowa ukończona dziś ✓
+        </div>
+      )}
+
       {/* Phrase Selection */}
       <div className="card mb-4">
         <div className="flex items-center gap-2 mb-3">
@@ -136,19 +175,29 @@ export default function PronunciationTrainer() {
         </div>
 
         {useCustom ? (
-          <input
-            type="text"
-            className="input-field"
-            placeholder={t('pronun.enterPhrase')}
-            value={customPhrase}
-            onChange={e => setCustomPhrase(e.target.value)}
-          />
+          <div>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                className="input-field flex-1"
+                placeholder={t('pronun.enterPhrase')}
+                value={customPhrase}
+                onChange={e => setCustomPhrase(e.target.value)}
+              />
+              {customPhrase.trim() && (
+                <PlayButton text={customPhrase} language={targetLanguage} />
+              )}
+            </div>
+          </div>
         ) : (
           <div>
             {phrases.length > 0 ? (
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-lg font-semibold text-indigo-200">{currentPhrase}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-lg font-semibold text-indigo-200">{currentPhrase}</p>
+                    <PlayButton text={currentPhrase} language={targetLanguage} />
+                  </div>
                   {phrases[currentIdx]?.source && (
                     <p className="text-xs text-gray-500 mt-0.5">{phrases[currentIdx].source}</p>
                   )}
@@ -278,6 +327,80 @@ export default function PronunciationTrainer() {
               <span>{t('pronun.wordAccuracy')} <span className="text-gray-300">{result.word_accuracy}%</span></span>
             )}
           </div>
+
+          {/* Next phrase button */}
+          <div className="flex gap-2 mt-4">
+            <button className="btn-primary flex-1" onClick={() => { setResult(null); if (!useCustom) nextPhrase() }}>
+              {t('pronun.nextPhrase')}
+            </button>
+            {sessionResults.length >= 2 && (
+              <button className="btn-secondary flex items-center gap-1" onClick={() => setShowSummary(true)}>
+                <BarChart3 className="w-4 h-4" />
+                {t('pronun.summary')}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Session Summary */}
+      {showSummary && sessionResults.length > 0 && (
+        <div className="card mt-4 border-indigo-700/30">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-lg flex items-center gap-2">
+              <Trophy className="w-5 h-5 text-yellow-400" />
+              {t('pronun.sessionSummary')}
+            </h2>
+            <button onClick={() => setShowSummary(false)} className="text-gray-500 hover:text-gray-300 text-lg">×</button>
+          </div>
+          <div className="grid grid-cols-3 gap-3 mb-4 text-center">
+            <div className="bg-gray-800 rounded-lg p-3">
+              <div className="text-2xl font-bold text-indigo-400">{sessionResults.length}</div>
+              <div className="text-xs text-gray-500 mt-1">{t('pronun.phrasesPracticed')}</div>
+            </div>
+            <div className="bg-gray-800 rounded-lg p-3">
+              <div className={`text-2xl font-bold ${
+                Math.round(sessionResults.reduce((s, r) => s + r.score, 0) / sessionResults.length) >= 80
+                  ? 'text-emerald-400' : 'text-yellow-400'
+              }`}>
+                {Math.round(sessionResults.reduce((s, r) => s + r.score, 0) / sessionResults.length)}
+              </div>
+              <div className="text-xs text-gray-500 mt-1">{t('pronun.avgScore')}</div>
+            </div>
+            <div className="bg-gray-800 rounded-lg p-3">
+              <div className="text-2xl font-bold text-emerald-400">
+                {Math.max(...sessionResults.map(r => r.score))}
+              </div>
+              <div className="text-xs text-gray-500 mt-1">{t('pronun.bestScore')}</div>
+            </div>
+          </div>
+          <div className="space-y-2">
+            {sessionResults.map((r, i) => (
+              <div key={i} className="flex items-center justify-between text-sm py-1 border-b border-gray-800 last:border-0">
+                <span className="text-gray-300 truncate flex-1 mr-3">{r.phrase}</span>
+                <span className={`font-bold shrink-0 ${r.score >= 80 ? 'text-emerald-400' : r.score >= 50 ? 'text-yellow-400' : 'text-red-400'}`}>
+                  {r.score}/100
+                </span>
+              </div>
+            ))}
+          </div>
+          {/* Problem words across session */}
+          {(() => {
+            const badWords = sessionResults.flatMap(r => r.word_scores.filter(w => !w.correct).map(w => w.word))
+            const unique = [...new Set(badWords)]
+            if (unique.length === 0) return null
+            return (
+              <div className="mt-4">
+                <p className="text-xs text-gray-500 mb-2">{t('pronun.problemWords')}</p>
+                <div className="flex flex-wrap gap-1">
+                  {unique.map((w, i) => <span key={i} className="px-2 py-0.5 bg-red-900/30 text-red-300 text-xs rounded">{w}</span>)}
+                </div>
+              </div>
+            )
+          })()}
+          <button className="btn-secondary w-full mt-4" onClick={() => { setSessionResults([]); setShowSummary(false) }}>
+            {t('pronun.resetSession')}
+          </button>
         </div>
       )}
     </div>

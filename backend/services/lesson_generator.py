@@ -5,34 +5,65 @@ logger = logging.getLogger(__name__)
 
 
 async def generate_placement_test(language: str, native_language: str) -> dict:
-    prompt = f"""Generate a placement test for {language} language learners whose native language is {native_language}.
-Create exactly 20 multiple choice questions covering CEFR levels A1 through C2 (escalating difficulty).
-Include 5 vocabulary questions, 5 grammar questions, 5 reading comprehension questions, and 5 sentence building questions.
+    prompt = f"""You are a strict certified {language} language examiner. Create a 30-question DIAGNOSTIC placement test for a native {native_language} speaker learning {language}.
 
-Return a JSON object with this exact structure:
+GOAL: Correctly distinguish between A1, A2, B1, B2, C1, C2 speakers. Most native {native_language} speakers with NO prior {language} knowledge should score at A1 level, NOT B1.
+
+CRITICAL RULES:
+1. Questions must test KNOWLEDGE that requires actual study — not guessable by logic or similarity to {native_language}
+2. Do NOT use cognates or internationally recognizable words in correct answers
+3. Grammar questions must require knowledge of specific {language} grammatical rules
+4. A1 questions should be failed by someone with zero knowledge
+5. B1 questions should require at least 6+ months of study to answer
+
+QUESTION DISTRIBUTION (30 questions — do NOT deviate):
+- Q1-5: A1 — basic verb conjugation in present tense, gender of common nouns, basic word order SVO
+- Q6-10: A2 — accusative/dative case endings for articles, separable verbs, common irregular verbs in past tense (Perfekt)
+- Q11-17: B1 — Konjunktiv II (würde/wäre), subordinate clause word order (WEIL/DASS/OB), two-way prepositions (Wechselpräpositionen Dativ vs Akkusativ), Genitiv case
+- Q18-23: B2 — Passiv constructions (werden+Partizip II), indirect speech (Konjunktiv I), relative clauses with correct case, nominalized verbs
+- Q24-27: C1 — extended adjective phrases, stylistic register differences, advanced modal particle usage (DOCH/JA/HALT/SCHON with nuanced meanings)
+- Q28-30: C2 — subtle grammatical errors in formal text, pragmatic implicature, advanced stylistic choices
+
+QUESTION TYPES (must vary — use all types):
+- fill_blank: A {language} sentence with a blank. Options are {language} word FORMS (e.g. "dem/den/des/der")
+- correct_sentence: Show 4 {language} sentences, only one is grammatically correct
+- word_order: Scrambled {language} words — pick the correctly ordered sentence
+- translation: A {native_language} phrase — pick the correct {language} translation from options
+- comprehension: A 3-4 sentence {language} text (no translation given), then a question in {native_language}
+
+MANDATORY LANGUAGE RULE:
+- {language} content (sentences, options for grammar questions) MUST stay in {language}
+- ONLY question framing ("Uzupełnij zdanie:", "Które zdanie jest poprawne?") is in {native_language}
+- Answer options for comprehension questions may be in {native_language}
+
+GOOD EXAMPLE (fill_blank for A2 Akkusativ):
+{{"question": "Uzupełnij zdanie (biernik): Ich sehe ___ Mann auf der Straße.", "options": ["A. der", "B. den", "C. dem", "D. ein"], "correct": "B", "points": 1, "cefr_hint": "A2"}}
+
+GOOD EXAMPLE (word_order for B1):
+{{"question": "Ułóż słowa w poprawnej kolejności (zdanie podrzędne): weil / ich / müde / bin / heute", "options": ["A. weil ich heute müde bin", "B. weil bin ich heute müde", "C. weil ich bin heute müde", "D. weil heute ich müde bin"], "correct": "A", "points": 2, "cefr_hint": "B1"}}
+
+GOOD EXAMPLE (correct_sentence for B2 Passiv):
+{{"question": "Które zdanie jest gramatycznie poprawne (strona bierna)?", "options": ["A. Das Buch wurde von ihm gelesen.", "B. Das Buch ist von ihm gelesen worden.", "C. Das Buch wird von ihm gelesen gewesen.", "D. Das Buch hat von ihm gelesen werden."], "correct": "A", "points": 3, "cefr_hint": "B2"}}
+
+Return ONLY valid JSON:
 {{
     "questions": [
         {{
             "id": 1,
-            "type": "vocabulary",
-            "question": "What does the {language} word 'Haus' mean?",
-            "options": ["A. House", "B. Car", "C. Tree", "D. Dog"],
-            "correct": "A",
+            "type": "fill_blank",
+            "question": "Question framing in {native_language} with {language} sentence",
+            "options": ["A. option", "B. option", "C. option", "D. option"],
+            "correct": "B",
             "points": 1,
             "cefr_hint": "A1"
         }}
     ]
-}}
-
-Make sure:
-- Questions progress from A1 (easy) to C2 (very hard)
-- All questions are in English for clarity, with target language words where needed
-- Options are labeled A, B, C, D
-- correct field contains only the letter (A, B, C, or D)
-- Include cefr_hint for each question indicating its difficulty level"""
+}}"""
 
     try:
         result = await generate_json(prompt)
+        if isinstance(result, list):
+            result = {"questions": result}
         return result
     except Exception as e:
         logger.error(f"Error generating placement test: {e}")
@@ -52,7 +83,7 @@ Make sure:
         }
 
 
-async def analyze_placement_results(questions: list, answers: dict, language: str) -> dict:
+async def analyze_placement_results(questions: list, answers: dict, language: str, native_language: str = "Polish") -> dict:
     questions_summary = []
     for q in questions:
         user_ans = answers.get(str(q["id"]), answers.get(q["id"], ""))
@@ -69,27 +100,34 @@ async def analyze_placement_results(questions: list, answers: dict, language: st
     total = len(questions)
     score = (correct_count / total * 100) if total > 0 else 0
 
-    prompt = f"""Analyze placement test results for a {language} learner.
+    prompt = f"""Analyze placement test results for a {native_language} speaker learning {language}.
 
 Test summary:
 - Total questions: {total}
 - Correct answers: {correct_count}
 - Score: {score:.1f}%
-- Question breakdown: {questions_summary}
+- Question breakdown (with CEFR hints): {questions_summary}
 
-Based on these results, determine:
-1. The appropriate CEFR level (A1, A2, B1, B2, C1, C2)
-2. Strong areas (types of questions they answered well)
-3. Weak areas (types of questions they struggled with)
-4. Personalized recommendations
+CEFR LEVEL DETERMINATION RULES — BE STRICT AND CONSERVATIVE:
+- Assign A1 if student gets fewer than 50% of A2 questions correct
+- Assign A2 if student masters A1 but fails more than 50% of B1 questions
+- Assign B1 if student masters A1+A2 but fails more than 40% of B2 questions
+- Assign B2 if student masters up to B1 with less than 30% of C1 wrong
+- Assign C1 only if student clearly demonstrates advanced competence
+- Assign C2 only for near-perfect scores on advanced questions
+
+IMPORTANT: A student who gets 30-50% overall is almost always A2, NOT B1. Do not over-estimate.
+Most native {native_language} speakers with minimal {language} exposure score A1-A2.
+
+Write ALL text fields (strong_areas, weak_areas, recommendations) in {native_language}.
 
 Return JSON:
 {{
-    "cefr_level": "B1",
-    "score": 65.0,
-    "strong_areas": ["vocabulary", "reading"],
-    "weak_areas": ["grammar", "sentence_building"],
-    "recommendations": "Focus on grammar structures and practice building complex sentences..."
+    "cefr_level": "A2",
+    "score": {score:.1f},
+    "strong_areas": ["obszary mocne w {native_language}"],
+    "weak_areas": ["obszary słabe w {native_language}"],
+    "recommendations": "Rekomendacje w {native_language}..."
 }}"""
 
     try:
@@ -124,6 +162,9 @@ async def generate_study_plan(user_data: dict, language: str, native_language: s
     name = user_data.get("name", "Student")
 
     prompt = f"""Create a comprehensive 30-day language study plan for {name}, a {native_language} speaker learning {language} at CEFR level {cefr_level}.
+
+Write all text fields (grammar_topic, vocabulary_theme, conversation_topic, cultural_note, goal, key_grammar, overall_goal) in {native_language}.
+
 
 The plan should:
 - Build progressively from their current level ({cefr_level})
@@ -243,12 +284,13 @@ Generate a complete lesson with rich content. Return JSON:
 {{
     "title": "Day {day_number}: {grammar_topic}",
     "topic": "{vocab_theme}",
-    "explanation": "Detailed grammar explanation in English with {language} examples...",
+    "explanation": "Detailed grammar explanation in {native_language} with {language} examples...",
     "vocabulary": [
         {{
             "word": "{language} word",
             "translation": "{native_language} translation",
-            "example": "Example sentence in {language}"
+            "example": "Example sentence in {language}",
+            "example_translation": "Translation of example in {native_language}"
         }}
     ],
     "dialogue": {{
@@ -288,8 +330,8 @@ Generate a complete lesson with rich content. Return JSON:
         }}
     ],
     "production_task": {{
-        "instruction": "Write 3 sentences using today's vocabulary...",
-        "example": "Example sentence"
+        "instruction": "Write 2-3 sentences in {language} using today's vocabulary and grammar. AI will evaluate your answer. Keep it simple and focused on today's topic.",
+        "example": "Example answer in {language}"
     }},
     "error_review": [],
     "comprehensible_input": {{
@@ -301,15 +343,15 @@ Generate a complete lesson with rich content. Return JSON:
     }},
     "interleaved_review": [],
     "output_forcing": {{
-        "instruction": "Read the following text, then hide it and reproduce it from memory",
-        "text": "A short {language} paragraph (3-5 sentences) using today's grammar and vocabulary"
+        "instruction": "Przeczytaj poniższy tekst, zakryj go i spróbuj odtworzyć go z pamięci. Zacznij od przeczytania całości, potem chowaj słowo po słowie.",
+        "text": "EXACTLY 1-2 SHORT sentences in {language} (max 20 words total) using today's grammar. Keep it extremely short and memorable."
     }}
 }}
 
 Include at least 10 vocabulary words, a 6-line dialogue, and 5 exercises.
 {f'Also add 2-3 interleaved review questions from recent topics: {recent_topics[:3]}. Format: [{{"topic": "...", "question": "...", "answer": "..."}}]' if recent_topics else 'Leave interleaved_review as empty array.'}
 If there are errors to address, add them to the error_review array with format:
-{{"error": "original mistake", "correction": "correct form", "explanation": "why it's wrong", "practice": "practice exercise"}}"""
+{{"error": "original mistake", "correction": "correct form", "explanation": "why it's wrong (write explanation in {native_language})", "practice": "practice exercise in {language}"}}"""
 
     try:
         return await generate_json(prompt)
@@ -620,47 +662,44 @@ async def analyze_conversation(
     language: str,
     native_language: str
 ) -> dict:
-    prompt = f"""Analyze this {language} conversation practice session.
-
-CEFR level: {cefr_level}
-Native language: {native_language}
+    prompt = f"""Analyze this {language} conversation practice session for a {native_language} speaker at CEFR {cefr_level}.
 
 Conversation:
 {conversation_history}
 
-Evaluate:
-1. Grammar accuracy
-2. Vocabulary range and appropriateness
-3. Fluency and naturalness
-4. Achievement of communication goals
-5. Areas for improvement
+Produce a DETAILED analysis with SPECIFIC error categories. Use these category types:
+- "grammar" — grammatical rule violations (wrong case, wrong tense, wrong conjugation)
+- "vocabulary" — wrong word choice, false friends, missing vocabulary
+- "word_order" — incorrect sentence structure / word placement
+- "articles" — wrong article (der/die/das/ein/eine), gender errors
+- "verb_conjugation" — wrong verb form, wrong auxiliary verb
+- "prepositions" — wrong preposition usage
+- "pronunciation_spelling" — spelling errors that suggest pronunciation issues
+- "fluency" — overly simple/broken sentences for the level
+- "register" — too formal/informal for the context
 
 Return JSON:
 {{
-    "summary": "Overall assessment of the conversation",
+    "summary": "2-3 sentence overall assessment in {native_language}",
     "errors": [
         {{
-            "type": "grammar|vocabulary|syntax|fluency",
-            "original": "what the student wrote",
-            "correction": "correct form",
-            "explanation": "why it should be changed"
+            "type": "grammar|vocabulary|word_order|articles|verb_conjugation|prepositions|pronunciation_spelling|fluency|register",
+            "question": "the problematic phrase the student wrote",
+            "correct_answer": "the corrected form",
+            "explanation": "brief explanation in {native_language} why it's wrong and what rule applies"
         }}
     ],
-    "vocabulary_used": [
-        {{
-            "word": "word used",
-            "correct_usage": true,
-            "note": "any relevant note"
-        }}
-    ],
-    "recommendations": [
-        "Specific improvement recommendation 1",
-        "Specific improvement recommendation 2",
-        "Specific improvement recommendation 3"
-    ],
+    "category_advice": {{
+        "grammar": "Specific advice on what grammar topics to study",
+        "vocabulary": "Specific vocabulary areas to improve",
+        "word_order": "Word order rules to practice"
+    }},
+    "recommendations": ["Specific actionable recommendation 1", "Specific recommendation 2", "Specific recommendation 3"],
     "score": 75,
-    "strengths": ["What the student did well"]
-}}"""
+    "strengths": ["What the student did well 1", "What the student did well 2"]
+}}
+
+Note: category_advice should only include categories where errors were found."""
 
     try:
         return await generate_json(prompt)
@@ -669,7 +708,7 @@ Return JSON:
         return {
             "summary": "Conversation analysis complete. Good effort in practicing!",
             "errors": [],
-            "vocabulary_used": [],
+            "category_advice": {},
             "recommendations": [
                 "Continue practicing daily conversations",
                 "Focus on grammar accuracy",
@@ -677,6 +716,59 @@ Return JSON:
             ],
             "score": 70,
             "strengths": ["Attempted communication", "Used target language"]
+        }
+
+
+async def analyze_pasted_conversation(
+    pasted_text: str,
+    cefr_level: str,
+    language: str,
+    native_language: str
+) -> dict:
+    prompt = f"""A {native_language} speaker learning {language} at CEFR {cefr_level} pasted this conversation/text for analysis.
+Analyze their {language} usage for errors and provide detailed feedback.
+
+Text to analyze:
+{pasted_text}
+
+Instructions:
+- Only analyze the LEARNER's lines (not the AI/tutor responses)
+- If it's unclear who wrote what, analyze all {language} text
+- Be specific about error types
+
+Use these error category types:
+- "grammar", "vocabulary", "word_order", "articles", "verb_conjugation", "prepositions", "pronunciation_spelling", "fluency", "register"
+
+Return JSON:
+{{
+    "summary": "2-3 sentence overall assessment in {native_language}",
+    "errors": [
+        {{
+            "type": "grammar|vocabulary|word_order|articles|verb_conjugation|prepositions|pronunciation_spelling|fluency|register",
+            "question": "the problematic phrase",
+            "correct_answer": "the corrected form",
+            "explanation": "brief explanation in {native_language}"
+        }}
+    ],
+    "category_advice": {{
+        "grammar": "what grammar to study"
+    }},
+    "recommendations": ["recommendation 1", "recommendation 2"],
+    "score": 70,
+    "strengths": ["strength 1"]
+}}"""
+
+    try:
+        return await generate_json(prompt)
+    except Exception as e:
+        logger.error(f"Error analyzing pasted conversation: {e}")
+        return {
+            "summary": "Analiza zakończona.",
+            "errors": [],
+            "category_advice": {},
+            "recommendations": ["Ćwicz codziennie konwersacje"],
+            "score": 0,
+            "strengths": []
         }
 
 

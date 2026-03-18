@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
-  BookOpen, FlaskConical, MessageSquare, Brain,
+  BookOpen, FlaskConical, MessageSquare,
   Flame, Star, TrendingUp, ChevronRight, Sparkles,
-  Target, Clock, CheckCircle
+  Target, Clock, CheckCircle, Brain, Mic, Newspaper, Youtube, Timer
 } from 'lucide-react'
 import { getUserId, getStats, getDailyTips } from '../api/client'
 import { PageLoader } from '../components/LoadingSpinner'
+import { useLanguage } from '../hooks/useLanguage'
 
 export default function Home() {
   const [stats, setStats] = useState(null)
@@ -14,28 +15,47 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
   const userId = getUserId()
+  const { t } = useLanguage()
 
   useEffect(() => {
     if (!userId) {
       setLoading(false)
       return
     }
-    Promise.all([
-      getStats(userId),
-      getDailyTips(userId)
-    ])
+    const today = new Date().toISOString().slice(0, 10)
+    const cachedDate = localStorage.getItem('tips_date')
+    const cachedData = localStorage.getItem('tips_data')
+    const hasCachedTips = cachedDate === today && cachedData
+
+    const promises = [getStats(userId)]
+    if (!hasCachedTips) {
+      promises.push(getDailyTips(userId))
+    }
+
+    Promise.all(promises)
       .then(([statsData, tipsData]) => {
         setStats(statsData)
-        setTips(tipsData.tips || [])
+        if (tipsData) {
+          const tipsArr = tipsData.tips || []
+          setTips(tipsArr)
+          localStorage.setItem('tips_date', today)
+          localStorage.setItem('tips_data', JSON.stringify(tipsArr))
+        } else if (hasCachedTips) {
+          try { setTips(JSON.parse(cachedData)) } catch {}
+        }
       })
-      .catch(() => {})
+      .catch(() => {
+        if (hasCachedTips) {
+          try { setTips(JSON.parse(cachedData)) } catch {}
+        }
+      })
       .finally(() => setLoading(false))
   }, [userId])
 
-  if (loading) return <PageLoader text="Loading your dashboard..." />
+  if (loading) return <PageLoader text={t('home.loadingDashboard')} />
 
   if (!userId) {
-    return <WelcomeScreen />
+    return <WelcomeScreen t={t} />
   }
 
   return (
@@ -43,10 +63,10 @@ export default function Home() {
       {/* Greeting */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-1">
-          Welcome back, <span className="gradient-text">{stats?.user?.name || 'Learner'}</span>!
+          {t('home.welcomeBack')} <span className="gradient-text">{stats?.user?.name || t('home.learner')}</span>!
         </h1>
         <p className="text-gray-400">
-          Learning {stats?.user?.target_language || 'your language'} — {stats?.user?.cefr_level || 'A1'} level
+          {t('home.learning')} {stats?.user?.target_language || t('home.yourLanguage')} — {t('home.level')} {stats?.user?.cefr_level || 'A1'}
         </p>
       </div>
 
@@ -54,25 +74,25 @@ export default function Home() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <StatCard
           icon={<Flame className="w-6 h-6 text-orange-400" />}
-          label="Day Streak"
+          label={t('home.dayStreak')}
           value={stats?.user?.streak_days || 0}
           color="orange"
         />
         <StatCard
           icon={<Star className="w-6 h-6 text-yellow-400" />}
-          label="Total XP"
+          label={t('home.totalXP')}
           value={stats?.user?.total_xp || 0}
           color="yellow"
         />
         <StatCard
           icon={<CheckCircle className="w-6 h-6 text-emerald-400" />}
-          label="Lessons Done"
+          label={t('home.lessonsDone')}
           value={stats?.lessons?.completed || 0}
           color="emerald"
         />
         <StatCard
           icon={<TrendingUp className="w-6 h-6 text-indigo-400" />}
-          label="Avg Score"
+          label={t('home.avgScore')}
           value={`${stats?.tests?.average_score || 0}%`}
           color="indigo"
         />
@@ -83,12 +103,12 @@ export default function Home() {
         <div className="card mb-6">
           <div className="flex items-center justify-between mb-2">
             <div>
-              <span className="text-gray-400 text-sm">Level {stats.level_info.level}</span>
+              <span className="text-gray-400 text-sm">{t('home.level')} {stats.level_info.level}</span>
               <h3 className="text-lg font-semibold">{stats.level_info.level_name}</h3>
             </div>
             <div className="text-right">
               <span className="text-indigo-400 font-bold">{stats.level_info.xp} XP</span>
-              <p className="text-gray-500 text-xs">/{stats.level_info.next_level_xp} for next level</p>
+              <p className="text-gray-500 text-xs">/{stats.level_info.next_level_xp} {t('home.forNextLevel')}</p>
             </div>
           </div>
           <div className="progress-bar">
@@ -103,61 +123,81 @@ export default function Home() {
       {/* Quick Actions */}
       <h2 className="section-title flex items-center gap-2">
         <Target className="w-5 h-5 text-indigo-400" />
-        Today's Activities
+        Aktywności
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <ActionCard
           to="/lesson"
           icon={<BookOpen className="w-8 h-8 text-blue-400" />}
-          title="Today's Lesson"
-          description="Learn new vocabulary and grammar"
+          title={t('home.todayLesson')}
+          description={t('home.todayLessonDesc')}
           color="blue"
           xp="+25 XP"
         />
         <ActionCard
           to="/test"
           icon={<FlaskConical className="w-8 h-8 text-purple-400" />}
-          title="Daily Test"
-          description="Test what you've learned today"
+          title={t('home.dailyTest')}
+          description={t('home.dailyTestDesc')}
           color="purple"
           xp="+50 XP"
         />
         <ActionCard
           to="/conversation"
           icon={<MessageSquare className="w-8 h-8 text-emerald-400" />}
-          title="Practice Speaking"
-          description="Conversation with AI tutor"
+          title={t('home.practiceSpeaking')}
+          description={t('home.practiceSpeakingDesc')}
           color="emerald"
           xp="+30 XP"
         />
+        <ActionCard
+          to="/flashcards"
+          icon={<Brain className="w-8 h-8 text-pink-400" />}
+          title="Fiszki"
+          description="Powtórka słownictwa metodą spaced repetition"
+          color="pink"
+          xp="+10 XP"
+        />
+        <ActionCard
+          to="/pronunciation"
+          icon={<Mic className="w-8 h-8 text-orange-400" />}
+          title="Wymowa"
+          description="Ćwicz wymowę z AI i analizą audio"
+          color="orange"
+          xp="+10 XP"
+        />
+        <ActionCard
+          to="/news"
+          icon={<Newspaper className="w-8 h-8 text-teal-400" />}
+          title="Newsy"
+          description="Czytaj uproszczone wiadomości po angielsku"
+          color="teal"
+          xp="+10 XP"
+        />
+        <ActionCard
+          to="/videos"
+          icon={<Youtube className="w-8 h-8 text-red-400" />}
+          title="Filmy YouTube"
+          description="Oglądaj filmy dopasowane do Twojego poziomu"
+          color="red"
+          xp="+10 XP"
+        />
+        <ActionCard
+          to="/quickmode"
+          icon={<Timer className="w-8 h-8 text-emerald-400" />}
+          title="Timer"
+          description="15-minutowy plan nauki ze stoperem"
+          color="emerald"
+          xp=""
+        />
       </div>
-
-      {/* Flashcards due */}
-      {stats?.flashcards?.due_today > 0 && (
-        <div className="card mb-6 border-yellow-600/30 bg-yellow-900/10">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Brain className="w-6 h-6 text-yellow-400" />
-              <div>
-                <p className="font-semibold">Flashcards Due</p>
-                <p className="text-gray-400 text-sm">
-                  {stats.flashcards.due_today} cards ready for review
-                </p>
-              </div>
-            </div>
-            <Link to="/flashcards" className="btn-primary text-sm">
-              Review Now
-            </Link>
-          </div>
-        </div>
-      )}
 
       {/* Daily Tips */}
       {tips.length > 0 && (
         <div className="mb-6">
           <h2 className="section-title flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-yellow-400" />
-            Daily Tips
+            {t('home.dailyTips')}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {tips.slice(0, 4).map((tip, i) => (
@@ -170,7 +210,7 @@ export default function Home() {
   )
 }
 
-function WelcomeScreen() {
+function WelcomeScreen({ t }) {
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4">
       <div className="text-center max-w-2xl">
@@ -178,29 +218,28 @@ function WelcomeScreen() {
           <BookOpen className="w-10 h-10 text-white" />
         </div>
         <h1 className="text-4xl font-bold mb-4">
-          Learn Languages with <span className="gradient-text">AI Power</span>
+          {t('home.welcomeTitle')} <span className="gradient-text">{t('home.welcomeTitleHighlight')}</span>
         </h1>
         <p className="text-gray-400 text-lg mb-8 leading-relaxed">
-          Personalized lessons, adaptive tests, flashcards, and AI conversation practice.
-          Take the placement test to find your level and start learning today.
+          {t('home.welcomeSubtitle')}
         </p>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
-            { icon: '📚', label: 'Daily Lessons' },
-            { icon: '✍️', label: 'Smart Tests' },
-            { icon: '🃏', label: 'Flashcards' },
-            { icon: '💬', label: 'AI Conversation' },
+            { icon: '📚', labelKey: 'home.featureLessons' },
+            { icon: '✍️', labelKey: 'home.featureTests' },
+            { icon: '🃏', labelKey: 'home.featureFlashcards' },
+            { icon: '💬', labelKey: 'home.featureConversation' },
           ].map((f, i) => (
             <div key={i} className="card text-center py-4">
               <div className="text-3xl mb-2">{f.icon}</div>
-              <p className="text-sm text-gray-400">{f.label}</p>
+              <p className="text-sm text-gray-400">{t(f.labelKey)}</p>
             </div>
           ))}
         </div>
 
         <Link to="/placement" className="btn-primary text-lg py-3 px-8 inline-flex items-center gap-2">
-          Start Placement Test
+          {t('home.startTest')}
           <ChevronRight className="w-5 h-5" />
         </Link>
       </div>
@@ -249,7 +288,11 @@ function TipCard({ tip }) {
     <div className="card">
       <div className="flex items-start gap-3">
         <span className={`badge-${color === 'gray' ? 'blue' : color} mt-0.5 shrink-0`}>
-          {tip.type?.replace('_', ' ') || 'tip'}
+          {tip.type === 'grammar' ? 'Gramatyka' :
+           tip.type === 'vocabulary' ? 'Słownictwo' :
+           tip.type === 'culture' ? 'Kultura' :
+           tip.type === 'memory_tip' ? 'Zapamiętywanie' :
+           tip.type?.replace('_', ' ') || 'Wskazówka'}
         </span>
         <div>
           <h4 className="font-medium mb-1">{tip.title}</h4>

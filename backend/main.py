@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 
 from backend.database import engine, Base
 from backend.routers import placement, lessons, tests, flashcards, conversation, stats
-from backend.routers import quickmode, news, pronunciation, settings
+from backend.routers import quickmode, news, pronunciation, settings, audio, youtube
 
 logging.basicConfig(
     level=logging.INFO,
@@ -24,6 +24,17 @@ async def lifespan(app: FastAPI):
     # Import all models so SQLAlchemy registers them before create_all
     from backend.models import achievement  # noqa
     Base.metadata.create_all(bind=engine)
+
+    # Add language_profiles column to users table if missing (SQLite migration)
+    try:
+        with engine.connect() as conn:
+            conn.execute(__import__('sqlalchemy').text(
+                "ALTER TABLE users ADD COLUMN language_profiles TEXT DEFAULT '{}'"
+            ))
+            conn.commit()
+            logger.info("Added language_profiles column to users table")
+    except Exception:
+        pass  # Column already exists
 
     # Ensure audio and exports directories exist
     audio_dir = os.path.join(os.path.dirname(__file__), "audio")
@@ -64,11 +75,13 @@ app.include_router(quickmode.router, tags=["QuickMode"])
 app.include_router(news.router, tags=["News"])
 app.include_router(pronunciation.router, tags=["Pronunciation"])
 app.include_router(settings.router, tags=["Settings"])
+app.include_router(audio.router, tags=["Audio"])
+app.include_router(youtube.router, tags=["YouTube"])
 
 # Serve audio files
 audio_dir = os.path.join(os.path.dirname(__file__), "audio")
-if os.path.exists(audio_dir):
-    app.mount("/audio", StaticFiles(directory=audio_dir), name="audio")
+os.makedirs(audio_dir, exist_ok=True)
+app.mount("/audio", StaticFiles(directory=audio_dir), name="audio")
 
 # Serve frontend in production (if dist exists)
 frontend_dist = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "dist")

@@ -16,7 +16,7 @@ if (-not (Test-Path "backend\.env")) {
 $rootDir = $PWD.Path
 
 Write-Host "Starting Language Tutor Backend..." -ForegroundColor Green
-$backendCmd = "Set-Location '$rootDir'; Write-Host 'Starting backend on http://localhost:8000' -ForegroundColor Green; python -m pip install -r backend\requirements.txt; uvicorn backend.main:app --reload --port 8000"
+$backendCmd = "Set-Location '$rootDir'; Write-Host 'Starting backend on http://localhost:8000' -ForegroundColor Green; py -3.11 -m pip install -r backend\requirements.txt; py -3.11 -m uvicorn backend.main:app --reload --port 8000"
 Start-Process powershell -ArgumentList "-NoExit", "-Command", $backendCmd
 
 Start-Sleep -Seconds 2
