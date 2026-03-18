@@ -500,26 +500,34 @@ Test results:
 - Wrong answers: {wrong_answers}
 - Native language of student: {native_language}
 
-For each error, provide:
-- Error type (grammar, vocabulary, syntax, comprehension)
-- Clear explanation of why the answer was wrong
-- The grammar rule or vocabulary note
-- A brief practice suggestion
+For each error, classify the type using one of these specific categories:
+- "grammar" — general grammar mistake
+- "verb_conjugation" — wrong verb form or tense
+- "word_order" — incorrect sentence structure
+- "articles" — wrong or missing article (der/die/das, a/an/the)
+- "prepositions" — wrong preposition used
+- "vocabulary" — wrong word choice or unknown word
+- "spelling" — spelling or punctuation error
+- "comprehension" — misunderstood the question meaning
+- "pronunciation" — phonetic confusion (e.g. similar-sounding words)
+- "case" — wrong grammatical case (Nominativ/Akkusativ/Dativ/Genitiv)
+
+IMPORTANT: Write "explanation" and "practice" fields in {native_language}. Keep "question", "user_answer", "correct_answer" in the original language.
 
 Return JSON:
 {{
     "score": {score:.1f},
     "errors": [
         {{
-            "type": "grammar",
-            "question": "original question",
-            "user_answer": "what they wrote",
-            "correct_answer": "correct answer",
-            "explanation": "why it's wrong in simple terms",
-            "rule": "the grammar/vocabulary rule to remember"
+            "type": "verb_conjugation",
+            "question": "original question text",
+            "user_answer": "what the student answered",
+            "correct_answer": "the correct answer",
+            "explanation": "clear explanation in {native_language} of why it was wrong and what rule applies",
+            "practice": "a short practice sentence in {language} the student should try to translate"
         }}
     ],
-    "performance_summary": "Overall feedback message for the student"
+    "performance_summary": "Overall encouraging feedback message in {native_language}"
 }}"""
 
     try:
@@ -531,18 +539,18 @@ Return JSON:
         errors = []
         for r in wrong_answers:
             errors.append({
-                "type": r["type"],
+                "type": r["type"] if r["type"] != "unknown" else "grammar",
                 "question": r["question"],
                 "user_answer": r["user_answer"],
                 "correct_answer": r["correct_answer"],
-                "explanation": f"The correct answer is {r['correct_answer']}",
-                "rule": "Review this topic in the lesson"
+                "explanation": f"Poprawna odpowiedź to: {r['correct_answer']}",
+                "practice": f"Przypomnij sobie tę regułę i spróbuj ponownie."
             })
 
         return {
             "score": score,
             "errors": errors,
-            "performance_summary": f"You scored {score:.1f}%. Review the errors and practice more."
+            "performance_summary": f"Zdobyłeś {score:.1f}%. Przejrzyj błędy i poćwicz te zagadnienia."
         }
 
 

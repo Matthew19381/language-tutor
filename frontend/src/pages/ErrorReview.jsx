@@ -13,12 +13,15 @@ const CATEGORY_LABELS = {
   articles: 'Rodzajniki',
   verb_conjugation: 'Koniugacja',
   prepositions: 'Przyimki',
+  spelling: 'Pisownia',
+  pronunciation: 'Wymowa',
+  case: 'Przypadki',
+  comprehension: 'Rozumienie',
+  syntax: 'Składnia',
   pronunciation_spelling: 'Wymowa/Pisownia',
   fluency: 'Płynność',
   register: 'Rejestr',
-  comprehension: 'Rozumienie',
   application: 'Zastosowanie',
-  syntax: 'Składnia',
   unknown: 'Inne',
 }
 

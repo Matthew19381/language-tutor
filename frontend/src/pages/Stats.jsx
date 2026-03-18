@@ -130,12 +130,15 @@ export default function Stats() {
     articles: 'Rodzajniki',
     verb_conjugation: 'Koniugacja',
     prepositions: 'Przyimki',
+    spelling: 'Pisownia',
+    pronunciation: 'Wymowa',
+    case: 'Przypadki',
+    comprehension: 'Rozumienie',
+    syntax: 'Składnia',
     pronunciation_spelling: 'Wymowa/Pisownia',
     fluency: 'Płynność',
     register: 'Rejestr',
-    comprehension: 'Rozumienie',
     application: 'Zastosowanie',
-    syntax: 'Składnia',
     unknown: 'Inne',
   }
 
@@ -146,12 +149,15 @@ export default function Stats() {
     articles: 'Ucz się rodzajników i rodzaju gramatycznego rzeczowników na pamięć.',
     verb_conjugation: 'Ćwicz odmianę czasowników — szczególnie nieregularne i modalne.',
     prepositions: 'Zapamiętuj przyimki z ich przypadkami — lista typowych połączeń.',
+    spelling: 'Ćwicz pisownię — zwróć uwagę na podwójne litery i wyjątki ortograficzne.',
+    pronunciation: 'Słuchaj native speakerów i powtarzaj na głos — ćwicz trudne dźwięki.',
+    case: 'Ćwicz przypadki gramatyczne — szczególnie Akkusativ i Dativ z przyimkami.',
+    comprehension: 'Ćwicz rozumienie ze słuchu i z czytania — więcej ekspozycji na język.',
+    syntax: 'Popracuj nad budową zdań złożonych i spójnikami.',
     pronunciation_spelling: 'Ćwicz wymowę i pisownię — słuchaj native speakerów i powtarzaj.',
     fluency: 'Mów więcej i nie bój się błędów — liczy się płynność rozmowy.',
     register: 'Ćwicz różne rejestry języka — formalny i nieformalny styl.',
-    comprehension: 'Ćwicz rozumienie ze słuchu i z czytania — więcej ekspozycji na język.',
     application: 'Ćwicz zastosowanie wiedzy w praktycznych sytuacjach.',
-    syntax: 'Popracuj nad budową zdań złożonych i spójnikami.',
   }
 
   return (
