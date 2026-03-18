@@ -280,3 +280,57 @@ async def export_progress_csv(user_id: int, db: Session = Depends(get_db)):
         media_type="text/csv",
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
+
+
+@router.get("/api/stats/{user_id}/errors")
+async def get_all_errors(user_id: int, db: Session = Depends(get_db)):
+    """Return all test errors for the user, grouped by type, for the error review page."""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    test_results = db.query(TestResult).filter(
+        TestResult.user_id == user_id,
+        TestResult.language == user.target_language
+    ).order_by(TestResult.created_at.desc()).all()
+
+    all_errors = []
+    for test in test_results:
+        if not test.errors:
+            continue
+        try:
+            errors = json.loads(test.errors)
+            date_str = test.created_at.strftime("%d.%m.%Y")
+            for err in errors:
+                if isinstance(err, dict):
+                    all_errors.append({
+                        "type": err.get("type", "unknown"),
+                        "error": err.get("error", err.get("question", "")),
+                        "correction": err.get("correction", err.get("correct_answer", "")),
+                        "explanation": err.get("explanation", err.get("rule", "")),
+                        "practice": err.get("practice", ""),
+                        "date": date_str,
+                        "test_id": test.id,
+                    })
+        except Exception:
+            pass
+
+    # Group by type
+    grouped: dict = {}
+    for err in all_errors:
+        t = err["type"]
+        if t not in grouped:
+            grouped[t] = []
+        grouped[t].append(err)
+
+    # Sort groups by count desc
+    grouped_list = [
+        {"type": k, "count": len(v), "errors": v}
+        for k, v in sorted(grouped.items(), key=lambda x: -len(x[1]))
+    ]
+
+    return {
+        "total": len(all_errors),
+        "language": user.target_language,
+        "groups": grouped_list,
+    }

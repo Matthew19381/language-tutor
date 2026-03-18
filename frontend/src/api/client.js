@@ -146,6 +146,9 @@ export const addXP = (userId, amount, reason) =>
 export const getDailyTips = (userId) =>
   api.get(`/tips/${userId}`)
 
+export const getAllErrors = (userId) =>
+  api.get(`/stats/${userId}/errors`)
+
 // ===== PDF Export =====
 
 export const exportLessonPDF = (lessonId) =>

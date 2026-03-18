@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import {
   BookOpen, FlaskConical, MessageSquare, LayoutGrid,
   BarChart3, Flame, Star, Brain, Timer, Newspaper, Mic,
-  BookmarkPlus, X, Loader2, Video
+  BookmarkPlus, X, Loader2, Video, AlertTriangle
 } from 'lucide-react'
 import { getUserId, getStats, addFlashcardAI } from '../api/client'
 import { useLanguage } from '../hooks/useLanguage'
@@ -25,7 +25,7 @@ export default function NavBar({ dailyTabs: dailyTabsProp }) {
   const userId = getUserId()
   const { t } = useLanguage()
   const dailyTabs = dailyTabsProp || getDailyTabsNav()
-  const dailyProgress = Math.min(100, Math.round((dailyTabs.length / 6) * 100))
+  const dailyProgress = Math.min(100, Math.round((dailyTabs.length / 4) * 100))
 
   const [flashOpen, setFlashOpen] = useState(false)
   const [flashWord, setFlashWord] = useState('')
@@ -42,6 +42,7 @@ export default function NavBar({ dailyTabs: dailyTabsProp }) {
     { to: '/news', label: t('nav.news'), icon: Newspaper },
     { to: '/videos', label: t('nav.videos'), icon: Video },
     { to: '/quickmode', label: t('nav.quickmode'), icon: Timer },
+    { to: '/errors', label: 'Błędy', icon: AlertTriangle },
     { to: '/stats', label: t('nav.stats'), icon: BarChart3 },
   ]
 

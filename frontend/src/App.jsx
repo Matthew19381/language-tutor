@@ -12,6 +12,7 @@ import News from './pages/News'
 import PronunciationTrainer from './pages/PronunciationTrainer'
 import LessonHistory from './pages/LessonHistory'
 import Videos from './pages/Videos'
+import ErrorReview from './pages/ErrorReview'
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
         <Route path="news" element={<News />} />
         <Route path="pronunciation" element={<PronunciationTrainer />} />
         <Route path="videos" element={<Videos />} />
+        <Route path="errors" element={<ErrorReview />} />
       </Route>
       <Route path="/placement" element={<PlacementTest />} />
     </Routes>
