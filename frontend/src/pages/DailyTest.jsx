@@ -104,11 +104,9 @@ export default function DailyTest() {
           <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-3" />
           <h2 className="text-xl font-semibold mb-2">{t('test.couldNotLoad')}</h2>
           <p className="text-gray-400 mb-4">{error}</p>
-          {error.includes('lesson') && (
-            <button onClick={() => navigate('/lesson')} className="btn-primary">
-              {t('test.goToLesson')}
-            </button>
-          )}
+          <button onClick={() => navigate('/lesson')} className="btn-primary mt-2">
+            {t('test.goToLesson')}
+          </button>
         </div>
       </div>
     )

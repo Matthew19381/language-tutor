@@ -601,7 +601,7 @@ function TodayCompletion({ stats }) {
       <div className="progress-bar mb-4">
         <div className={`progress-fill ${pct === 100 ? 'bg-emerald-500' : 'bg-indigo-500'}`} style={{ width: `${pct}%` }} />
       </div>
-      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {activities.map(act => (
           <div key={act.key} className={`flex flex-col items-center gap-1 p-2 rounded-lg border text-center ${
             act.done

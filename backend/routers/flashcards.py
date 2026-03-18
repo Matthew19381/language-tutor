@@ -264,13 +264,13 @@ async def add_flashcard_ai(
 
     # Use AI to generate translation and example
     prompt = f"""Given the {user.target_language} word or phrase '{request.word}', provide:
-- Polish translation
+- ONE main Polish translation (the most common/primary meaning only — do NOT list all conjugated forms)
 - An example sentence in {user.target_language} (at {user.cefr_level} level)
 - Polish translation of that example sentence
 
 Return ONLY valid JSON:
 {{
-    "translation": "Polish translation here",
+    "translation": "single main Polish translation",
     "example": "Example sentence in {user.target_language}",
     "example_translation": "Polish translation of the example"
 }}"""

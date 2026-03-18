@@ -506,7 +506,7 @@ async def generate_next_lesson(user_id: int, db: Session = Depends(get_db)):
     lesson = Lesson(
         user_id=user_id,
         day_number=next_day,
-        title=lesson_content.get("title", f"Day {next_day} Lesson"),
+        title=lesson_content.get("title", f"Dzień {next_day}"),
         topic=lesson_content.get("topic", "General"),
         content=json.dumps(lesson_content),
         cefr_level=user.cefr_level,
@@ -647,6 +647,7 @@ Return JSON:
         return {"success": False, "message": "AI generation failed", "created": 0}
 
     created = 0
+    skipped = 0
     for concept in concepts:
         front = concept.get("front", "")
         back = concept.get("back", "")
@@ -668,9 +669,11 @@ Return JSON:
             )
             db.add(fc)
             created += 1
+        else:
+            skipped += 1
 
     db.commit()
-    return {"success": True, "created": created, "total_concepts": len(concepts)}
+    return {"success": True, "created": created, "skipped": skipped, "total_concepts": len(concepts)}
 
 
 @router.get("/api/lessons/study-plan/{user_id}")

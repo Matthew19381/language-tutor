@@ -60,6 +60,32 @@ export default function DailyLesson() {
       navigate('/placement')
       return
     }
+
+    if (!lessonId) {
+      // Try loading from localStorage cache first (today's lesson)
+      const today = new Date().toISOString().slice(0, 10)
+      const lang = localStorage.getItem('userLanguage') || ''
+      const cacheKey = `lesson_cache_${userId}_${lang}_${today}`
+      const cached = localStorage.getItem(cacheKey)
+      if (cached) {
+        try {
+          const data = JSON.parse(cached)
+          setLesson(data)
+          setCompleted(data.is_completed)
+          setLoading(false)
+          // Revalidate in background
+          getTodayLesson(userId)
+            .then(fresh => {
+              setLesson(fresh)
+              setCompleted(fresh.is_completed)
+              localStorage.setItem(cacheKey, JSON.stringify(fresh))
+            })
+            .catch(() => {})
+          return
+        } catch {}
+      }
+    }
+
     setLoading(true)
     const fetch = lessonId
       ? getLesson(parseInt(lessonId))
@@ -68,6 +94,12 @@ export default function DailyLesson() {
       .then(data => {
         setLesson(data)
         setCompleted(data.is_completed)
+        if (!lessonId) {
+          const today = new Date().toISOString().slice(0, 10)
+          const lang = localStorage.getItem('userLanguage') || ''
+          const cacheKey = `lesson_cache_${userId}_${lang}_${today}`
+          localStorage.setItem(cacheKey, JSON.stringify(data))
+        }
       })
       .catch(e => setError(e.message))
       .finally(() => setLoading(false))
@@ -126,12 +158,14 @@ export default function DailyLesson() {
     setConceptsMsg('')
     try {
       const res = await generateConceptFlashcards(lesson.lesson_id)
-      if (res.created > 0) {
-        setConceptsMsg(`Dodano ${res.created} fiszek z koncepcjami ✓`)
-      } else if (!res.success) {
+      if (!res.success) {
         setConceptsMsg(res.message || 'Brak gramatyki w tej lekcji.')
+      } else if (res.created > 0 && res.skipped > 0) {
+        setConceptsMsg(`Dodano ${res.created} fiszek (${res.skipped} już istniało) ✓`)
+      } else if (res.created > 0) {
+        setConceptsMsg(`Dodano ${res.created} fiszek z koncepcjami ✓`)
       } else {
-        setConceptsMsg('Koncepcje już istnieją w fiszkach.')
+        setConceptsMsg(`Wszystkie ${res.total_concepts || ''} koncepcje już są w fiszkach.`)
       }
     } catch (e) {
       setConceptsMsg('Błąd: ' + e.message)

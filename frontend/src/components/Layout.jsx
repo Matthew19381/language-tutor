@@ -35,20 +35,24 @@ export default function Layout() {
   // Daily progress state
   const [dailyTabs, setDailyTabs] = useState(() => getDailyTabs().tabs)
 
+  const [timerSeconds, setTimerSeconds] = useState(null)
+
   useEffect(() => {
     const updateTimer = () => {
       const startTime = localStorage.getItem('quickmode_start')
       const duration = parseInt(localStorage.getItem('quickmode_duration') || '15') * 60
-      if (!startTime) { setTimerDisplay(null); return }
+      if (!startTime) { setTimerDisplay(null); setTimerSeconds(null); return }
       const elapsed = Math.floor((Date.now() - parseInt(startTime)) / 1000)
       const remaining = duration - elapsed
       if (remaining <= 0) {
         localStorage.removeItem('quickmode_start')
         setTimerDisplay(null)
+        setTimerSeconds(null)
       } else {
         const m = Math.floor(remaining / 60)
         const s = remaining % 60
         setTimerDisplay(`${m}:${s.toString().padStart(2, '0')}`)
+        setTimerSeconds(remaining)
       }
     }
     updateTimer()
@@ -106,7 +110,12 @@ export default function Layout() {
       {timerDisplay && (
         <button
           onClick={() => navigate('/quickmode')}
-          className="fixed bottom-6 right-4 z-50 flex items-center gap-2 bg-emerald-700 hover:bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-lg transition-colors"
+          className={`fixed bottom-6 right-4 z-50 flex items-center gap-2 px-5 py-3 rounded-xl shadow-lg transition-colors ${
+            timerSeconds <= 5 ? 'bg-red-700 hover:bg-red-600 animate-blink' :
+            timerSeconds < 60 ? 'bg-red-700 hover:bg-red-600' :
+            timerSeconds < 300 ? 'bg-yellow-600 hover:bg-yellow-500' :
+            'bg-emerald-700 hover:bg-emerald-600'
+          } text-white`}
         >
           <Timer className="w-6 h-6" />
           <span className="font-mono font-bold text-2xl">{timerDisplay}</span>
