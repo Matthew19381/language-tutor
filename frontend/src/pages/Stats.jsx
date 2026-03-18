@@ -266,7 +266,7 @@ export default function Stats() {
           </h2>
           <div className="space-y-2">
             {lessons.history.map((lesson, i) => (
-              <div key={i} className="flex items-center gap-3">
+              <Link key={i} to={lesson.id ? `/lesson/${lesson.id}` : '/lesson'} className="flex items-center gap-3 hover:bg-gray-800/40 rounded px-1 py-0.5 transition-colors">
                 <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
                   lesson.completed ? 'bg-emerald-700 text-emerald-100' : 'bg-gray-700 text-gray-400'
                 }`}>
@@ -281,7 +281,7 @@ export default function Stats() {
                 {lesson.completed && (
                   <div className="w-4 h-4 text-emerald-400">✓</div>
                 )}
-              </div>
+              </Link>
             ))}
           </div>
           {lessons.completion_rate !== undefined && (
