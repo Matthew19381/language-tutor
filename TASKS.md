@@ -66,13 +66,13 @@ _Źródła: FEEDBACK.md + ZmianyTutor.txt (2026-03-18 → 2026-03-26)_
 
 ## P3 — Niskie (UI/UX dopracowanie)
 
-- [ ] **NAV-1** — Kolejność zakładek: Główna → Lekcja → Wymowa → Mów → Fiszki → Test → Newsy → Filmy → Timer → Statystyki → [tabela fiszek po prawej].
-- [ ] **TIMER-2** — Timer: opcja własnego czasu (np. 30 min, nie tylko 15 min).
-- [ ] **TIMER-3** — Ostatnie 5 sekund: licznik się powiększa i miga na czerwono.
-- [ ] **TIMER-4** — Licznik czasu: 3x większy, po prawej na dole ekranu.
-- [ ] **TIMER-5** — Usunąć "Flashcard Review" z trybu Timer (użytkownik korzysta z Anki).
-- [ ] **HOME-1** — Zakładka Główna: usunąć "Fiszki do powtórki" z Aktywności.
-- [ ] **HOME-2** — Sekcja Aktywności: zmienić nazwę z "Dzisiejsze Aktywności" na "Aktywności", zawierać wszystkie aktywności do nauki.
+- [x] **NAV-1** — Kolejność zakładek: Główna → Lekcja → Wymowa → Mów → Fiszki → Test → Newsy → Filmy → Timer → Statystyki → [tabela fiszek po prawej]. Zweryfikowano: NavBar.jsx lines 36-47 — kolejność identyczna. ✅ (2026-03-26)
+- [x] **TIMER-2** — Timer: opcja własnego czasu (np. 30 min, nie tylko 15 min). Zweryfikowano: QuickMode.jsx — przyciski 5/10/15/20/30 min. ✅ (2026-03-26)
+- [x] **TIMER-3** — Ostatnie 5 sekund: licznik się powiększa i miga na czerwono. Zweryfikowano: QuickMode.jsx — text-7xl + animate-blink gdy <=5s. ✅ (2026-03-26)
+- [x] **TIMER-4** — Licznik czasu: 3x większy, po prawej na dole ekranu. Fix: Layout.jsx badge text-2xl → text-4xl. ✅ (2026-03-26)
+- [x] **TIMER-5** — Usunąć "Flashcard Review" z trybu Timer (użytkownik korzysta z Anki). Zweryfikowano: quickmode.py nie ma fiszek w planie. ✅ (2026-03-26)
+- [x] **HOME-1** — Zakładka Główna: usunąć "Fiszki do powtórki" z Aktywności. Usunięto ActionCard /flashcards z Home.jsx. ✅ (2026-03-26)
+- [x] **HOME-2** — Sekcja Aktywności: zmienić nazwę z "Dzisiejsze Aktywności" na "Aktywności", zawierać wszystkie aktywności do nauki. Zweryfikowano: Home.jsx — już "Aktywności". ✅ (2026-03-26)
 - [ ] **SETTINGS-1** — Ustawienia: w liście języków nauki pokazywać aktualnie uczony język dla łatwego dostępu.
 - [ ] **HARDCORE** — Tryb Hardcore: zmienia język tylko częściowo — naprawić pełną zmianę na język uczony.
 - [x] **ACHIEVEMENTS** — Wszystkie tytuły i opisy osiągnięć przetłumaczone na polski. ✅ (2026-03-26)

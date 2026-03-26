@@ -117,8 +117,8 @@ export default function Layout() {
             'bg-emerald-700 hover:bg-emerald-600'
           } text-white`}
         >
-          <Timer className="w-6 h-6" />
-          <span className="font-mono font-bold text-2xl">{timerDisplay}</span>
+          <Timer className="w-8 h-8" />
+          <span className="font-mono font-bold text-4xl">{timerDisplay}</span>
         </button>
       )}
 

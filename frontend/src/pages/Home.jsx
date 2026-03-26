@@ -156,14 +156,6 @@ export default function Home() {
           xp="+30 XP"
         />
         <ActionCard
-          to="/flashcards"
-          icon={<Brain className="w-8 h-8 text-pink-400" />}
-          title="Fiszki"
-          description="Powtórka słownictwa metodą spaced repetition"
-          color="pink"
-          xp="+10 XP"
-        />
-        <ActionCard
           to="/pronunciation"
           icon={<Mic className="w-8 h-8 text-orange-400" />}
           title="Wymowa"
