@@ -407,8 +407,10 @@ async def export_lesson_obsidian(
     if upload:
         try:
             from backend.services.google_drive_service import upload_to_google_drive
+            from backend.services.obsidian_service import _folder_name
             folder_id = os.environ.get("GDRIVE_FOLDER_ID")
-            url = upload_to_google_drive(filepath, folder_id)
+            subfolder = _folder_name(lesson_data.get("language", ""), lesson_data.get("cefr_level", "A1"))
+            url = upload_to_google_drive(filepath, folder_id, subfolder_name=subfolder)
             return {"success": True, "url": url, "filename": os.path.basename(filepath)}
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Google Drive upload failed: {e}")

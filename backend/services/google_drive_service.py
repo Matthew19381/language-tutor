@@ -78,8 +78,32 @@ def _get_credentials():
     return creds
 
 
-def upload_to_google_drive(file_path: str, folder_id: str | None = None) -> str:
-    """Upload a file to Google Drive and return the file URL."""
+def get_or_create_folder(service, folder_name: str, parent_id: str | None = None) -> str:
+    """Get or create a Google Drive folder by name, return its ID."""
+    query = f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder' and trashed=false"
+    if parent_id:
+        query += f" and '{parent_id}' in parents"
+    results = service.files().list(q=query, fields="files(id, name)").execute()
+    files = results.get("files", [])
+    if files:
+        return files[0]["id"]
+    meta = {"name": folder_name, "mimeType": "application/vnd.google-apps.folder"}
+    if parent_id:
+        meta["parents"] = [parent_id]
+    folder = service.files().create(body=meta, fields="id").execute()
+    return folder["id"]
+
+
+def upload_to_google_drive(
+    file_path: str,
+    folder_id: str | None = None,
+    subfolder_name: str | None = None,
+) -> str:
+    """Upload a file to Google Drive and return the file URL.
+
+    If subfolder_name is given (e.g. 'Hiszpanski_A1'), the file is placed
+    inside that subfolder (created automatically if needed).
+    """
     try:
         from googleapiclient.discovery import build
         from googleapiclient.http import MediaFileUpload
@@ -87,10 +111,14 @@ def upload_to_google_drive(file_path: str, folder_id: str | None = None) -> str:
         creds = _get_credentials()
         service = build("drive", "v3", credentials=creds)
 
+        target_folder_id = folder_id
+        if subfolder_name:
+            target_folder_id = get_or_create_folder(service, subfolder_name, parent_id=folder_id)
+
         filename = os.path.basename(file_path)
         file_metadata = {"name": filename}
-        if folder_id:
-            file_metadata["parents"] = [folder_id]
+        if target_folder_id:
+            file_metadata["parents"] = [target_folder_id]
 
         media = MediaFileUpload(file_path, mimetype="text/markdown")
         uploaded = service.files().create(

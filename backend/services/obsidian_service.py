@@ -8,7 +8,10 @@ OBSIDIAN_DIR = os.path.join(os.path.dirname(__file__), "..", "exports", "obsidia
 
 
 def generate_obsidian_md(lesson_data: dict) -> str:
-    """Generate Obsidian-compatible Markdown from lesson data."""
+    """Generate Obsidian-compatible Markdown from lesson data.
+
+    Exported content: Gramatyka + Słownictwo + Dialog only (core study material).
+    """
     content = lesson_data.get("content", {})
     title = lesson_data.get("title", "Lesson")
     topic = lesson_data.get("topic", "General")
@@ -73,58 +76,32 @@ def generate_obsidian_md(lesson_data: dict) -> str:
                 lines.append(f"  *({translation})*")
         lines.append("")
 
-    # Exercises
-    exercises = content.get("exercises", [])
-    if exercises:
-        lines += ["## Ćwiczenia", ""]
-        for i, ex in enumerate(exercises, 1):
-            ex_type = ex.get("type", "exercise").replace("_", " ")
-            instruction = ex.get("instruction", "")
-            ex_content = ex.get("content", "")
-            answer = ex.get("answer", "")
-            lines.append(f"### {i}. {ex_type}")
-            if instruction:
-                lines.append(f"*{instruction}*")
-            lines.append(f"\n{ex_content}")
-            if answer:
-                lines.append(f"\n> Odpowiedź: {answer}")
-            lines.append("")
-
-    # Production task
-    production = content.get("production_task", {})
-    if production:
-        lines += [
-            "## Zadanie produkcyjne",
-            "",
-            production.get("instruction", ""),
-            "",
-        ]
-        if production.get("example"):
-            lines += [f"*Przykład: {production['example']}*", ""]
-
-    # Comprehensible input
-    ci = content.get("comprehensible_input", {})
-    if ci.get("text"):
-        lines += [
-            "## Ćwiczenie czytania (i+1)",
-            "",
-            ci["text"],
-            "",
-        ]
-        if ci.get("new_words"):
-            lines += ["**Nowe słowa:** " + ", ".join(ci["new_words"]), ""]
-
     return "\n".join(lines)
 
 
+def _folder_name(language: str, cefr: str) -> str:
+    """Return folder name like 'Hiszpański_A1'."""
+    safe_lang = "".join(c if c.isalnum() else "_" for c in language).strip("_")
+    safe_cefr = cefr.replace(" ", "").replace("+", "plus")
+    return f"{safe_lang}_{safe_cefr}"
+
+
 def save_obsidian_md(lesson_data: dict, lesson_id: int) -> str:
-    """Save Obsidian Markdown to file and return the file path."""
-    os.makedirs(OBSIDIAN_DIR, exist_ok=True)
+    """Save Obsidian Markdown to file and return the file path.
+
+    Files are saved in a subfolder named {Language}_{CEFR} (e.g. Hiszpanski_A1).
+    """
+    language = lesson_data.get("language", "Unknown")
+    cefr = lesson_data.get("cefr_level", "A1")
+    folder = _folder_name(language, cefr)
+    dest_dir = os.path.join(OBSIDIAN_DIR, folder)
+    os.makedirs(dest_dir, exist_ok=True)
 
     title = lesson_data.get("title", f"lesson_{lesson_id}")
+    day_number = lesson_data.get("day_number", lesson_id)
     safe_title = "".join(c if c.isalnum() or c in " _-" else "_" for c in title)[:50].strip()
-    filename = f"lesson_{lesson_id}_{safe_title}.md"
-    filepath = os.path.join(OBSIDIAN_DIR, filename)
+    filename = f"Lekcja_{day_number:02d}_{safe_title}.md"
+    filepath = os.path.join(dest_dir, filename)
 
     md_content = generate_obsidian_md(lesson_data)
     with open(filepath, "w", encoding="utf-8") as f:

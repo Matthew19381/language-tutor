@@ -47,7 +47,7 @@ _Źródła: FEEDBACK.md + ZmianyTutor.txt (2026-03-18 → 2026-03-26)_
 - [x] **LESSON-5** — Możliwość powrotu do wcześniejszych lekcji. Błędy z poprzednich lekcji uwzględniane w następnej. Zweryfikowano: route /lesson/:lessonId, Stats.jsx linki, generate_next_lesson już używa user_errors. ✅ (2026-03-26)
 - [x] **LESSON-6** — Poprawiono matching: strip punctuation + prefix match (4 chars) + include match — łapie odmienione formy. ✅ (2026-03-26)
 - [x] **LESSON-7** — Zweryfikowano: TranslationReveal już istnieje i jest używany w OutputForcingCard. ✅ (2026-03-26)
-- [ ] **LESSON-8** — W pobranych plikach: zawartość Gramatyka + Słownictwo + Dialog (bez reszty). Nazewnictwo folderu np. `Hiszpański_A1`. Integracja z Google Drive / Obsidian.
+- [x] **LESSON-8** — W pobranych plikach: zawartość Gramatyka + Słownictwo + Dialog (bez reszty). Nazewnictwo folderu np. `Hiszpański_A1`. Integracja z Google Drive / Obsidian. ✅ (2026-03-26)
 - [ ] **LESSON-9** — Pobrana lekcja: 3 pliki audio (Gramatyka, Słownictwo, Dialog) + film dopasowany do poziomu i tematu.
 - [ ] **TEST-4** — Test: znacznie trudniejszy, powiązany z bieżącą lekcją.
 - [x] **TEST-5** — Po zakończeniu testu: opcja regeneracji uwzględniająca błędy z podsumowania. ✅ (2026-03-26)
