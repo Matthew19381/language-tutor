@@ -45,22 +45,22 @@ _Źródła: FEEDBACK.md + ZmianyTutor.txt (2026-03-18 → 2026-03-26)_
 - [ ] **LESSON-3** — Historia lekcji: wskaźnik ukończenia per lekcja.
 - [ ] **LESSON-4** — Generator przycisku "Następna lekcja" (nie "Wygeneruj nową — usuwa obecną").
 - [ ] **LESSON-5** — Możliwość powrotu do wcześniejszych lekcji. Błędy z poprzednich lekcji uwzględniane w następnej.
-- [ ] **LESSON-6** — Ćwiczenie czytania (i+1): w tekście zaznaczone tylko 2 z 6 nowych słów — naprawić.
-- [ ] **LESSON-7** — Wymuszanie produkcji (Recall): dodać opcję ujawnienia tłumaczenia zdania.
+- [x] **LESSON-6** — Poprawiono matching: strip punctuation + prefix match (4 chars) + include match — łapie odmienione formy. ✅ (2026-03-26)
+- [x] **LESSON-7** — Zweryfikowano: TranslationReveal już istnieje i jest używany w OutputForcingCard. ✅ (2026-03-26)
 - [ ] **LESSON-8** — W pobranych plikach: zawartość Gramatyka + Słownictwo + Dialog (bez reszty). Nazewnictwo folderu np. `Hiszpański_A1`. Integracja z Google Drive / Obsidian.
 - [ ] **LESSON-9** — Pobrana lekcja: 3 pliki audio (Gramatyka, Słownictwo, Dialog) + film dopasowany do poziomu i tematu.
 - [ ] **TEST-4** — Test: znacznie trudniejszy, powiązany z bieżącą lekcją.
 - [ ] **TEST-5** — Po zakończeniu testu: opcja regeneracji uwzględniająca błędy z podsumowania.
 - [ ] **ERRORS-2** — Zakładka Błędy: przyciski "Generuj fiszki z błędów" i "Generuj test z błędów".
 - [ ] **ERRORS-3** — Analiza błędów w Statystykach: więcej rubryk (Gramatyka, Rozumienie, Wymowa, Rozmowa), każda rozwijalna z opisem co poprawić.
-- [ ] **SPECIAL-CHARS** — Znaki specjalne (ä Ä ö Ö ü Ü ß): wyświetlać przy każdym polu tekstowym (nie tylko w ćwiczeniach).
+- [x] **SPECIAL-CHARS** — SpecialCharHelper dodany do: textarea zadania produkcyjnego + textarea recall w OutputForcingCard. ✅ (2026-03-26)
 - [ ] **TRANSLATE-1** — Panel tłumacza (górny lewy): autodetect języka (uczony ↔ polski), tylko tłumaczy słowo/zdanie, "Wytłumacz" jako opcja, po tłumaczeniu przycisk "Dodaj do fiszek", zamyka się po kliknięciu poza.
 - [ ] **PRONUNCIATION-1** — Zakładka Wymowa: przycisk dodania zdania do fiszek.
 - [ ] **PRONUNCIATION-2** — Zakładka Wymowa: przycisk generowania nowych zdań do ćwiczenia.
 - [ ] **VIDEOS-1** — Zakładka Filmy: dodawanie ulubionych twórców (przycisk lub wpisanie nazwy).
 - [ ] **GROK-1** — Generator promptu dla Grok: po polsku, widoczny i edytowalny przed skopiowaniem, zawiera temat dnia + błędy + słownictwo.
-- [ ] **STATS-2** — Statystyki: usunąć pole Fiszki (użytkownik korzysta z Anki).
-- [ ] **STATS-3** — Statystyki: zamiast eksportu CSV — rozwijana tabela historii lekcji (in-app).
+- [x] **STATS-2** — Zweryfikowano: `flashcards` jest destrukturyzowane ale nie renderowane w Stats.jsx. ✅ (2026-03-26)
+- [x] **STATS-3** — Usunięto przycisk CSV. Historia lekcji: wszystkie lekcje z backendu, domyślnie 7 ostatnich, "Pokaż wszystkie" toggle. ✅ (2026-03-26)
 
 ---
 

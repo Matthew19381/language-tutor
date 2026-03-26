@@ -604,6 +604,7 @@ export default function DailyLesson() {
             value={productionAnswer}
             onChange={e => setProductionAnswer(e.target.value)}
           />
+          <SpecialCharHelper language={lesson.language} onInsert={ch => setProductionAnswer(a => a + ch)} />
           <p className="text-xs text-gray-500 mb-2">{t('lesson.aiWillEvaluate')}</p>
           <button
             onClick={handleEvaluateProduction}
@@ -692,9 +693,18 @@ export default function DailyLesson() {
         >
           <div className="bg-teal-900/10 border border-teal-700/30 rounded-lg p-4 mb-3 relative">
             <p className="text-gray-200 leading-relaxed">
-              {content.comprehensible_input.text.split(/(\b\S+\b)/).map((part, i) => {
+              {content.comprehensible_input.text.split(/(\S+)/).map((part, i) => {
                 const newWords = content.comprehensible_input.new_words || []
-                const isNew = newWords.some(w => part.toLowerCase().includes(w.toLowerCase()) && w.length > 2)
+                const cleaned = part.replace(/[.,!?;:'"()[\]]/g, '').toLowerCase()
+                const isNew = cleaned.length > 2 && newWords.some(w => {
+                  const wl = w.toLowerCase().replace(/[.,!?;:'"()[\]]/g, '')
+                  return wl.length > 2 && (
+                    cleaned === wl ||
+                    cleaned.includes(wl) ||
+                    wl.includes(cleaned) ||
+                    (cleaned.length >= 4 && wl.length >= 4 && cleaned.slice(0, 4) === wl.slice(0, 4))
+                  )
+                })
                 return isNew
                   ? <mark key={i} className="bg-yellow-500/30 text-yellow-200 rounded px-0.5">{part}</mark>
                   : <span key={i}>{part}</span>
@@ -960,12 +970,13 @@ function OutputForcingCard({ instruction, text, translation, language, t }) {
         <div>
           <p className="text-gray-400 text-sm mb-2">{t('lesson.recallText')}</p>
           <textarea
-            className="input-field h-24 resize-none mb-3"
+            className="input-field h-24 resize-none mb-2"
             placeholder={t('lesson.writeRemember')}
             value={userRecall}
             onChange={e => setUserRecall(e.target.value)}
           />
-          <div className="flex items-center gap-3 flex-wrap">
+          <SpecialCharHelper language={language} onInsert={ch => setUserRecall(r => r + ch)} />
+          <div className="flex items-center gap-3 flex-wrap mt-1">
             {score !== null && (
               <span className={`text-sm font-bold ${
                 score >= 70 ? 'text-emerald-400' : score >= 40 ? 'text-yellow-400' : 'text-red-400'

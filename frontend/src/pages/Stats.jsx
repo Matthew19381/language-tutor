@@ -18,6 +18,7 @@ export default function Stats() {
   const [tipsLoading, setTipsLoading] = useState(false)
   const [studyPlan, setStudyPlan] = useState(null)
   const [csvLoading, setCsvLoading] = useState(false)
+  const [showAllLessons, setShowAllLessons] = useState(false)
   const [changingLanguage, setChangingLanguage] = useState(false)
   const [languageMsg, setLanguageMsg] = useState('')
   const [languageProfiles, setLanguageProfiles] = useState(null)
@@ -272,12 +273,22 @@ export default function Stats() {
       {/* Lesson Completion */}
       {lessons?.history?.length > 0 && (
         <div className="card mb-6">
-          <h2 className="section-title flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-blue-400" />
-            {t('stats.recentLessons')}
-          </h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="section-title flex items-center gap-2 mb-0">
+              <Calendar className="w-5 h-5 text-blue-400" />
+              {t('stats.recentLessons')} ({lessons.history.length})
+            </h2>
+            {lessons.history.length > 7 && (
+              <button
+                onClick={() => setShowAllLessons(s => !s)}
+                className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+              >
+                {showAllLessons ? 'Zwiń' : 'Pokaż wszystkie'}
+              </button>
+            )}
+          </div>
           <div className="space-y-2">
-            {lessons.history.map((lesson, i) => (
+            {(showAllLessons ? lessons.history : lessons.history.slice(-7)).map((lesson, i) => (
               <Link key={i} to={lesson.id ? `/lesson/${lesson.id}` : '/lesson'} className="flex items-center gap-3 hover:bg-gray-800/40 rounded px-1 py-0.5 transition-colors">
                 <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
                   lesson.completed ? 'bg-emerald-700 text-emerald-100' : 'bg-gray-700 text-gray-400'
@@ -496,15 +507,6 @@ export default function Stats() {
           Wygeneruj następną lekcję
         </button>
 
-        {/* CSV Export */}
-        <button
-          onClick={handleDownloadCSV}
-          disabled={csvLoading}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm transition-colors disabled:opacity-50 mt-2"
-        >
-          <Download className="w-4 h-4" />
-          {csvLoading ? '...' : t('stats.downloadCSV')}
-        </button>
       </div>
 
       {/* Notification Settings */}

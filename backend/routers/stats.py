@@ -92,9 +92,9 @@ async def get_stats(user_id: int, db: Session = Depends(get_db)):
             "type": result.test_type
         })
 
-    # Lesson completion history
+    # Lesson completion history — all lessons sorted by day number
     lesson_history = []
-    for lesson in sorted(all_lessons, key=lambda x: x.day_number)[-14:]:
+    for lesson in sorted(all_lessons, key=lambda x: x.day_number):
         lesson_history.append({
             "id": lesson.id,
             "day": lesson.day_number,
