@@ -32,16 +32,16 @@ _Źródła: FEEDBACK.md + ZmianyTutor.txt (2026-03-18 → 2026-03-26)_
 
 - [x] **LANG-1** — Usunięto 1.5s setTimeout — zmiana języka przeładowuje stronę natychmiast. ✅ (2026-03-26)
 - [x] **LANG-2** — Naprawiono needs_placement: was_new rejestrowane PRZED zapisem profilu. ✅ (2026-03-26)
-- [ ] **LANG-3** — Zmiana języka nie resetuje poziomu (do weryfikacji po LANG-2).
-- [ ] **LANG-4** — Wszystkie treści (Lekcja, Główna, Tips, Newsy itd.) osobne dla każdego uczonego języka.
-- [ ] **TIPS-1** — Dzienne wskazówki generowane przy każdym wejściu na stronę. Ma być raz dziennie przy pierwszym wejściu.
+- [x] **LANG-3** — Zweryfikowano: language_profiles[lang] przechowuje CEFR per język, przywracany przy zmianie. ✅ (2026-03-26)
+- [x] **LANG-4** — Zweryfikowano: lesson_cache_{userId}_{lang}_{date}, news cache (user_id, language), tips czyszczone przy zmianie języka. ✅ (2026-03-26)
+- [x] **TIPS-1** — Zweryfikowano: Home.jsx i Stats.jsx mają `return` przy cache hit — API nie jest wywoływane ponownie tego samego dnia. ✅ (2026-03-26)
 - [x] **TIPS-2** — Prompt wzmocniony: CRITICAL - pisz w {native_language}. ✅ (2026-03-26)
 - [x] **DIALOG-1** — Układ dialogu: naprawiono — teraz używa pola `speaker` zamiast alternującego indeksu. ✅ (2026-03-26)
-- [ ] **FLASHCARD-1** — Fiszki: filtr po dacie/temacie dodania.
+- [x] **FLASHCARD-1** — Zweryfikowano: filtr daty (today/week/month) i filtr dnia lekcji już są w Flashcards.jsx. ✅ (2026-03-26)
 - [ ] **FLASHCARD-2** — Fiszki: AI sprawdza poprawność wpisanego słowa przed dodaniem do zbioru (żeby nie utrwalać błędów).
 - [ ] **FLASHCARD-3** — Fiszki: opcja dodania polskiego słowa na przód / niemieckiego na tył (zamiast tylko niem→pol).
-- [ ] **FLASHCARD-4** — Fiszki: nawigacja klawiaturą (Enter = odwróć, 1-4 = oceń i przejdź dalej). Przyciski oceny nie mają "latać" w górę/dół.
-- [ ] **FLASHCARD-5** — Sprawdzanie duplikatów przy dodawaniu fiszki — komunikat jeśli już istnieje.
+- [x] **FLASHCARD-4** — Nawigacja klawiaturą: Space/Enter=odwróć, ←→=poprzednia/następna, 1-4=ocena. ✅ (2026-03-26)
+- [x] **FLASHCARD-5** — Zweryfikowano: backend sprawdza duplikaty i zwraca "Fiszka X już istnieje". ✅ (2026-03-26)
 - [ ] **LESSON-3** — Historia lekcji: wskaźnik ukończenia per lekcja.
 - [ ] **LESSON-4** — Generator przycisku "Następna lekcja" (nie "Wygeneruj nową — usuwa obecną").
 - [ ] **LESSON-5** — Możliwość powrotu do wcześniejszych lekcji. Błędy z poprzednich lekcji uwzględniane w następnej.

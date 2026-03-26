@@ -97,6 +97,23 @@ export default function Flashcards() {
     } catch (e) {}
   }
 
+  // Keyboard navigation: Space/Enter = flip, 1-4 = review rating, ←/→ = prev/next
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
+      if (!currentCard) return
+      if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); handleFlip() }
+      else if (e.key === 'ArrowRight') handleNext()
+      else if (e.key === 'ArrowLeft') handlePrev()
+      else if (e.key === '1') handleReview(1)
+      else if (e.key === '2') handleReview(2)
+      else if (e.key === '3') handleReview(3)
+      else if (e.key === '4') handleReview(4)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [currentCard, isFlipped, currentIndex, displayCards.length, tab])
+
   const handleExport = async () => {
     setExporting(true)
     try {
