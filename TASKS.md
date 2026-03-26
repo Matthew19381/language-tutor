@@ -76,10 +76,10 @@ _Źródła: FEEDBACK.md + ZmianyTutor.txt (2026-03-18 → 2026-03-26)_
 - [x] **SETTINGS-1** — Ustawienia: w liście języków nauki pokazywać aktualnie uczony język dla łatwego dostępu. Zweryfikowano: Stats.jsx — aktywny język ma indigo border/bg. ✅ (2026-03-26)
 - [x] **HARDCORE** — Tryb Hardcore: zmienia język tylko częściowo — naprawić pełną zmianę na język uczony. Fix: settings.py _UI_EN uzupełniony o wszystkie brakujące klucze (home/test/conv/lesson/flash/pronun). ✅ (2026-03-26)
 - [x] **ACHIEVEMENTS** — Wszystkie tytuły i opisy osiągnięć przetłumaczone na polski. ✅ (2026-03-26)
-- [ ] **FLASHCARD-TABLE** — Tabela szybkiego dodawania fiszek: widoczna na każdej zakładce (stały element layoutu), od razu pokazuje pole do wpisania po kliknięciu.
+- [x] **FLASHCARD-TABLE** — Tabela szybkiego dodawania fiszek: widoczna na każdej zakładce (stały element layoutu), od razu pokazuje pole do wpisania po kliknięciu. Zweryfikowano: NavBar.jsx — inline input "Dodaj fiszkę..." na desktop (hidden md:flex). ✅ (2026-03-26)
 - [ ] **READING-COPY** — Zakładka Czytanie: opcja kopiowania słowa/zdania do tabeli → AI tworzy fiszkę automatycznie.
 - [ ] **MOW-ANALYSIS** — Analiza z zakładki Mów uwzględniana w systemie nauki i w Analizie błędów.
-- [ ] **ERRORS-4** — Zakładka Błędy: wklejenie podsumowania rozmowy z Grok → analiza i ocena wymowy/rozmowy.
+- [x] **ERRORS-4** — Zakładka Błędy: wklejenie podsumowania rozmowy z Grok → analiza i ocena wymowy/rozmowy. ✅ (2026-03-26)
 - [ ] **CONCEPTS** — Koncepcje gramatyczne: generowane do fiszek lub jako rozwijalna tabela w Statystykach.
 - [ ] **AI-MODEL** — Zweryfikować czy Gemini to najlepszy darmowy wybór (do decyzji).
 

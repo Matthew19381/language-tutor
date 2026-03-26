@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertTriangle, ChevronDown, ChevronUp, BookOpen, Brain, FlaskConical } from 'lucide-react'
-import { getUserId, getAllErrors, addFlashcardAI, getTestFromErrors } from '../api/client'
+import { AlertTriangle, ChevronDown, ChevronUp, BookOpen, Brain, FlaskConical, MessageSquare } from 'lucide-react'
+import { getUserId, getAllErrors, addFlashcardAI, getTestFromErrors, askQuestion } from '../api/client'
 import { PageLoader } from '../components/LoadingSpinner'
 import PlayButton from '../components/PlayButton'
 import { useLanguage } from '../hooks/useLanguage'
@@ -32,6 +32,9 @@ export default function ErrorReview() {
   const [flashMsg, setFlashMsg] = useState('')
   const [flashLoading, setFlashLoading] = useState(false)
   const [testLoading, setTestLoading] = useState(false)
+  const [grokText, setGrokText] = useState('')
+  const [grokAnalysis, setGrokAnalysis] = useState('')
+  const [grokLoading, setGrokLoading] = useState(false)
   const navigate = useNavigate()
   const userId = getUserId()
   const { targetLanguage } = useLanguage()
@@ -66,6 +69,31 @@ export default function ErrorReview() {
       setFlashMsg('Błąd generowania testu.')
     } finally {
       setTestLoading(false)
+    }
+  }
+
+  const handleGrokAnalysis = async () => {
+    if (!grokText.trim() || !userId) return
+    setGrokLoading(true)
+    setGrokAnalysis('')
+    try {
+      const lang = data?.language || targetLanguage || 'angielski'
+      const prompt = `Przeanalizuj poniższe podsumowanie rozmowy w języku ${lang}. Oceń:
+1. Wymowę/pisownię (błędy ortograficzne lub wymowa opisana w tekście)
+2. Gramatykę (błędne formy, koniugacje, deklinacje)
+3. Słownictwo (czy dobór słów jest właściwy)
+4. Płynność i naturalność wypowiedzi
+
+Podaj konkretne błędy z korektą i ogólną ocenę (A/B/C). Odpowiedź po polsku.
+
+Podsumowanie rozmowy:
+${grokText.trim()}`
+      const res = await askQuestion(prompt, userId)
+      setGrokAnalysis(res.answer || 'Brak analizy.')
+    } catch {
+      setGrokAnalysis('Błąd analizy.')
+    } finally {
+      setGrokLoading(false)
     }
   }
 
@@ -185,6 +213,34 @@ export default function ErrorReview() {
           ))}
         </div>
       )}
+
+      {/* Grok Conversation Analysis */}
+      <div className="card mt-6">
+        <h2 className="flex items-center gap-2 font-semibold text-lg mb-2">
+          <MessageSquare className="w-5 h-5 text-indigo-400" />
+          Analiza rozmowy z Grok
+        </h2>
+        <p className="text-gray-500 text-sm mb-3">Wklej podsumowanie rozmowy z Grok — AI oceni wymowę, gramatykę i płynność.</p>
+        <textarea
+          className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-sm text-gray-200 resize-none h-28 focus:outline-none focus:border-indigo-500 mb-3"
+          placeholder="Wklej tutaj podsumowanie rozmowy z Grok..."
+          value={grokText}
+          onChange={e => { setGrokText(e.target.value); setGrokAnalysis('') }}
+        />
+        <button
+          onClick={handleGrokAnalysis}
+          disabled={grokLoading || !grokText.trim()}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition-colors disabled:opacity-50 mb-3"
+        >
+          <MessageSquare className="w-4 h-4" />
+          {grokLoading ? 'Analizowanie...' : 'Analizuj rozmowę'}
+        </button>
+        {grokAnalysis && (
+          <div className="bg-gray-800/60 rounded-lg p-4 border border-indigo-700/30">
+            <pre className="text-sm text-gray-200 whitespace-pre-wrap leading-relaxed font-sans">{grokAnalysis}</pre>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
