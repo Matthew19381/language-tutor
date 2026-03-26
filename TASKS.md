@@ -52,7 +52,7 @@ _Źródła: FEEDBACK.md + ZmianyTutor.txt (2026-03-18 → 2026-03-26)_
 - [ ] **TEST-4** — Test: znacznie trudniejszy, powiązany z bieżącą lekcją.
 - [x] **TEST-5** — Po zakończeniu testu: opcja regeneracji uwzględniająca błędy z podsumowania. ✅ (2026-03-26)
 - [x] **ERRORS-2** — Zakładka Błędy: przyciski "Generuj fiszki z błędów" i "Generuj test z błędów". ✅ (2026-03-26)
-- [ ] **ERRORS-3** — Analiza błędów w Statystykach: więcej rubryk (Gramatyka, Rozumienie, Wymowa, Rozmowa), każda rozwijalna z opisem co poprawić.
+- [x] **ERRORS-3** — Analiza błędów w Statystykach: więcej rubryk (Gramatyka, Rozumienie, Wymowa, Rozmowa), każda rozwijalna z opisem co poprawić. ✅ (2026-03-26)
 - [x] **SPECIAL-CHARS** — SpecialCharHelper dodany do: textarea zadania produkcyjnego + textarea recall w OutputForcingCard. ✅ (2026-03-26)
 - [x] **TRANSLATE-1** — Tłumacz: autodetect języka (cyrylica/inne → target→PL, reszta → PL→target), przycisk "Wytłumacz", "Dodaj do fiszek" po tłumaczeniu, zamknięcie przez klik poza. ✅ (2026-03-26)
 - [x] **PRONUNCIATION-1** — Zakładka Wymowa: przycisk dodania zdania do fiszek. ✅ (2026-03-26)

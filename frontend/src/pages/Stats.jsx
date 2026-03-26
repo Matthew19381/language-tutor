@@ -152,6 +152,7 @@ export default function Stats() {
     fluency: 'Płynność',
     register: 'Rejestr',
     application: 'Zastosowanie',
+    conversation: 'Rozmowa',
     unknown: 'Inne',
   }
 
@@ -171,7 +172,43 @@ export default function Stats() {
     fluency: 'Mów więcej i nie bój się błędów — liczy się płynność rozmowy.',
     register: 'Ćwicz różne rejestry języka — formalny i nieformalny styl.',
     application: 'Ćwicz zastosowanie wiedzy w praktycznych sytuacjach.',
+    conversation: 'Regularnie rozmawiaj z AI — różne tematy i sytuacje.',
   }
+
+  const SUPER_GROUPS = [
+    {
+      id: 'grammar_group',
+      label: 'Gramatyka',
+      color: 'purple',
+      icon: '📐',
+      keys: ['grammar', 'word_order', 'articles', 'verb_conjugation', 'prepositions', 'case', 'syntax'],
+      advice: 'Skup się na zasadach gramatycznych: odmiana czasowników, przypadki, szyk zdania. Ćwicz ćwiczenia gramatyczne z lekcji i zaglądaj do wyjaśnień.',
+    },
+    {
+      id: 'comprehension_group',
+      label: 'Rozumienie',
+      color: 'blue',
+      icon: '📖',
+      keys: ['comprehension', 'vocabulary', 'application'],
+      advice: 'Zwiększ ekspozycję na język — czytaj, słuchaj, oglądaj. Dodawaj nowe słówka do fiszek i powtarzaj je regularnie.',
+    },
+    {
+      id: 'pronunciation_group',
+      label: 'Wymowa',
+      color: 'emerald',
+      icon: '🎙️',
+      keys: ['pronunciation', 'pronunciation_spelling', 'spelling'],
+      advice: 'Słuchaj native speakerów i naśladuj. Korzystaj z zakładki Wymowa — nagrywaj się i analizuj różnice.',
+    },
+    {
+      id: 'conversation_group',
+      label: 'Rozmowa',
+      color: 'yellow',
+      icon: '💬',
+      keys: ['fluency', 'register', 'conversation', 'unknown'],
+      advice: 'Mów regularnie — nie bój się błędów. Korzystaj z zakładki Mów: rozmawiaj z AI na różne tematy, proś o korektę.',
+    },
+  ]
 
   return (
     <div className="page-container">
@@ -336,6 +373,7 @@ export default function Stats() {
           error_examples={error_examples}
           CATEGORY_LABELS={CATEGORY_LABELS}
           CATEGORY_ADVICE={CATEGORY_ADVICE}
+          SUPER_GROUPS={SUPER_GROUPS}
           t={t}
         />
       )}
@@ -520,9 +558,16 @@ export default function Stats() {
   )
 }
 
-function ErrorCategoriesCard({ error_categories, error_examples, CATEGORY_LABELS, CATEGORY_ADVICE, t }) {
+function ErrorCategoriesCard({ error_categories, error_examples, CATEGORY_LABELS, CATEGORY_ADVICE, SUPER_GROUPS, t }) {
   const [expanded, setExpanded] = useState({})
   const total = Object.values(error_categories).reduce((a, b) => a + b, 0)
+
+  const COLOR_MAP = {
+    purple: { bar: 'bg-purple-500', badge: 'bg-purple-900/30 text-purple-300 border-purple-700/40', title: 'text-purple-300' },
+    blue: { bar: 'bg-blue-500', badge: 'bg-blue-900/30 text-blue-300 border-blue-700/40', title: 'text-blue-300' },
+    emerald: { bar: 'bg-emerald-500', badge: 'bg-emerald-900/30 text-emerald-300 border-emerald-700/40', title: 'text-emerald-300' },
+    yellow: { bar: 'bg-yellow-500', badge: 'bg-yellow-900/30 text-yellow-300 border-yellow-700/40', title: 'text-yellow-300' },
+  }
 
   return (
     <div className="card mb-6">
@@ -536,50 +581,96 @@ function ErrorCategoriesCard({ error_categories, error_examples, CATEGORY_LABELS
         </Link>
       </div>
       <p className="text-gray-400 text-sm mb-4">{t('stats.errorAreas')}</p>
-      <div className="space-y-2">
-        {Object.entries(error_categories)
-          .sort((a, b) => b[1] - a[1])
-          .map(([category, count]) => {
-            const pct = Math.round((count / total) * 100)
-            const examples = error_examples?.[category] || []
-            const isOpen = expanded[category]
-            const hasDetails = examples.length > 0 || !!CATEGORY_ADVICE[category]
-            return (
-              <div key={category} className="rounded-lg overflow-hidden">
-                <button
-                  className="w-full text-left"
-                  onClick={() => hasDetails && setExpanded(e => ({ ...e, [category]: !e[category] }))}
-                >
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-300 flex items-center gap-1">
-                      {CATEGORY_LABELS[category] || category}
-                      {hasDetails && (
-                        <span className="text-gray-600 text-xs ml-1">{isOpen ? '▲' : '▼'}</span>
-                      )}
-                    </span>
-                    <span className="text-gray-500">{count} {t('stats.errors')} ({pct}%)</span>
-                  </div>
-                  <div className="progress-bar">
-                    <div className="progress-fill bg-red-500" style={{ width: `${pct}%` }} />
-                  </div>
-                </button>
-                {isOpen && hasDetails && (
-                  <div className="mt-2 pl-2 space-y-1">
-                    {examples.map((ex, ei) => (
-                      <div key={ei} className="text-xs text-gray-500 flex gap-2">
-                        <span className="text-red-400 shrink-0">✗</span>
-                        <span className="truncate">{ex.question}</span>
-                        {ex.correct && <span className="text-emerald-500 shrink-0">→ {ex.correct}</span>}
-                      </div>
-                    ))}
-                    {CATEGORY_ADVICE[category] && (
-                      <p className="text-xs text-indigo-400 mt-1 italic">💡 {CATEGORY_ADVICE[category]}</p>
+
+      <div className="space-y-3">
+        {SUPER_GROUPS.map(group => {
+          const groupCount = group.keys.reduce((sum, k) => sum + (error_categories[k] || 0), 0)
+          const pct = total > 0 ? Math.round((groupCount / total) * 100) : 0
+          const isOpen = expanded[group.id]
+          const c = COLOR_MAP[group.color]
+          const subEntries = group.keys
+            .filter(k => error_categories[k] > 0)
+            .sort((a, b) => error_categories[b] - error_categories[a])
+
+          return (
+            <div key={group.id} className={`rounded-lg border ${groupCount > 0 ? `border-${group.color}-800/40 bg-${group.color}-950/10` : 'border-gray-800/40'}`}>
+              <button
+                className="w-full text-left p-3"
+                onClick={() => setExpanded(e => ({ ...e, [group.id]: !e[group.id] }))}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className={`font-semibold flex items-center gap-2 ${groupCount > 0 ? c.title : 'text-gray-500'}`}>
+                    <span>{group.icon}</span>
+                    {group.label}
+                    {groupCount > 0 && (
+                      <span className={`text-xs px-1.5 py-0.5 rounded border ${c.badge}`}>{groupCount}</span>
                     )}
+                  </span>
+                  <span className="flex items-center gap-2">
+                    {groupCount === 0 && <span className="text-xs text-emerald-500">✓ brak błędów</span>}
+                    <span className="text-gray-600 text-xs">{isOpen ? '▲' : '▼'}</span>
+                  </span>
+                </div>
+                {groupCount > 0 && (
+                  <div className="progress-bar">
+                    <div className={`progress-fill ${c.bar}`} style={{ width: `${pct}%` }} />
                   </div>
                 )}
-              </div>
-            )
-          })}
+              </button>
+
+              {isOpen && (
+                <div className="px-3 pb-3 space-y-2 border-t border-gray-700/30 pt-2">
+                  <p className="text-xs text-indigo-300 italic">💡 {group.advice}</p>
+                  {subEntries.length > 0 && (
+                    <div className="space-y-1.5 mt-2">
+                      {subEntries.map(key => {
+                        const count = error_categories[key]
+                        const examples = error_examples?.[key] || []
+                        const subPct = total > 0 ? Math.round((count / total) * 100) : 0
+                        const isSubOpen = expanded[key]
+                        return (
+                          <div key={key}>
+                            <button
+                              className="w-full text-left"
+                              onClick={e => { e.stopPropagation(); setExpanded(prev => ({ ...prev, [key]: !prev[key] })) }}
+                            >
+                              <div className="flex justify-between text-xs text-gray-400 mb-0.5">
+                                <span className="flex items-center gap-1">
+                                  {CATEGORY_LABELS[key] || key}
+                                  {(examples.length > 0 || CATEGORY_ADVICE[key]) && (
+                                    <span className="text-gray-600">{isSubOpen ? '▲' : '▼'}</span>
+                                  )}
+                                </span>
+                                <span className="text-gray-600">{count} ({subPct}%)</span>
+                              </div>
+                              <div className="h-1 rounded-full bg-gray-700">
+                                <div className={`h-1 rounded-full ${c.bar} opacity-60`} style={{ width: `${subPct}%` }} />
+                              </div>
+                            </button>
+                            {isSubOpen && (examples.length > 0 || CATEGORY_ADVICE[key]) && (
+                              <div className="mt-1 pl-2 space-y-1">
+                                {examples.map((ex, ei) => (
+                                  <div key={ei} className="text-xs text-gray-500 flex gap-2">
+                                    <span className="text-red-400 shrink-0">✗</span>
+                                    <span className="truncate">{ex.question}</span>
+                                    {ex.correct && <span className="text-emerald-500 shrink-0">→ {ex.correct}</span>}
+                                  </div>
+                                ))}
+                                {CATEGORY_ADVICE[key] && (
+                                  <p className="text-xs text-gray-500 italic">→ {CATEGORY_ADVICE[key]}</p>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )
+        })}
       </div>
     </div>
   )
