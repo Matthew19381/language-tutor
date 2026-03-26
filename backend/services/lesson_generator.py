@@ -15,6 +15,9 @@ CRITICAL RULES:
 3. Grammar questions must require knowledge of specific {language} grammatical rules
 4. A1 questions should be failed by someone with zero knowledge
 5. B1 questions should require at least 6+ months of study to answer
+6. fill_blank questions MUST have EXACTLY ONE blank (___) in the sentence. Never two or more gaps.
+7. translation questions: do NOT include both the {native_language} phrase AND its {language} translation in the same question — the answer must NOT be visible in the question text
+8. Do NOT give away the answer in the question text. The question must not contain the correct answer or any translation that makes the correct option obvious.
 
 QUESTION DISTRIBUTION (30 questions — do NOT deviate):
 - Q1-5: A1 — basic verb conjugation in present tense, gender of common nouns, basic word order SVO

@@ -18,9 +18,9 @@ _Źródła: FEEDBACK.md + ZmianyTutor.txt (2026-03-18 → 2026-03-26)_
 ## P1 — Wysokie (funkcje zepsute)
 
 - [x] **TEST-1** — Cache pytań testu w localStorage per dzień/język. ✅ (2026-03-26)
-- [ ] **TEST-2** — Test plasujący: pytania za łatwe, z przetłumaczonym tekstem (odpowiedź oczywista). Przebudować kalibrację.
-- [ ] **TEST-3** — Test plasujący: pytanie z 2 lukami i 3 słowami w odpowiedzi — logicznie błędne. Naprawić generator pytań.
-- [ ] **TIMER-1** — Minutnik zatrzymuje się i znika po kliknięciu w inną zakładkę. Minutnik ma być widoczny globalnie (layout), nie zatrzymywać się.
+- [x] **TEST-2** — Prompt wzmocniony: zakaz dawania odpowiedzi w treści pytania, zakaz ujawniania tłumaczenia. ✅ (2026-03-26)
+- [x] **TEST-3** — Prompt: fill_blank musi mieć DOKŁADNIE JEDNO ___ — nie więcej. ✅ (2026-03-26)
+- [x] **TIMER-1** — Już zaimplementowany: Layout.jsx ma globalny badge (quickmode_start z localStorage), niezależny od stanu QuickMode. Timer nie zatrzymuje się przy zmianie zakładki. ✅ (2026-03-26)
 - [x] **STATS-1** — TodayCompletion: reaktywny useState + odświeżanie na focus okna. 4 aktywności: Lekcja, Test, Rozmowa, Newsy/Wymowa. ✅ (2026-03-26)
 - [x] **ERRORS-1** — Backend (stats.py) zwracał error/correction zamiast user_answer/correct_answer. Fix: nowe pola question/user_answer/correct_answer w get_all_errors + UI ErrorReview.jsx. ✅ (2026-03-26)
 - [x] **GRAMMAR-1** — Wyjaśnienie gramatyki: dodano `renderMarkdown()` obsługujący `#/##/###`, `**bold**`, listy. ✅ (2026-03-26)
