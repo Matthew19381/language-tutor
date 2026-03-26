@@ -232,6 +232,9 @@ async def update_user_language(
     except Exception:
         profiles = {}
 
+    # Track before any modifications whether this is a genuinely new language
+    was_new = new_lang not in profiles
+
     # Save current language's CEFR level before switching
     if user.target_language:
         profiles[user.target_language] = user.cefr_level
@@ -258,7 +261,7 @@ async def update_user_language(
         "target_language": new_lang,
         "cefr_level": new_cefr,
         "language_profiles": profiles,
-        "needs_placement": new_lang not in profiles or profiles.get(new_lang) == "A1"
+        "needs_placement": was_new
     }
 
 

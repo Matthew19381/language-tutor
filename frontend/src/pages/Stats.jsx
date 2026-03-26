@@ -93,17 +93,21 @@ export default function Stats() {
     setChangingLanguage(true)
     try {
       const result = await updateUserLanguage(userId, newLanguage)
+      // Clear cached data for old language
       localStorage.removeItem('tips_date')
       localStorage.removeItem('tips_data')
+      // Clear lesson cache for all languages so fresh lesson loads
+      Object.keys(localStorage)
+        .filter(k => k.startsWith('lesson_cache_'))
+        .forEach(k => localStorage.removeItem(k))
+      localStorage.setItem('userLanguage', newLanguage)
       if (result.needs_placement) {
         navigate(`/placement?language=${encodeURIComponent(newLanguage)}&userId=${userId}`)
       } else {
-        setLanguageMsg(`Zmieniono na ${newLanguage}. Odśwież stronę.`)
-        setTimeout(() => window.location.reload(), 1500)
+        window.location.reload()
       }
     } catch (e) {
       setLanguageMsg('Błąd: ' + e.message)
-    } finally {
       setChangingLanguage(false)
     }
   }
@@ -582,8 +586,7 @@ function StatBox({ icon, label, value, color }) {
 }
 
 function TodayCompletion({ stats }) {
-  // Read daily tabs from localStorage
-  const getDailyTabs = () => {
+  const [tabs, setTabs] = useState(() => {
     try {
       const raw = localStorage.getItem('daily_tabs')
       if (!raw) return []
@@ -592,8 +595,22 @@ function TodayCompletion({ stats }) {
       if (parsed.date !== today) return []
       return parsed.tabs || []
     } catch { return [] }
-  }
-  const tabs = getDailyTabs()
+  })
+
+  // Re-read on visibility change (user switches back to this tab)
+  useEffect(() => {
+    const refresh = () => {
+      try {
+        const raw = localStorage.getItem('daily_tabs')
+        if (!raw) return setTabs([])
+        const parsed = JSON.parse(raw)
+        const today = new Date().toISOString().slice(0, 10)
+        setTabs(parsed.date === today ? (parsed.tabs || []) : [])
+      } catch { setTabs([]) }
+    }
+    window.addEventListener('focus', refresh)
+    return () => window.removeEventListener('focus', refresh)
+  }, [])
 
   // Check if lesson completed today
   const lessonDoneToday = stats?.lessons?.history?.some(
