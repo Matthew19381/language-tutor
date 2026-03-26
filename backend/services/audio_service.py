@@ -170,3 +170,67 @@ async def generate_full_lesson_audio(lesson_content: dict, language: str, lesson
             logger.warning(f"Output forcing audio failed: {e}")
 
     return result
+
+
+async def generate_lesson_package_audio(lesson_content: dict, language: str, lesson_id: int) -> dict:
+    """Generate 3 combined audio files for download: Grammar, Vocabulary, Dialog.
+
+    Returns dict with local file paths:
+      {"grammar": path, "vocabulary": path, "dialogue": path}
+    """
+    ensure_audio_dir()
+    result = {}
+
+    # 1. Grammar — full explanation text
+    explanation = lesson_content.get("explanation", "")
+    if explanation:
+        filename = f"lesson_{lesson_id}_pkg_gramatyka.mp3"
+        output_path = os.path.join(AUDIO_DIR, filename)
+        try:
+            if not os.path.exists(output_path):
+                await generate_audio(explanation[:1500], language, output_path)
+            result["grammar"] = output_path
+        except Exception as e:
+            logger.warning(f"Grammar package audio failed: {e}")
+
+    # 2. Vocabulary — all words + translations read aloud
+    vocabulary = lesson_content.get("vocabulary", [])
+    if vocabulary:
+        parts = []
+        for item in vocabulary:
+            word = item.get("word", "")
+            translation = item.get("translation", "")
+            if word:
+                parts.append(f"{word}. {translation}." if translation else f"{word}.")
+        vocab_text = "  ".join(parts)
+        if vocab_text:
+            filename = f"lesson_{lesson_id}_pkg_slownictwo.mp3"
+            output_path = os.path.join(AUDIO_DIR, filename)
+            try:
+                if not os.path.exists(output_path):
+                    await generate_audio(vocab_text[:1500], language, output_path)
+                result["vocabulary"] = output_path
+            except Exception as e:
+                logger.warning(f"Vocabulary package audio failed: {e}")
+
+    # 3. Dialogue — all lines concatenated
+    dialogue = lesson_content.get("dialogue", {})
+    lines = dialogue.get("lines", []) if isinstance(dialogue, dict) else dialogue if isinstance(dialogue, list) else []
+    if lines:
+        parts = []
+        for line in lines:
+            text = line.get("text", "")
+            if text:
+                parts.append(text)
+        dialogue_text = "  ".join(parts)
+        if dialogue_text:
+            filename = f"lesson_{lesson_id}_pkg_dialog.mp3"
+            output_path = os.path.join(AUDIO_DIR, filename)
+            try:
+                if not os.path.exists(output_path):
+                    await generate_audio(dialogue_text[:1500], language, output_path)
+                result["dialogue"] = output_path
+            except Exception as e:
+                logger.warning(f"Dialogue package audio failed: {e}")
+
+    return result

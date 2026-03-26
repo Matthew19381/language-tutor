@@ -74,6 +74,7 @@ export default function DailyLesson() {
     outputForcing: false,
   })
   const [pdfLoading, setPdfLoading] = useState(false)
+  const [audioPackageLoading, setAudioPackageLoading] = useState(false)
   const [obsidianLoading, setObsidianLoading] = useState(false)
   const [obsidianOffset, setObsidianOffset] = useState(0)
   const [obsidianUpload, setObsidianUpload] = useState(false)
@@ -207,6 +208,26 @@ export default function DailyLesson() {
       setConceptsMsg('Błąd: ' + e.message)
     } finally {
       setConceptsLoading(false)
+    }
+  }
+
+  const handleDownloadAudioPackage = async () => {
+    if (!lesson) return
+    setAudioPackageLoading(true)
+    try {
+      const response = await axios.get(`/api/lessons/${lesson.lesson_id}/audio-package`, {
+        responseType: 'blob',
+      })
+      const url = URL.createObjectURL(new Blob([response.data], { type: 'application/zip' }))
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `Lekcja_${lesson.lesson_id}_audio.zip`
+      link.click()
+      URL.revokeObjectURL(url)
+    } catch (e) {
+      console.error('Audio package download failed:', e)
+    } finally {
+      setAudioPackageLoading(false)
     }
   }
 
@@ -350,6 +371,15 @@ export default function DailyLesson() {
           >
             <Download className="w-4 h-4" />
             {pdfLoading ? t('lesson.generating') : t('lesson.pdf')}
+          </button>
+          <button
+            onClick={handleDownloadAudioPackage}
+            disabled={audioPackageLoading}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm transition-colors disabled:opacity-50"
+            title="Pobierz audio (ZIP)"
+          >
+            <Download className="w-4 h-4" />
+            {audioPackageLoading ? t('lesson.generating') : 'MP3'}
           </button>
 
           {/* Obsidian Export Dropdown */}

@@ -14,7 +14,7 @@ from backend.models.study_plan import StudyPlan
 from backend.models.test_result import TestResult
 from backend.models.flashcard import Flashcard
 from backend.services.lesson_generator import generate_daily_lesson
-from backend.services.audio_service import generate_vocabulary_audio, generate_full_lesson_audio, AUDIO_DIR
+from backend.services.audio_service import generate_vocabulary_audio, generate_full_lesson_audio, generate_lesson_package_audio, AUDIO_DIR
 from backend.services.pdf_service import generate_lesson_pdf, EXPORTS_DIR
 from backend.services.obsidian_service import save_obsidian_md
 from backend.services.gemini_service import generate_json as ai_generate_json
@@ -419,6 +419,56 @@ async def export_lesson_obsidian(
         filepath,
         media_type="text/markdown",
         filename=os.path.basename(filepath),
+    )
+
+
+@router.get("/api/lessons/{lesson_id}/audio-package")
+async def download_lesson_audio_package(lesson_id: int, db: Session = Depends(get_db)):
+    """Generate and download a ZIP archive with 3 audio files: Gramatyka, Słownictwo, Dialog.
+    Also includes a YouTube search URL for a matched video.
+    """
+    import zipfile
+    import io
+    import urllib.parse
+    from fastapi.responses import StreamingResponse
+
+    lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+
+    content = json.loads(lesson.content)
+    audio_files = await generate_lesson_package_audio(content, lesson.language, lesson_id)
+
+    if not audio_files:
+        raise HTTPException(status_code=500, detail="Could not generate audio files")
+
+    # Build ZIP in memory
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+        name_map = {
+            "grammar": "01_Gramatyka.mp3",
+            "vocabulary": "02_Słownictwo.mp3",
+            "dialogue": "03_Dialog.mp3",
+        }
+        for key, arcname in name_map.items():
+            filepath = audio_files.get(key)
+            if filepath and os.path.exists(filepath):
+                zf.write(filepath, arcname)
+
+        # Include a text file with YouTube search link
+        topic = lesson.topic or lesson.title or "language learning"
+        yt_query = urllib.parse.quote(f"{lesson.language} {topic} {lesson.cefr_level}")
+        yt_url = f"https://www.youtube.com/results?search_query={yt_query}"
+        zf.writestr("video_link.txt", f"Wyszukaj film na YouTube:\n{yt_url}\n")
+
+    zip_buffer.seek(0)
+    safe_title = "".join(c if c.isalnum() or c in " _-" else "_" for c in (lesson.title or "lesson"))[:30]
+    zip_name = f"Lekcja_{lesson.day_number:02d}_{safe_title}.zip"
+
+    return StreamingResponse(
+        zip_buffer,
+        media_type="application/zip",
+        headers={"Content-Disposition": f"attachment; filename=\"{zip_name}\""},
     )
 
 
