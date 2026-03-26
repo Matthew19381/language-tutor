@@ -777,6 +777,57 @@ Return JSON:
     return {"success": True, "created": created, "skipped": skipped, "total_concepts": len(concepts)}
 
 
+@router.get("/api/lessons/latest/{user_id}/concepts")
+async def get_lesson_concepts(user_id: int, db: Session = Depends(get_db)):
+    """Generate grammar concepts from the latest lesson and return them (without saving to flashcards)."""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    lesson = db.query(Lesson).filter(
+        Lesson.user_id == user_id,
+        Lesson.language == user.target_language
+    ).order_by(Lesson.day_number.desc()).first()
+
+    if not lesson:
+        return {"concepts": [], "lesson_title": None}
+
+    content = json.loads(lesson.content)
+    grammar_explanation = content.get("grammar_explanation") or content.get("explanation", "")
+    if not grammar_explanation:
+        return {"concepts": [], "lesson_title": lesson.title}
+
+    prompt = f"""From this {lesson.language} grammar explanation, extract 3-6 key grammar CONCEPTS.
+Each concept: name (in Polish), brief explanation (in Polish), example in {lesson.language}.
+
+Grammar topic: {lesson.topic}
+Explanation: {grammar_explanation[:800]}
+
+Return JSON:
+{{
+    "concepts": [
+        {{
+            "name": "Akkusativ z rodzajnikiem określonym",
+            "explanation": "Zmiana rodzajnika dla przypadku Akkusativ.",
+            "example": "Ich sehe den Mann."
+        }}
+    ]
+}}"""
+
+    try:
+        result = await ai_generate_json(prompt)
+        concepts = result.get("concepts", [])
+    except Exception:
+        concepts = []
+
+    return {
+        "concepts": concepts,
+        "lesson_title": lesson.title,
+        "lesson_id": lesson.id,
+        "topic": lesson.topic,
+    }
+
+
 @router.get("/api/lessons/study-plan/{user_id}")
 async def get_study_plan(user_id: int, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()

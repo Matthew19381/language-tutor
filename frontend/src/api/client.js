@@ -75,6 +75,9 @@ export const generateNextLesson = (userId) =>
 export const generateConceptFlashcards = (lessonId) =>
   api.post(`/lessons/${lessonId}/concept-flashcards`)
 
+export const getLessonConcepts = (userId) =>
+  api.get(`/lessons/latest/${userId}/concepts`)
+
 export const recordExerciseError = (lessonId, data) =>
   api.post(`/lessons/${lessonId}/exercise-error`, data)
 

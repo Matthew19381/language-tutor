@@ -6,7 +6,7 @@ import {
   Download, Globe, Lightbulb, CheckCircle
 } from 'lucide-react'
 import axios from 'axios'
-import { getUserId, getStats, getDailyTips, updateUserLanguage, getLanguageProfiles, getStudyPlan } from '../api/client'
+import { getUserId, getStats, getDailyTips, updateUserLanguage, getLanguageProfiles, getStudyPlan, getLessonConcepts, generateConceptFlashcards } from '../api/client'
 import { NotificationSettings } from '../components/NotificationManager'
 import { PageLoader } from '../components/LoadingSpinner'
 import { useLanguage } from '../hooks/useLanguage'
@@ -378,6 +378,9 @@ export default function Stats() {
         />
       )}
 
+      {/* Grammar Concepts */}
+      <ConceptsCard userId={userId} t={t} />
+
       {/* Achievements */}
       {achievements && (
         <div className="card mb-6">
@@ -672,6 +675,105 @@ function ErrorCategoriesCard({ error_categories, error_examples, CATEGORY_LABELS
           )
         })}
       </div>
+    </div>
+  )
+}
+
+function ConceptsCard({ userId, t }) {
+  const [open, setOpen] = useState(false)
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [addingIdx, setAddingIdx] = useState(null)
+  const [addedIdxs, setAddedIdxs] = useState(new Set())
+  const [msg, setMsg] = useState('')
+
+  const load = async () => {
+    if (data) { setOpen(o => !o); return }
+    setOpen(true)
+    setLoading(true)
+    try {
+      const res = await getLessonConcepts(userId)
+      setData(res)
+    } catch {
+      setData({ concepts: [], lesson_title: null })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const addToFlash = async (concept, idx) => {
+    setAddingIdx(idx)
+    try {
+      await generateConceptFlashcards(data.lesson_id)
+      setAddedIdxs(prev => new Set([...prev, idx]))
+      setMsg('Koncepcje dodane do fiszek!')
+      setTimeout(() => setMsg(''), 3000)
+    } catch {
+      setMsg('Błąd dodawania.')
+    } finally {
+      setAddingIdx(null)
+    }
+  }
+
+  return (
+    <div className="card mb-6">
+      <button className="w-full flex items-center justify-between" onClick={load}>
+        <h2 className="section-title flex items-center gap-2 mb-0">
+          <BookOpen className="w-5 h-5 text-teal-400" />
+          Koncepcje gramatyczne z ostatniej lekcji
+        </h2>
+        <span className="text-gray-600 text-xs">{open ? '▲' : '▼'}</span>
+      </button>
+
+      {open && (
+        <div className="mt-4">
+          {loading && <p className="text-gray-500 text-sm">Generowanie koncepcji...</p>}
+          {data && !loading && (
+            <>
+              {data.lesson_title && (
+                <p className="text-xs text-gray-500 mb-3">Lekcja: <span className="text-gray-300">{data.lesson_title}</span></p>
+              )}
+              {data.concepts?.length === 0 && (
+                <p className="text-gray-500 text-sm">Brak koncepcji gramatycznych w tej lekcji.</p>
+              )}
+              {data.concepts?.length > 0 && (
+                <>
+                  <div className="space-y-3 mb-3">
+                    {data.concepts.map((c, i) => (
+                      <div key={i} className="bg-gray-800/60 rounded-lg p-3 border border-gray-700/40">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1">
+                            <p className="font-semibold text-teal-300 text-sm mb-1">{c.name}</p>
+                            <p className="text-gray-400 text-xs leading-relaxed">{c.explanation}</p>
+                            {c.example && (
+                              <p className="text-yellow-300 text-xs mt-1 italic">Przykład: {c.example}</p>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => addToFlash(c, i)}
+                            disabled={addingIdx === i || addedIdxs.has(i)}
+                            className={`shrink-0 text-xs px-2 py-1 rounded transition-colors ${addedIdxs.has(i) ? 'bg-emerald-700/30 text-emerald-400' : 'bg-gray-700 hover:bg-teal-700/40 text-gray-400 hover:text-teal-300'}`}
+                            title="Dodaj do fiszek"
+                          >
+                            {addedIdxs.has(i) ? '✓' : addingIdx === i ? '...' : '+'}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {msg && <p className="text-emerald-400 text-xs">{msg}</p>}
+                  <button
+                    onClick={() => { setData(null); setOpen(false); setAddedIdxs(new Set()) }}
+                    className="text-xs text-gray-600 hover:text-gray-400 mt-1"
+                  >
+                    Odśwież →
+                  </button>
+                </>
+              )}
+            </>
+          )}
+        </div>
+      )}
     </div>
   )
 }
