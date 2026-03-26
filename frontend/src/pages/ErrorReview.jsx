@@ -176,6 +176,13 @@ ${grokText.trim()}`
                 <div className="mt-4 space-y-3">
                   {group.errors.map((err, i) => (
                     <div key={i} className="bg-gray-800/60 rounded-lg p-3 border border-gray-700/40">
+                      {/* Source tag + date */}
+                      <div className="flex items-center gap-2 mb-1">
+                        {err.source === 'conversation' && (
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-indigo-900/40 border border-indigo-700/40 text-indigo-400">Rozmowa</span>
+                        )}
+                        <span className="text-xs text-gray-600 ml-auto">{err.date}</span>
+                      </div>
                       {/* Question */}
                       {err.question && (
                         <p className="text-gray-300 text-xs mb-2 font-medium">{err.question}</p>
@@ -192,7 +199,6 @@ ${grokText.trim()}`
                           <span className="text-emerald-400 font-medium text-sm">{err.correct_answer}</span>
                           {err.correct_answer && <PlayButton text={err.correct_answer} language={data.language} />}
                         </div>
-                        <span className="text-xs text-gray-600 ml-auto">{err.date}</span>
                       </div>
 
                       {err.explanation && (

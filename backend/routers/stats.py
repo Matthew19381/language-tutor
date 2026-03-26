@@ -304,15 +304,20 @@ async def get_all_errors(user_id: int, db: Session = Depends(get_db)):
             date_str = test.created_at.strftime("%d.%m.%Y")
             for err in errors:
                 if isinstance(err, dict):
+                    # Conversation errors use 'question' as the problematic phrase (user_answer)
+                    user_answer = err.get("user_answer", "")
+                    if not user_answer and test.test_type == "conversation":
+                        user_answer = err.get("question", "")
                     all_errors.append({
                         "type": err.get("type", "unknown"),
                         "question": err.get("question", err.get("error", "")),
-                        "user_answer": err.get("user_answer", ""),
+                        "user_answer": user_answer,
                         "correct_answer": err.get("correct_answer", err.get("correction", "")),
                         "explanation": err.get("explanation", err.get("rule", "")),
                         "practice": err.get("practice", ""),
                         "date": date_str,
                         "test_id": test.id,
+                        "source": test.test_type or "test",
                     })
         except Exception:
             pass
