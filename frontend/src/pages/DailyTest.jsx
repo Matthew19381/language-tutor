@@ -32,9 +32,30 @@ export default function DailyTest() {
       navigate('/placement')
       return
     }
+
+    const today = new Date().toISOString().slice(0, 10)
+    const lang = localStorage.getItem('userLanguage') || ''
+    const cacheKey = `test_cache_${userId}_${lang}_${today}`
+    const cached = localStorage.getItem(cacheKey)
+
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached)
+        if (parsed.already_taken) {
+          setResults({ score: parsed.score, already_taken: true, errors: [], performance_summary: t('test.alreadyTakenMsg') })
+          setStep(STEPS.RESULTS)
+        } else {
+          setTestData(parsed)
+          setStep(STEPS.TESTING)
+        }
+        return
+      } catch {}
+    }
+
     getDailyTest(userId)
       .then(data => {
         if (data.already_taken) {
+          localStorage.setItem(cacheKey, JSON.stringify({ already_taken: true, score: data.score }))
           setResults({
             score: data.score,
             already_taken: true,
@@ -43,6 +64,7 @@ export default function DailyTest() {
           })
           setStep(STEPS.RESULTS)
         } else {
+          localStorage.setItem(cacheKey, JSON.stringify(data))
           setTestData(data)
           setStep(STEPS.TESTING)
         }
@@ -76,8 +98,11 @@ export default function DailyTest() {
       })
       setResults(res)
       setStep(STEPS.RESULTS)
-      // Mark test as completed in daily tabs
       const today = new Date().toISOString().slice(0, 10)
+      const lang = localStorage.getItem('userLanguage') || ''
+      // Update cache to mark test as already taken
+      localStorage.setItem(`test_cache_${userId}_${lang}_${today}`, JSON.stringify({ already_taken: true, score: res.score }))
+      // Mark test as completed in daily tabs
       try {
         const raw = localStorage.getItem('daily_tabs')
         const stored = raw ? JSON.parse(raw) : { date: today, tabs: [] }
