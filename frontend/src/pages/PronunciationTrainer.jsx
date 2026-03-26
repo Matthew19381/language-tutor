@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Mic, MicOff, RotateCcw, ChevronRight, BarChart3, Trophy, CheckCircle } from 'lucide-react'
-import { getUserId, addXP } from '../api/client'
+import { getUserId, addXP, addFlashcard, askQuestion } from '../api/client'
 import { PageLoader } from '../components/LoadingSpinner'
 import { useLanguage } from '../hooks/useLanguage'
 import PlayButton from '../components/PlayButton'
@@ -20,6 +20,8 @@ export default function PronunciationTrainer() {
   const [sessionResults, setSessionResults] = useState([])
   const [showSummary, setShowSummary] = useState(false)
   const [activityDone, setActivityDone] = useState(false)
+  const [flashMsg, setFlashMsg] = useState('')
+  const [generatingPhrases, setGeneratingPhrases] = useState(false)
   const mediaRecorderRef = useRef(null)
   const audioChunksRef = useRef([])
   const navigate = useNavigate()
@@ -113,6 +115,32 @@ export default function PronunciationTrainer() {
     } finally {
       setAnalyzing(false)
     }
+  }
+
+  const handleAddToFlash = async () => {
+    const phrase = useCustom ? customPhrase.trim() : (phrases[currentIdx]?.text || '')
+    if (!phrase || !userId) return
+    try {
+      const res = await addFlashcard(userId, { word: phrase, translation: '' })
+      setFlashMsg(res.success === false ? res.message : 'Dodano do fiszek!')
+      setTimeout(() => setFlashMsg(''), 3000)
+    } catch { setFlashMsg('Błąd.') }
+  }
+
+  const handleGeneratePhrases = async () => {
+    if (!userId) return
+    setGeneratingPhrases(true)
+    try {
+      const res = await askQuestion(
+        `Wygeneruj 5 zdań do ćwiczenia wymowy w języku ${targetLanguage} na poziomie B1. Podaj tylko same zdania, jedno per linia, bez numeracji.`,
+        userId
+      )
+      const lines = (res.answer || '').split('\n').map(l => l.trim()).filter(Boolean).slice(0, 5)
+      const newPhrases = lines.map(text => ({ text, source: 'AI' }))
+      setPhrases(prev => [...newPhrases, ...prev])
+      setCurrentIdx(0)
+    } catch {}
+    finally { setGeneratingPhrases(false) }
   }
 
   const nextPhrase = () => {
@@ -210,16 +238,43 @@ export default function PronunciationTrainer() {
                   <ChevronRight className="w-5 h-5" />
                 </button>
               </div>
+              <div className="flex items-center gap-2 mt-2">
+                <button
+                  onClick={handleAddToFlash}
+                  className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+                >
+                  + Dodaj do fiszek
+                </button>
+                {flashMsg && <span className="text-xs text-emerald-400">{flashMsg}</span>}
+              </div>
             ) : (
-              <p className="text-gray-400 text-sm">
-                {t('pronun.completeLessons')}
-              </p>
+              <div>
+                <p className="text-gray-400 text-sm mb-2">{t('pronun.completeLessons')}</p>
+                <button
+                  onClick={handleGeneratePhrases}
+                  disabled={generatingPhrases}
+                  className="text-xs text-indigo-400 hover:text-indigo-300 disabled:opacity-50 transition-colors"
+                >
+                  {generatingPhrases ? 'Generowanie...' : 'Generuj zdania do ćwiczenia'}
+                </button>
+              </div>
             )}
-            {phrases.length > 1 && (
-              <p className="text-xs text-gray-600 mt-2">
-                {currentIdx + 1} / {phrases.length}
-              </p>
-            )}
+            <div className="flex items-center justify-between mt-2">
+              {phrases.length > 1 && (
+                <p className="text-xs text-gray-600">
+                  {currentIdx + 1} / {phrases.length}
+                </p>
+              )}
+              {phrases.length > 0 && (
+                <button
+                  onClick={handleGeneratePhrases}
+                  disabled={generatingPhrases}
+                  className="text-xs text-gray-600 hover:text-gray-400 disabled:opacity-50 transition-colors"
+                >
+                  {generatingPhrases ? '...' : '↻ Generuj nowe'}
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>

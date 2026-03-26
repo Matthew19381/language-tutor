@@ -55,8 +55,8 @@ _Źródła: FEEDBACK.md + ZmianyTutor.txt (2026-03-18 → 2026-03-26)_
 - [ ] **ERRORS-3** — Analiza błędów w Statystykach: więcej rubryk (Gramatyka, Rozumienie, Wymowa, Rozmowa), każda rozwijalna z opisem co poprawić.
 - [x] **SPECIAL-CHARS** — SpecialCharHelper dodany do: textarea zadania produkcyjnego + textarea recall w OutputForcingCard. ✅ (2026-03-26)
 - [x] **TRANSLATE-1** — Tłumacz: autodetect języka (cyrylica/inne → target→PL, reszta → PL→target), przycisk "Wytłumacz", "Dodaj do fiszek" po tłumaczeniu, zamknięcie przez klik poza. ✅ (2026-03-26)
-- [ ] **PRONUNCIATION-1** — Zakładka Wymowa: przycisk dodania zdania do fiszek.
-- [ ] **PRONUNCIATION-2** — Zakładka Wymowa: przycisk generowania nowych zdań do ćwiczenia.
+- [x] **PRONUNCIATION-1** — Zakładka Wymowa: przycisk dodania zdania do fiszek. ✅ (2026-03-26)
+- [x] **PRONUNCIATION-2** — Zakładka Wymowa: przycisk generowania nowych zdań do ćwiczenia. ✅ (2026-03-26)
 - [ ] **VIDEOS-1** — Zakładka Filmy: dodawanie ulubionych twórców (przycisk lub wpisanie nazwy).
 - [x] **GROK-1** — Zweryfikowano: prompt po polsku (conversation.py), edytowalny textarea + przycisk kopiowania w Conversation.jsx. ✅ (2026-03-26)
 - [x] **STATS-2** — Zweryfikowano: `flashcards` jest destrukturyzowane ale nie renderowane w Stats.jsx. ✅ (2026-03-26)
