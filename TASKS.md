@@ -17,11 +17,11 @@ _Źródła: FEEDBACK.md + ZmianyTutor.txt (2026-03-18 → 2026-03-26)_
 
 ## P1 — Wysokie (funkcje zepsute)
 
-- [ ] **TEST-1** — Test generuje się za każdym razem po wyjściu z zakładki — ma się generować raz, trzymać w stanie do zakończenia.
+- [x] **TEST-1** — Cache pytań testu w localStorage per dzień/język. ✅ (2026-03-26)
 - [ ] **TEST-2** — Test plasujący: pytania za łatwe, z przetłumaczonym tekstem (odpowiedź oczywista). Przebudować kalibrację.
 - [ ] **TEST-3** — Test plasujący: pytanie z 2 lukami i 3 słowami w odpowiedzi — logicznie błędne. Naprawić generator pytań.
 - [ ] **TIMER-1** — Minutnik zatrzymuje się i znika po kliknięciu w inną zakładkę. Minutnik ma być widoczny globalnie (layout), nie zatrzymywać się.
-- [ ] **STATS-1** — Wskaźnik ukończenia dnia nie działa. Ma się ładować wraz z ukończeniem zakładek: Lekcja, Test, Mów, Newsy/Wymowa — 100% po ~4 aktywnościach.
+- [x] **STATS-1** — TodayCompletion: reaktywny useState + odświeżanie na focus okna. 4 aktywności: Lekcja, Test, Rozmowa, Newsy/Wymowa. ✅ (2026-03-26)
 - [ ] **ERRORS-1** — Zakładka Błędy: nie pokazuje odpowiedzi użytkownika ani poprawnej — tylko wyjaśnienie. Dodać: moja odpowiedź / poprawna odpowiedź / wyjaśnienie.
 - [x] **GRAMMAR-1** — Wyjaśnienie gramatyki: dodano `renderMarkdown()` obsługujący `#/##/###`, `**bold**`, listy. ✅ (2026-03-26)
 - [x] **FLASHCARD-BTN** — Backend zwraca teraz czytelny komunikat gdy AI nie generuje koncepcji. ✅ (2026-03-26)
@@ -30,9 +30,9 @@ _Źródła: FEEDBACK.md + ZmianyTutor.txt (2026-03-18 → 2026-03-26)_
 
 ## P2 — Średnie (funkcje niekompletne)
 
-- [ ] **LANG-1** — Zmiana języka nauki działa z dużym opóźnieniem. Zrobić natychmiastowe przeładowanie strony.
-- [ ] **LANG-2** — Zmiana języka na nowy → od razu test plasujący. Brak możliwości wyboru języka bez testu.
-- [ ] **LANG-3** — Zmiana języka nie resetuje poziomu (po hiszpańskim wróciło do niemieckiego z poziomem A1 z hiszp.).
+- [x] **LANG-1** — Usunięto 1.5s setTimeout — zmiana języka przeładowuje stronę natychmiast. ✅ (2026-03-26)
+- [x] **LANG-2** — Naprawiono needs_placement: was_new rejestrowane PRZED zapisem profilu. ✅ (2026-03-26)
+- [ ] **LANG-3** — Zmiana języka nie resetuje poziomu (do weryfikacji po LANG-2).
 - [ ] **LANG-4** — Wszystkie treści (Lekcja, Główna, Tips, Newsy itd.) osobne dla każdego uczonego języka.
 - [ ] **TIPS-1** — Dzienne wskazówki generowane przy każdym wejściu na stronę. Ma być raz dziennie przy pierwszym wejściu.
 - [x] **TIPS-2** — Prompt wzmocniony: CRITICAL - pisz w {native_language}. ✅ (2026-03-26)
