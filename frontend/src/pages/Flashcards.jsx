@@ -35,6 +35,7 @@ export default function Flashcards() {
   const [addMsg, setAddMsg] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
   const [aiPreview, setAiPreview] = useState(null)
+  const [reversed, setReversed] = useState(false) // PL→target instead of target→PL
 
   useEffect(() => {
     if (!userId) { navigate('/placement'); return }
@@ -388,9 +389,18 @@ export default function Flashcards() {
               {/* Card counter */}
               <div className="flex justify-between text-sm text-gray-400 mb-3">
                 <span>{currentIndex + 1} / {displayCards.length}</span>
-                {tab === TABS.DUE && (
-                  <span>{reviewDone.size} {t('flash.reviewed')}</span>
-                )}
+                <div className="flex items-center gap-3">
+                  {tab === TABS.DUE && (
+                    <span>{reviewDone.size} {t('flash.reviewed')}</span>
+                  )}
+                  <button
+                    onClick={() => { setReversed(r => !r); setIsFlipped(false) }}
+                    className={`text-xs px-2 py-0.5 rounded transition-colors ${reversed ? 'bg-indigo-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-gray-200'}`}
+                    title="Odwróć kierunek fiszek"
+                  >
+                    {reversed ? 'PL → cel' : 'cel → PL'}
+                  </button>
+                </div>
               </div>
 
               {/* Flashcard */}
@@ -404,28 +414,45 @@ export default function Flashcards() {
                     <div className="flashcard-front">
                       <div className="text-center">
                         <p className="text-gray-400 text-xs mb-2 uppercase tracking-wider">
-                          {isFlipped ? t('flash.translationSide') : t('flash.wordSide')}
+                          {reversed ? 'Polski' : t('flash.wordSide')}
                         </p>
-                        <div className="flex items-center justify-center gap-2">
-                          <p className="text-3xl font-bold text-indigo-300">{currentCard.word}</p>
-                          <div onClick={e => e.stopPropagation()}>
-                            <PlayButton text={currentCard.word} language={currentCard.language || targetLanguage} />
+                        {reversed ? (
+                          <p className="text-3xl font-bold text-emerald-300">{currentCard.translation}</p>
+                        ) : (
+                          <div className="flex items-center justify-center gap-2">
+                            <p className="text-3xl font-bold text-indigo-300">{currentCard.word}</p>
+                            <div onClick={e => e.stopPropagation()}>
+                              <PlayButton text={currentCard.word} language={currentCard.language || targetLanguage} />
+                            </div>
                           </div>
-                        </div>
+                        )}
                         <p className="text-gray-500 text-xs mt-3">{t('flash.clickReveal')}</p>
                       </div>
                     </div>
                     {/* Back */}
                     <div className="flashcard-back">
                       <div className="text-center">
-                        <p className="text-gray-400 text-xs mb-2 uppercase tracking-wider">{t('flash.translationSide')}</p>
-                        <div className="flex items-center justify-center gap-2 mb-1">
-                          <p className="text-3xl font-bold text-indigo-300">{currentCard.word}</p>
-                          <div onClick={e => e.stopPropagation()}>
-                            <PlayButton text={currentCard.word} language={currentCard.language || targetLanguage} />
+                        <p className="text-gray-400 text-xs mb-2 uppercase tracking-wider">
+                          {reversed ? t('flash.wordSide') : t('flash.translationSide')}
+                        </p>
+                        {reversed ? (
+                          <div className="flex items-center justify-center gap-2 mb-1">
+                            <p className="text-3xl font-bold text-indigo-300">{currentCard.word}</p>
+                            <div onClick={e => e.stopPropagation()}>
+                              <PlayButton text={currentCard.word} language={currentCard.language || targetLanguage} />
+                            </div>
                           </div>
-                        </div>
-                        <p className="text-2xl font-bold text-emerald-300">{currentCard.translation}</p>
+                        ) : (
+                          <>
+                            <div className="flex items-center justify-center gap-2 mb-1">
+                              <p className="text-3xl font-bold text-indigo-300">{currentCard.word}</p>
+                              <div onClick={e => e.stopPropagation()}>
+                                <PlayButton text={currentCard.word} language={currentCard.language || targetLanguage} />
+                              </div>
+                            </div>
+                            <p className="text-2xl font-bold text-emerald-300">{currentCard.translation}</p>
+                          </>
+                        )}
                         {currentCard.example_sentence && (
                           <p className="text-gray-400 text-sm mt-3 italic max-w-xs">
                             {currentCard.example_sentence}

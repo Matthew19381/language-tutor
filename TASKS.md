@@ -39,7 +39,7 @@ _Źródła: FEEDBACK.md + ZmianyTutor.txt (2026-03-18 → 2026-03-26)_
 - [x] **DIALOG-1** — Układ dialogu: naprawiono — teraz używa pola `speaker` zamiast alternującego indeksu. ✅ (2026-03-26)
 - [x] **FLASHCARD-1** — Zweryfikowano: filtr daty (today/week/month) i filtr dnia lekcji już są w Flashcards.jsx. ✅ (2026-03-26)
 - [x] **FLASHCARD-2** — Fiszki: AI sprawdza poprawność wpisanego słowa przed dodaniem do zbioru (żeby nie utrwalać błędów). ✅ (2026-03-26)
-- [ ] **FLASHCARD-3** — Fiszki: opcja dodania polskiego słowa na przód / niemieckiego na tył (zamiast tylko niem→pol).
+- [x] **FLASHCARD-3** — Fiszki: opcja dodania polskiego słowa na przód / niemieckiego na tył (zamiast tylko niem→pol). ✅ (2026-03-26)
 - [x] **FLASHCARD-4** — Nawigacja klawiaturą: Space/Enter=odwróć, ←→=poprzednia/następna, 1-4=ocena. ✅ (2026-03-26)
 - [x] **FLASHCARD-5** — Zweryfikowano: backend sprawdza duplikaty i zwraca "Fiszka X już istnieje". ✅ (2026-03-26)
 - [ ] **LESSON-3** — Historia lekcji: wskaźnik ukończenia per lekcja.
