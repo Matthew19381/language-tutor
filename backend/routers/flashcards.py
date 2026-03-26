@@ -275,7 +275,7 @@ Return ONLY valid JSON:
             correction = val.get("correction", "").strip()
             msg = f"Niepoprawna pisownia."
             if correction:
-                msg = f"Niepoprawna pisownia. Czy chodziło Ci o: „{correction}"?"
+                msg = f'Niepoprawna pisownia. Czy chodziło Ci o: "{correction}"?'
             return {"success": False, "message": msg}
     except Exception:
         pass  # If validation fails, proceed anyway
