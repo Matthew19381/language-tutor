@@ -262,6 +262,24 @@ async def add_flashcard_ai(
     if existing:
         return {"success": False, "message": f"Fiszka '{request.word}' już istnieje w Twojej kolekcji.", "id": existing.id}
 
+    # Validate spelling before adding
+    validation_prompt = f"""Is '{request.word}' a correctly spelled {user.target_language} word or phrase?
+Return ONLY valid JSON:
+{{
+    "valid": true/false,
+    "correction": "corrected form if invalid, empty string if valid"
+}}"""
+    try:
+        val = await generate_json(validation_prompt)
+        if isinstance(val, dict) and val.get("valid") is False:
+            correction = val.get("correction", "").strip()
+            msg = f"Niepoprawna pisownia."
+            if correction:
+                msg = f"Niepoprawna pisownia. Czy chodziło Ci o: „{correction}"?"
+            return {"success": False, "message": msg}
+    except Exception:
+        pass  # If validation fails, proceed anyway
+
     # Use AI to generate translation and example
     prompt = f"""Given the {user.target_language} word or phrase '{request.word}', provide:
 - ONE main Polish translation (the most common/primary meaning only — do NOT list all conjugated forms)
