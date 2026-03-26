@@ -22,7 +22,7 @@ _Źródła: FEEDBACK.md + ZmianyTutor.txt (2026-03-18 → 2026-03-26)_
 - [ ] **TEST-3** — Test plasujący: pytanie z 2 lukami i 3 słowami w odpowiedzi — logicznie błędne. Naprawić generator pytań.
 - [ ] **TIMER-1** — Minutnik zatrzymuje się i znika po kliknięciu w inną zakładkę. Minutnik ma być widoczny globalnie (layout), nie zatrzymywać się.
 - [x] **STATS-1** — TodayCompletion: reaktywny useState + odświeżanie na focus okna. 4 aktywności: Lekcja, Test, Rozmowa, Newsy/Wymowa. ✅ (2026-03-26)
-- [ ] **ERRORS-1** — Zakładka Błędy: nie pokazuje odpowiedzi użytkownika ani poprawnej — tylko wyjaśnienie. Dodać: moja odpowiedź / poprawna odpowiedź / wyjaśnienie.
+- [x] **ERRORS-1** — Backend (stats.py) zwracał error/correction zamiast user_answer/correct_answer. Fix: nowe pola question/user_answer/correct_answer w get_all_errors + UI ErrorReview.jsx. ✅ (2026-03-26)
 - [x] **GRAMMAR-1** — Wyjaśnienie gramatyki: dodano `renderMarkdown()` obsługujący `#/##/###`, `**bold**`, listy. ✅ (2026-03-26)
 - [x] **FLASHCARD-BTN** — Backend zwraca teraz czytelny komunikat gdy AI nie generuje koncepcji. ✅ (2026-03-26)
 

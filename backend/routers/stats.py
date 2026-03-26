@@ -306,8 +306,9 @@ async def get_all_errors(user_id: int, db: Session = Depends(get_db)):
                 if isinstance(err, dict):
                     all_errors.append({
                         "type": err.get("type", "unknown"),
-                        "error": err.get("error", err.get("question", "")),
-                        "correction": err.get("correction", err.get("correct_answer", "")),
+                        "question": err.get("question", err.get("error", "")),
+                        "user_answer": err.get("user_answer", ""),
+                        "correct_answer": err.get("correct_answer", err.get("correction", "")),
                         "explanation": err.get("explanation", err.get("rule", "")),
                         "practice": err.get("practice", ""),
                         "date": date_str,

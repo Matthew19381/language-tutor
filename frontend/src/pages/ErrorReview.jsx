@@ -90,16 +90,21 @@ export default function ErrorReview() {
                 <div className="mt-4 space-y-3">
                   {group.errors.map((err, i) => (
                     <div key={i} className="bg-gray-800/60 rounded-lg p-3 border border-gray-700/40">
-                      {/* Error → Correction */}
-                      <div className="flex items-center gap-2 flex-wrap mb-2">
-                        <div className="flex items-center gap-1">
-                          <span className="text-red-400 font-medium line-through text-sm">{err.error}</span>
-                          {err.error && <PlayButton text={err.error} language={data.language} />}
+                      {/* Question */}
+                      {err.question && (
+                        <p className="text-gray-300 text-xs mb-2 font-medium">{err.question}</p>
+                      )}
+                      {/* User answer → Correct answer */}
+                      <div className="flex items-center gap-3 flex-wrap mb-2">
+                        <div>
+                          <span className="text-gray-500 text-xs">Twoja odpowiedź: </span>
+                          <span className="text-red-400 font-medium text-sm line-through">{err.user_answer || '—'}</span>
                         </div>
                         <span className="text-gray-600">→</span>
                         <div className="flex items-center gap-1">
-                          <span className="text-emerald-400 font-medium text-sm">{err.correction}</span>
-                          {err.correction && <PlayButton text={err.correction} language={data.language} />}
+                          <span className="text-gray-500 text-xs">Poprawna: </span>
+                          <span className="text-emerald-400 font-medium text-sm">{err.correct_answer}</span>
+                          {err.correct_answer && <PlayButton text={err.correct_answer} language={data.language} />}
                         </div>
                         <span className="text-xs text-gray-600 ml-auto">{err.date}</span>
                       </div>
