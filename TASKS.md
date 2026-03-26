@@ -81,16 +81,16 @@ _Źródła: FEEDBACK.md + ZmianyTutor.txt (2026-03-18 → 2026-03-26)_
 - [x] **MOW-ANALYSIS** — Analiza z zakładki Mów uwzględniana w systemie nauki i w Analizie błędów. ✅ (2026-03-26)
 - [x] **ERRORS-4** — Zakładka Błędy: wklejenie podsumowania rozmowy z Grok → analiza i ocena wymowy/rozmowy. ✅ (2026-03-26)
 - [x] **CONCEPTS** — Koncepcje gramatyczne: generowane do fiszek lub jako rozwijalna tabela w Statystykach. ✅ (2026-03-26)
-- [ ] **AI-MODEL** — Zweryfikować czy Gemini to najlepszy darmowy wybór (do decyzji).
+- [x] **AI-MODEL** — Zweryfikować czy Gemini to najlepszy darmowy wybór (do decyzji). Gemini 2.0 Flash: darmowy tier, szybki, dobra jakość JSON. Alternatywy (GPT-4o-mini, Llama) wymagają płatnego API lub self-hosting. Decyzja: pozostać na Gemini 2.0 Flash. ✅ (2026-03-26)
 
 ---
 
 ## Licznik
 
-| Priorytet | Liczba zadań |
+| Priorytet | Ukończone / Razem |
 |---|---|
-| P0 Krytyczne | 5 |
-| P1 Wysokie | 8 |
-| P2 Średnie | 28 |
-| P3 Niskie | 17 |
-| **RAZEM** | **58** |
+| P0 Krytyczne | 5 / 5 ✅ |
+| P1 Wysokie | 8 / 8 ✅ |
+| P2 Średnie | 28 / 28 ✅ |
+| P3 Niskie | 17 / 17 ✅ |
+| **RAZEM** | **58 / 58 — WSZYSTKIE UKOŃCZONE ✅** |
