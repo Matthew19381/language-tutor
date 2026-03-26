@@ -1,17 +1,24 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Youtube, Search, RefreshCw, ExternalLink, Play, X, BookOpen, CheckCircle, Heart } from 'lucide-react'
+import { Youtube, Search, RefreshCw, ExternalLink, Play, X, BookOpen, CheckCircle, Heart, Plus, Users } from 'lucide-react'
 import { getUserId, searchYouTube, addXP } from '../api/client'
 import { PageLoader } from '../components/LoadingSpinner'
 import { useLanguage } from '../hooks/useLanguage'
 
 const FAVS_KEY = 'video_favorites'
+const CREATORS_KEY = 'video_favorite_creators'
 
 function loadFavorites() {
   try { return JSON.parse(localStorage.getItem(FAVS_KEY) || '[]') } catch { return [] }
 }
 function saveFavorites(favs) {
   localStorage.setItem(FAVS_KEY, JSON.stringify(favs))
+}
+function loadCreators() {
+  try { return JSON.parse(localStorage.getItem(CREATORS_KEY) || '[]') } catch { return [] }
+}
+function saveCreators(creators) {
+  localStorage.setItem(CREATORS_KEY, JSON.stringify(creators))
 }
 
 export default function Videos() {
@@ -28,6 +35,8 @@ export default function Videos() {
   const [activityDone, setActivityDone] = useState(false)
   const [favorites, setFavorites] = useState(loadFavorites)
   const [showFavs, setShowFavs] = useState(false)
+  const [creators, setCreators] = useState(loadCreators)
+  const [creatorInput, setCreatorInput] = useState('')
 
   const toggleFavorite = (video) => {
     setFavorites(prev => {
@@ -40,6 +49,21 @@ export default function Videos() {
     })
   }
   const isFav = (video_id) => favorites.some(f => f.video_id === video_id)
+
+  const addCreator = () => {
+    const name = creatorInput.trim()
+    if (!name || creators.includes(name)) return
+    const next = [...creators, name]
+    setCreators(next)
+    saveCreators(next)
+    setCreatorInput('')
+  }
+
+  const removeCreator = (name) => {
+    const next = creators.filter(c => c !== name)
+    setCreators(next)
+    saveCreators(next)
+  }
 
   useEffect(() => {
     if (!userId) { navigate('/placement'); return }
@@ -203,6 +227,51 @@ export default function Videos() {
           {searching ? '...' : 'Szukaj'}
         </button>
       </form>
+
+      {/* Favorite creators */}
+      <div className="mb-4">
+        <div className="flex items-center gap-2 mb-2">
+          <Users className="w-4 h-4 text-indigo-400" />
+          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Ulubieni twórcy</span>
+        </div>
+        <div className="flex flex-wrap gap-2 mb-2">
+          {creators.map(name => (
+            <button
+              key={name}
+              onClick={() => handleSuggestedClick(name)}
+              disabled={searching}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-900/30 border border-indigo-700/40 text-indigo-300 text-xs hover:bg-indigo-700/40 transition-colors disabled:opacity-50"
+            >
+              {name}
+              <span
+                onClick={e => { e.stopPropagation(); removeCreator(name) }}
+                className="text-indigo-500 hover:text-red-400 transition-colors cursor-pointer ml-0.5"
+              >
+                <X className="w-3 h-3" />
+              </span>
+            </button>
+          ))}
+          <form
+            onSubmit={e => { e.preventDefault(); addCreator() }}
+            className="flex items-center gap-1"
+          >
+            <input
+              type="text"
+              value={creatorInput}
+              onChange={e => setCreatorInput(e.target.value)}
+              placeholder="Dodaj twórcę..."
+              className="bg-gray-800 border border-gray-700 rounded-full px-3 py-1.5 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-indigo-500 w-36"
+            />
+            <button
+              type="submit"
+              disabled={!creatorInput.trim()}
+              className="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-40 transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+            </button>
+          </form>
+        </div>
+      </div>
 
       {/* Suggested queries */}
       {data?.suggested_queries?.length > 0 && !isCustomSearch && (

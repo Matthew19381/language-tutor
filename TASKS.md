@@ -57,7 +57,7 @@ _Źródła: FEEDBACK.md + ZmianyTutor.txt (2026-03-18 → 2026-03-26)_
 - [x] **TRANSLATE-1** — Tłumacz: autodetect języka (cyrylica/inne → target→PL, reszta → PL→target), przycisk "Wytłumacz", "Dodaj do fiszek" po tłumaczeniu, zamknięcie przez klik poza. ✅ (2026-03-26)
 - [x] **PRONUNCIATION-1** — Zakładka Wymowa: przycisk dodania zdania do fiszek. ✅ (2026-03-26)
 - [x] **PRONUNCIATION-2** — Zakładka Wymowa: przycisk generowania nowych zdań do ćwiczenia. ✅ (2026-03-26)
-- [ ] **VIDEOS-1** — Zakładka Filmy: dodawanie ulubionych twórców (przycisk lub wpisanie nazwy).
+- [x] **VIDEOS-1** — Zakładka Filmy: dodawanie ulubionych twórców (przycisk lub wpisanie nazwy). ✅ (2026-03-26)
 - [x] **GROK-1** — Zweryfikowano: prompt po polsku (conversation.py), edytowalny textarea + przycisk kopiowania w Conversation.jsx. ✅ (2026-03-26)
 - [x] **STATS-2** — Zweryfikowano: `flashcards` jest destrukturyzowane ale nie renderowane w Stats.jsx. ✅ (2026-03-26)
 - [x] **STATS-3** — Usunięto przycisk CSV. Historia lekcji: wszystkie lekcje z backendu, domyślnie 7 ostatnich, "Pokaż wszystkie" toggle. ✅ (2026-03-26)
