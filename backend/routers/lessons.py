@@ -29,7 +29,8 @@ def get_day_number(user: User, db: Session = None, language: str = None) -> int:
     if db is not None and language is not None:
         count = db.query(Lesson).filter(
             Lesson.user_id == user.id,
-            Lesson.language == language
+            Lesson.language == language,
+            Lesson.is_completed == True
         ).count()
         return count + 1
     # Fallback: global calendar-based calculation
@@ -63,13 +64,21 @@ async def get_today_lesson(user_id: int, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Check if lesson for today already exists for this language
+    # Check if today's lesson already exists for this language
     today_start = datetime.combine(date.today(), datetime.min.time())
     existing_lesson = db.query(Lesson).filter(
         Lesson.user_id == user_id,
         Lesson.language == user.target_language,
         Lesson.created_at >= today_start
     ).first()
+
+    # If no lesson today, check for uncompleted lesson from previous days
+    if not existing_lesson:
+        existing_lesson = db.query(Lesson).filter(
+            Lesson.user_id == user_id,
+            Lesson.language == user.target_language,
+            Lesson.is_completed == False
+        ).order_by(Lesson.created_at.desc()).first()
 
     day_number = get_day_number(user, db, user.target_language)
 

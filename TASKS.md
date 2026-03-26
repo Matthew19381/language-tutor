@@ -11,7 +11,7 @@ _Źródła: FEEDBACK.md + ZmianyTutor.txt (2026-03-18 → 2026-03-26)_
 - [x] **AUDIO-2** — PlayButton dodany do: gramatyka (explanation), fiszki (słowo front+back), newsy (simplified_text), wymowa (fraza/custom). Dialog i słownictwo już miały. ✅ (2026-03-26)
 - [x] **UI-1** — Nazwy języków spolszczone (German→Niemiecki itd.) w Stats, PlacementTest, Home, QuickMode. LANG_DISPLAY map per plik. ✅ (2026-03-26)
 - [x] **LESSON-1** — useState(true) powodował flash spinnera przy powrocie. Fix: lazy initializer z readLessonCache() — loading=false i lesson=dane od razu przy mount. ✅ (2026-03-26)
-- [ ] **LESSON-2** — Lekcja nie powinna zaczynać od Dnia 2 jeśli użytkownik nie ukończył Dnia 1.
+- [x] **LESSON-2** — get_day_number liczyło wszystkie lekcje (nie tylko ukończone). Fix: liczenie tylko is_completed=True + sprawdzenie nieukończonych lekcji z poprzednich dni. ✅ (2026-03-26)
 
 ---
 
