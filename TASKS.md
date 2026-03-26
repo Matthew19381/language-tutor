@@ -73,8 +73,8 @@ _Źródła: FEEDBACK.md + ZmianyTutor.txt (2026-03-18 → 2026-03-26)_
 - [x] **TIMER-5** — Usunąć "Flashcard Review" z trybu Timer (użytkownik korzysta z Anki). Zweryfikowano: quickmode.py nie ma fiszek w planie. ✅ (2026-03-26)
 - [x] **HOME-1** — Zakładka Główna: usunąć "Fiszki do powtórki" z Aktywności. Usunięto ActionCard /flashcards z Home.jsx. ✅ (2026-03-26)
 - [x] **HOME-2** — Sekcja Aktywności: zmienić nazwę z "Dzisiejsze Aktywności" na "Aktywności", zawierać wszystkie aktywności do nauki. Zweryfikowano: Home.jsx — już "Aktywności". ✅ (2026-03-26)
-- [ ] **SETTINGS-1** — Ustawienia: w liście języków nauki pokazywać aktualnie uczony język dla łatwego dostępu.
-- [ ] **HARDCORE** — Tryb Hardcore: zmienia język tylko częściowo — naprawić pełną zmianę na język uczony.
+- [x] **SETTINGS-1** — Ustawienia: w liście języków nauki pokazywać aktualnie uczony język dla łatwego dostępu. Zweryfikowano: Stats.jsx — aktywny język ma indigo border/bg. ✅ (2026-03-26)
+- [x] **HARDCORE** — Tryb Hardcore: zmienia język tylko częściowo — naprawić pełną zmianę na język uczony. Fix: settings.py _UI_EN uzupełniony o wszystkie brakujące klucze (home/test/conv/lesson/flash/pronun). ✅ (2026-03-26)
 - [x] **ACHIEVEMENTS** — Wszystkie tytuły i opisy osiągnięć przetłumaczone na polski. ✅ (2026-03-26)
 - [ ] **FLASHCARD-TABLE** — Tabela szybkiego dodawania fiszek: widoczna na każdej zakładce (stały element layoutu), od razu pokazuje pole do wpisania po kliknięciu.
 - [ ] **READING-COPY** — Zakładka Czytanie: opcja kopiowania słowa/zdania do tabeli → AI tworzy fiszkę automatycznie.
