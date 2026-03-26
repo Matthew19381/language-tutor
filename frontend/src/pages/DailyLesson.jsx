@@ -591,7 +591,6 @@ export default function DailyLesson() {
               )
               })
             })()}
-            })}
           </div>
         </Section>
       )}

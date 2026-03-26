@@ -220,33 +220,35 @@ export default function PronunciationTrainer() {
         ) : (
           <div>
             {phrases.length > 0 ? (
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="text-lg font-semibold text-indigo-200">{currentPhrase}</p>
-                    <PlayButton text={currentPhrase} language={targetLanguage} />
+              <>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="text-lg font-semibold text-indigo-200">{currentPhrase}</p>
+                      <PlayButton text={currentPhrase} language={targetLanguage} />
+                    </div>
+                    {phrases[currentIdx]?.source && (
+                      <p className="text-xs text-gray-500 mt-0.5">{phrases[currentIdx].source}</p>
+                    )}
                   </div>
-                  {phrases[currentIdx]?.source && (
-                    <p className="text-xs text-gray-500 mt-0.5">{phrases[currentIdx].source}</p>
-                  )}
+                  <button
+                    onClick={nextPhrase}
+                    className="p-2 text-gray-400 hover:text-gray-200 transition-colors"
+                    title="Next phrase"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
                 </div>
-                <button
-                  onClick={nextPhrase}
-                  className="p-2 text-gray-400 hover:text-gray-200 transition-colors"
-                  title="Next phrase"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-              </div>
-              <div className="flex items-center gap-2 mt-2">
-                <button
-                  onClick={handleAddToFlash}
-                  className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
-                >
-                  + Dodaj do fiszek
-                </button>
-                {flashMsg && <span className="text-xs text-emerald-400">{flashMsg}</span>}
-              </div>
+                <div className="flex items-center gap-2 mt-2">
+                  <button
+                    onClick={handleAddToFlash}
+                    className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+                  >
+                    + Dodaj do fiszek
+                  </button>
+                  {flashMsg && <span className="text-xs text-emerald-400">{flashMsg}</span>}
+                </div>
+              </>
             ) : (
               <div>
                 <p className="text-gray-400 text-sm mb-2">{t('pronun.completeLessons')}</p>
