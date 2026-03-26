@@ -4,7 +4,7 @@ import {
   FlaskConical, ChevronRight, CheckCircle, XCircle,
   AlertTriangle, Trophy, RotateCcw
 } from 'lucide-react'
-import { getUserId, getDailyTest, submitTest } from '../api/client'
+import { getUserId, getDailyTest, submitTest, getTestFromErrors } from '../api/client'
 import { PageLoader } from '../components/LoadingSpinner'
 import { useLanguage } from '../hooks/useLanguage'
 
@@ -148,7 +148,16 @@ export default function DailyTest() {
   }
 
   if (step === STEPS.RESULTS && results) {
-    return <TestResults results={results} onRetry={() => navigate('/lesson')} t={t} />
+    const handleRegenerateFromErrors = async () => {
+      try {
+        const test = await getTestFromErrors(userId)
+        const today = new Date().toISOString().slice(0, 10)
+        const lang = localStorage.getItem('userLanguage') || ''
+        localStorage.setItem(`test_cache_${userId}_${lang}_${today}`, JSON.stringify(test))
+        window.location.reload()
+      } catch {}
+    }
+    return <TestResults results={results} onRetry={() => navigate('/lesson')} onRegenerateFromErrors={handleRegenerateFromErrors} t={t} />
   }
 
   if (!currentQuestion) return null
@@ -273,7 +282,8 @@ export default function DailyTest() {
   )
 }
 
-function TestResults({ results, onRetry, t }) {
+function TestResults({ results, onRetry, onRegenerateFromErrors, t }) {
+  const [regenLoading, setRegenLoading] = useState(false)
   const score = Math.round(results.score || 0)
   const scoreColor = score >= 80 ? 'emerald' : score >= 60 ? 'yellow' : 'red'
   const errors = results.errors || []
@@ -350,13 +360,25 @@ function TestResults({ results, onRetry, t }) {
         </div>
       )}
 
-      <button
-        className="btn-primary w-full py-3 flex items-center justify-center gap-2"
-        onClick={onRetry}
-      >
-        <RotateCcw className="w-4 h-4" />
-        {t('test.goToLesson')}
-      </button>
+      <div className="flex flex-col gap-3">
+        {errors.length > 0 && onRegenerateFromErrors && (
+          <button
+            className="btn-secondary w-full py-3 flex items-center justify-center gap-2"
+            onClick={async () => { setRegenLoading(true); await onRegenerateFromErrors(); setRegenLoading(false) }}
+            disabled={regenLoading}
+          >
+            <FlaskConical className="w-4 h-4" />
+            {regenLoading ? 'Generowanie...' : 'Generuj test z błędów'}
+          </button>
+        )}
+        <button
+          className="btn-primary w-full py-3 flex items-center justify-center gap-2"
+          onClick={onRetry}
+        >
+          <RotateCcw className="w-4 h-4" />
+          {t('test.goToLesson')}
+        </button>
+      </div>
     </div>
   )
 }
