@@ -1,7 +1,6 @@
 import asyncio
 import os
 import logging
-from functools import partial
 
 logger = logging.getLogger(__name__)
 
@@ -29,18 +28,24 @@ def ensure_audio_dir():
 
 
 async def generate_audio(text: str, language: str, output_path: str) -> str:
-    """Generate audio for the given text using edge-tts."""
+    """Generate audio for the given text using edge-tts. Retries up to 3 times on transient errors."""
     import edge_tts
     ensure_audio_dir()
     voice = LANGUAGE_VOICES.get(language, "de-DE-KatjaNeural")
-    try:
-        communicate = edge_tts.Communicate(text, voice)
-        await communicate.save(output_path)
-        logger.info(f"Audio generated: {output_path}")
-        return output_path
-    except Exception as e:
-        logger.error(f"Error generating audio: {e}")
-        raise
+    last_exc = None
+    for attempt in range(3):
+        try:
+            communicate = edge_tts.Communicate(text, voice)
+            await communicate.save(output_path)
+            logger.info(f"Audio generated: {output_path}")
+            return output_path
+        except Exception as e:
+            last_exc = e
+            logger.warning(f"Audio attempt {attempt + 1}/3 failed: {e}")
+            if attempt < 2:
+                await asyncio.sleep(0.5 * (2 ** attempt))
+    logger.error(f"Error generating audio after 3 attempts: {last_exc}")
+    raise last_exc
 
 
 async def generate_vocabulary_audio(vocabulary: list, language: str, lesson_id: int) -> list:

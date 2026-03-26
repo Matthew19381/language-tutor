@@ -711,6 +711,8 @@ Return JSON:
             skipped += 1
 
     db.commit()
+    if created == 0 and skipped == 0:
+        return {"success": False, "message": "AI nie wygenerowało koncepcji dla tej lekcji. Spróbuj ponownie.", "created": 0}
     return {"success": True, "created": created, "skipped": skipped, "total_concepts": len(concepts)}
 
 

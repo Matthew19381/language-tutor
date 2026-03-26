@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Fragment } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   BookOpen, CheckCircle, ChevronDown, ChevronUp,
@@ -11,6 +11,28 @@ import { getUserId, getTodayLesson, getLesson, completeLesson, addFlashcardAI, e
 import PlayButton from '../components/PlayButton'
 import { PageLoader } from '../components/LoadingSpinner'
 import { useLanguage } from '../hooks/useLanguage'
+
+function renderMarkdown(text) {
+  if (!text) return null
+  return text.split('\n').map((line, i) => {
+    if (line.startsWith('### ')) return <h4 key={i} className="font-semibold text-white mt-3 mb-1">{line.slice(4)}</h4>
+    if (line.startsWith('## ')) return <h3 key={i} className="font-bold text-indigo-300 text-base mt-4 mb-1">{line.slice(3)}</h3>
+    if (line.startsWith('# ')) return <h2 key={i} className="font-bold text-indigo-200 text-lg mt-4 mb-1">{line.slice(2)}</h2>
+    if (line.startsWith('- ') || line.startsWith('* ')) {
+      const content = parseBold(line.slice(2))
+      return <li key={i} className="text-gray-300 ml-4 list-disc">{content}</li>
+    }
+    if (!line.trim()) return <br key={i} />
+    return <p key={i} className="text-gray-300 leading-relaxed">{parseBold(line)}</p>
+  })
+}
+
+function parseBold(text) {
+  const parts = text.split(/\*\*(.*?)\*\*/g)
+  return parts.map((p, j) =>
+    j % 2 === 1 ? <strong key={j} className="text-white font-semibold">{p}</strong> : p
+  )
+}
 
 const OBSIDIAN_OFFSETS = [
   { offset: -1, key: 'lesson.yesterday' },
@@ -392,7 +414,7 @@ export default function DailyLesson() {
         onToggle={() => toggleSection('explanation')}
       >
         <div className="prose prose-invert max-w-none">
-          <p className="text-gray-300 leading-relaxed whitespace-pre-line">{content.explanation}</p>
+          {renderMarkdown(content.explanation)}
         </div>
         <div className="mt-3">
           <button
@@ -483,33 +505,43 @@ export default function DailyLesson() {
             </p>
           )}
           <div className="space-y-3">
-            {(content.dialogue.lines || []).map((line, i) => {
-              const isB = i % 2 === 1
-              return (
-              <div
-                key={i}
-                className={`flex gap-3 ${isB ? 'flex-row-reverse' : ''}`}
-              >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${
-                  isB ? 'bg-purple-700' : 'bg-indigo-700'
-                }`}>
-                  {line.speaker || (isB ? 'B' : 'A')}
-                </div>
-                <div className={`max-w-sm rounded-2xl px-4 py-2.5 ${
-                  isB
-                    ? 'bg-gray-700 rounded-tr-sm'
-                    : 'bg-gray-800 rounded-tl-sm'
-                }`}>
-                  <div className="flex items-start gap-1.5">
-                    <p className="font-medium flex-1">{line.text}</p>
-                    <PlayButton text={line.text} language={lesson.language} />
+            {(() => {
+              const lines = content.dialogue.lines || []
+              const speakers = []
+              lines.forEach(line => {
+                const s = line.speaker || 'A'
+                if (!speakers.includes(s)) speakers.push(s)
+              })
+              return lines.map((line, i) => {
+                const spk = line.speaker || (i % 2 === 0 ? speakers[0] : (speakers[1] || 'B'))
+                const isB = speakers.indexOf(spk) > 0
+                return (
+                <div
+                  key={i}
+                  className={`flex gap-3 ${isB ? 'flex-row-reverse' : ''}`}
+                >
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${
+                    isB ? 'bg-purple-700' : 'bg-indigo-700'
+                  }`}>
+                    {spk.slice(0, 2)}
                   </div>
-                  {line.translation && (
-                    <p className="text-gray-400 text-sm mt-0.5 italic">{line.translation}</p>
-                  )}
+                  <div className={`max-w-sm rounded-2xl px-4 py-2.5 ${
+                    isB
+                      ? 'bg-gray-700 rounded-tr-sm'
+                      : 'bg-gray-800 rounded-tl-sm'
+                  }`}>
+                    <div className="flex items-start gap-1.5">
+                      <p className="font-medium flex-1">{line.text}</p>
+                      <PlayButton text={line.text} language={lesson.language} />
+                    </div>
+                    {line.translation && (
+                      <p className="text-gray-400 text-sm mt-0.5 italic">{line.translation}</p>
+                    )}
+                  </div>
                 </div>
-              </div>
               )
+              })
+            })()}
             })}
           </div>
         </Section>
