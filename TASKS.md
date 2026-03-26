@@ -49,7 +49,7 @@ _Źródła: FEEDBACK.md + ZmianyTutor.txt (2026-03-18 → 2026-03-26)_
 - [x] **LESSON-7** — Zweryfikowano: TranslationReveal już istnieje i jest używany w OutputForcingCard. ✅ (2026-03-26)
 - [x] **LESSON-8** — W pobranych plikach: zawartość Gramatyka + Słownictwo + Dialog (bez reszty). Nazewnictwo folderu np. `Hiszpański_A1`. Integracja z Google Drive / Obsidian. ✅ (2026-03-26)
 - [x] **LESSON-9** — Pobrana lekcja: 3 pliki audio (Gramatyka, Słownictwo, Dialog) + film dopasowany do poziomu i tematu. ✅ (2026-03-26)
-- [ ] **TEST-4** — Test: znacznie trudniejszy, powiązany z bieżącą lekcją.
+- [x] **TEST-4** — Test: znacznie trudniejszy, powiązany z bieżącą lekcją. ✅ (2026-03-26)
 - [x] **TEST-5** — Po zakończeniu testu: opcja regeneracji uwzględniająca błędy z podsumowania. ✅ (2026-03-26)
 - [x] **ERRORS-2** — Zakładka Błędy: przyciski "Generuj fiszki z błędów" i "Generuj test z błędów". ✅ (2026-03-26)
 - [x] **ERRORS-3** — Analiza błędów w Statystykach: więcej rubryk (Gramatyka, Rozumienie, Wymowa, Rozmowa), każda rozwijalna z opisem co poprawić. ✅ (2026-03-26)

@@ -413,39 +413,66 @@ async def generate_daily_test(
     language: str,
     native_language: str
 ) -> dict:
-    vocab = lesson_content.get("vocabulary", [])[:5]
+    vocab = lesson_content.get("vocabulary", [])
     topic = lesson_content.get("topic", "general")
     title = lesson_content.get("title", "Today's Lesson")
+    grammar = lesson_content.get("explanation", "")[:600]
+    dialogue = lesson_content.get("dialogue", {})
+    dialogue_lines = dialogue.get("lines", [])[:4] if isinstance(dialogue, dict) else []
+    dialogue_sample = "  ".join(f"{l.get('speaker','')}: {l.get('text','')}" for l in dialogue_lines)
 
-    prompt = f"""Create a 10-question test based on this {language} lesson.
+    vocab_words = [f"{v.get('word','')} = {v.get('translation','')}" for v in vocab[:12]]
+
+    prompt = f"""You are a strict {language} language examiner. Create a CHALLENGING 15-question test based on today's lesson.
 
 Lesson: {title}
 Topic: {topic}
 CEFR Level: {cefr_level}
-Vocabulary covered: {vocab}
-Native language: {native_language}
+Native language (student): {native_language}
 
-Generate 10 questions testing:
-- 3 vocabulary questions from the lesson
-- 3 grammar questions based on lesson content
-- 2 translation questions (from {native_language} to {language})
-- 2 comprehension/application questions
+LESSON VOCABULARY (ALL must be tested):
+{chr(10).join(vocab_words)}
 
-Return JSON:
+GRAMMAR TOPIC:
+{grammar}
+
+DIALOGUE EXCERPT:
+{dialogue_sample}
+
+REQUIREMENTS — create EXACTLY:
+- 4 vocabulary questions: fill-in-the-blank sentences requiring the exact word from the lesson (NO multiple choice)
+- 3 grammar questions: multiple choice, test the specific grammar rule from the lesson (include plausible wrong answers)
+- 3 translation questions: {native_language}→{language}, student must write the full sentence (no options)
+- 2 dialogue questions: multiple choice based on the dialogue context
+- 2 application questions: student writes a sentence using a grammar rule or vocabulary word from the lesson (no options)
+- 1 bonus error-correction question: give a sentence with 1 error, student writes the corrected version
+
+DIFFICULTY: High. Wrong options must be plausible. Fill-blank and translation questions have no options (student types).
+CRITICAL: The answer must NEVER appear literally in the question text.
+CRITICAL: For fill_blank type, use ___ (three underscores) exactly ONCE.
+
+Return ONLY valid JSON:
 {{
     "questions": [
         {{
             "id": 1,
-            "type": "vocabulary",
-            "question": "Question text",
-            "options": ["A. option", "B. option", "C. option", "D. option"],
+            "type": "fill_blank",
+            "question": "Sentence with ___ to fill in.",
+            "correct": "exact word",
+            "points": 7
+        }},
+        {{
+            "id": 2,
+            "type": "multiple_choice",
+            "question": "Question?",
+            "options": ["A. option1", "B. option2", "C. option3", "D. option4"],
             "correct": "A",
-            "points": 10
+            "points": 6
         }}
     ]
 }}
 
-All questions should be answerable from the lesson content. Points should total 100."""
+Points should total 100. Types: fill_blank, multiple_choice, translation, application, error_correction."""
 
     try:
         return await generate_json(prompt)
