@@ -722,10 +722,12 @@ export default function DailyLesson() {
           onToggle={() => toggleSection('comprehensibleInput')}
         >
           <div className="bg-teal-900/10 border border-teal-700/30 rounded-lg p-4 mb-3 relative">
+            <p className="text-xs text-teal-600 mb-2 italic">Kliknij słowo → dodaj do fiszek</p>
             <p className="text-gray-200 leading-relaxed">
               {content.comprehensible_input.text.split(/(\S+)/).map((part, i) => {
                 const newWords = content.comprehensible_input.new_words || []
                 const cleaned = part.replace(/[.,!?;:'"()[\]]/g, '').toLowerCase()
+                const isWord = cleaned.length > 1
                 const isNew = cleaned.length > 2 && newWords.some(w => {
                   const wl = w.toLowerCase().replace(/[.,!?;:'"()[\]]/g, '')
                   return wl.length > 2 && (
@@ -735,9 +737,28 @@ export default function DailyLesson() {
                     (cleaned.length >= 4 && wl.length >= 4 && cleaned.slice(0, 4) === wl.slice(0, 4))
                   )
                 })
-                return isNew
-                  ? <mark key={i} className="bg-yellow-500/30 text-yellow-200 rounded px-0.5">{part}</mark>
-                  : <span key={i}>{part}</span>
+                const isAdded = addedWords.has(cleaned)
+                if (isNew) {
+                  return (
+                    <mark
+                      key={i}
+                      className={`rounded px-0.5 cursor-pointer transition-colors ${isAdded ? 'bg-emerald-500/30 text-emerald-200' : 'bg-yellow-500/30 text-yellow-200 hover:bg-yellow-500/50'}`}
+                      onClick={() => handleAddFlashcard(cleaned)}
+                      title={t('lesson.addToFlash')}
+                    >{part}</mark>
+                  )
+                }
+                if (isWord) {
+                  return (
+                    <span
+                      key={i}
+                      className={`cursor-pointer transition-colors rounded px-0.5 ${isAdded ? 'text-emerald-400' : 'hover:bg-teal-700/30 hover:text-teal-200'}`}
+                      onClick={() => handleAddFlashcard(cleaned)}
+                      title={t('lesson.addToFlash')}
+                    >{part}</span>
+                  )
+                }
+                return <span key={i}>{part}</span>
               })}
             </p>
             <div className="mt-2 flex justify-end">

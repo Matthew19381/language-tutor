@@ -77,7 +77,7 @@ _Źródła: FEEDBACK.md + ZmianyTutor.txt (2026-03-18 → 2026-03-26)_
 - [x] **HARDCORE** — Tryb Hardcore: zmienia język tylko częściowo — naprawić pełną zmianę na język uczony. Fix: settings.py _UI_EN uzupełniony o wszystkie brakujące klucze (home/test/conv/lesson/flash/pronun). ✅ (2026-03-26)
 - [x] **ACHIEVEMENTS** — Wszystkie tytuły i opisy osiągnięć przetłumaczone na polski. ✅ (2026-03-26)
 - [x] **FLASHCARD-TABLE** — Tabela szybkiego dodawania fiszek: widoczna na każdej zakładce (stały element layoutu), od razu pokazuje pole do wpisania po kliknięciu. Zweryfikowano: NavBar.jsx — inline input "Dodaj fiszkę..." na desktop (hidden md:flex). ✅ (2026-03-26)
-- [ ] **READING-COPY** — Zakładka Czytanie: opcja kopiowania słowa/zdania do tabeli → AI tworzy fiszkę automatycznie.
+- [x] **READING-COPY** — Zakładka Czytanie: opcja kopiowania słowa/zdania do tabeli → AI tworzy fiszkę automatycznie. ✅ (2026-03-26)
 - [ ] **MOW-ANALYSIS** — Analiza z zakładki Mów uwzględniana w systemie nauki i w Analizie błędów.
 - [x] **ERRORS-4** — Zakładka Błędy: wklejenie podsumowania rozmowy z Grok → analiza i ocena wymowy/rozmowy. ✅ (2026-03-26)
 - [ ] **CONCEPTS** — Koncepcje gramatyczne: generowane do fiszek lub jako rozwijalna tabela w Statystykach.
