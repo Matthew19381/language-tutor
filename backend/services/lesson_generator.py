@@ -611,6 +611,65 @@ Points should total 100."""
         return await generate_daily_test({}, cefr_level, language, native_language)
 
 
+async def generate_errors_test(
+    errors: list,
+    cefr_level: str,
+    language: str,
+    native_language: str
+) -> dict:
+    """Generate a test targeting the user's specific error patterns."""
+    # Build error context: up to 15 most recent errors
+    error_lines = []
+    for e in errors[:15]:
+        q = e.get("question", "")
+        ua = e.get("user_answer", "")
+        ca = e.get("correct_answer", "")
+        t = e.get("type", "")
+        if ca:
+            error_lines.append(f"- [{t}] {q} | Uczeń napisał: '{ua}' | Poprawnie: '{ca}'")
+
+    errors_str = "\n".join(error_lines) if error_lines else "Brak szczegółów błędów."
+
+    prompt = f"""Create a 10-question remediation test in {language} targeting these specific errors:
+
+{errors_str}
+
+CEFR Level: {cefr_level}
+Native language: {native_language}
+
+Make each question directly target one of the error patterns above. Focus on:
+- Correct forms of words the student got wrong
+- Similar constructions to what was answered incorrectly
+- Fill-in-the-blank with the correct forms
+
+Rules:
+- Each fill_blank question has EXACTLY ONE ___ blank
+- Do NOT include the answer in the question text
+- Options A/B/C/D for multiple choice questions
+
+Return JSON:
+{{
+    "questions": [
+        {{
+            "id": 1,
+            "type": "fill_blank",
+            "question": "Question text with ___",
+            "options": ["A. option", "B. option", "C. option", "D. option"],
+            "correct": "A",
+            "points": 10
+        }}
+    ]
+}}
+
+Points total 100."""
+
+    try:
+        return await generate_json(prompt)
+    except Exception as e:
+        logger.error(f"Error generating errors test: {e}")
+        return await generate_daily_test({}, cefr_level, language, native_language)
+
+
 async def generate_conversation_scenario(
     topic: str,
     cefr_level: str,

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertTriangle, ChevronDown, ChevronUp, BookOpen } from 'lucide-react'
-import { getUserId, getAllErrors } from '../api/client'
+import { AlertTriangle, ChevronDown, ChevronUp, BookOpen, Brain, FlaskConical } from 'lucide-react'
+import { getUserId, getAllErrors, addFlashcardAI, getTestFromErrors } from '../api/client'
 import { PageLoader } from '../components/LoadingSpinner'
 import PlayButton from '../components/PlayButton'
 import { useLanguage } from '../hooks/useLanguage'
@@ -29,9 +29,45 @@ export default function ErrorReview() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState({})
+  const [flashMsg, setFlashMsg] = useState('')
+  const [flashLoading, setFlashLoading] = useState(false)
+  const [testLoading, setTestLoading] = useState(false)
   const navigate = useNavigate()
   const userId = getUserId()
   const { targetLanguage } = useLanguage()
+
+  const handleGenerateFlashcards = async () => {
+    if (!data?.groups || !userId) return
+    setFlashLoading(true)
+    setFlashMsg('')
+    const allErrors = data.groups.flatMap(g => g.errors)
+    const unique = [...new Set(allErrors.map(e => e.correct_answer).filter(Boolean))]
+    let added = 0
+    for (const word of unique.slice(0, 20)) {
+      try {
+        const res = await addFlashcardAI(userId, word)
+        if (res.success) added++
+      } catch {}
+    }
+    setFlashMsg(`Dodano ${added} fiszek z błędów.`)
+    setFlashLoading(false)
+  }
+
+  const handleGenerateTest = async () => {
+    if (!userId) return
+    setTestLoading(true)
+    try {
+      const test = await getTestFromErrors(userId)
+      const today = new Date().toISOString().slice(0, 10)
+      const lang = localStorage.getItem('userLanguage') || ''
+      localStorage.setItem(`test_cache_${userId}_${lang}_${today}`, JSON.stringify(test))
+      navigate('/test')
+    } catch (e) {
+      setFlashMsg('Błąd generowania testu.')
+    } finally {
+      setTestLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (!userId) { navigate('/placement'); return }
@@ -57,6 +93,28 @@ export default function ErrorReview() {
           </p>
         </div>
       </div>
+
+      {data.total > 0 && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          <button
+            onClick={handleGenerateFlashcards}
+            disabled={flashLoading || testLoading}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-700/30 hover:bg-purple-700/50 border border-purple-700/40 text-purple-300 text-sm font-medium transition-colors disabled:opacity-50"
+          >
+            <Brain className="w-4 h-4" />
+            {flashLoading ? 'Generowanie...' : 'Generuj fiszki z błędów'}
+          </button>
+          <button
+            onClick={handleGenerateTest}
+            disabled={flashLoading || testLoading}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-700/30 hover:bg-indigo-700/50 border border-indigo-700/40 text-indigo-300 text-sm font-medium transition-colors disabled:opacity-50"
+          >
+            <FlaskConical className="w-4 h-4" />
+            {testLoading ? 'Generowanie...' : 'Generuj test z błędów'}
+          </button>
+          {flashMsg && <span className="text-sm text-emerald-400 self-center">{flashMsg}</span>}
+        </div>
+      )}
 
       {data.total === 0 ? (
         <div className="card text-center py-12">

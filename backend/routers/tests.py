@@ -101,6 +101,52 @@ async def submit_test_answers(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.get("/api/tests/errors/{user_id}")
+async def get_errors_test(user_id: int, db: Session = Depends(get_db)):
+    """Generate a test targeting the user's past error patterns."""
+    from backend.services.lesson_generator import generate_errors_test
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Get recent errors from test results
+    from backend.models.test_result import TestResult
+    import json as _json
+    test_results = db.query(TestResult).filter(
+        TestResult.user_id == user_id,
+        TestResult.language == user.target_language
+    ).order_by(TestResult.created_at.desc()).limit(20).all()
+
+    all_errors = []
+    for test in test_results:
+        if not test.errors:
+            continue
+        try:
+            errors = _json.loads(test.errors)
+            for err in errors:
+                if isinstance(err, dict) and err.get("correct_answer") or err.get("correction"):
+                    all_errors.append({
+                        "type": err.get("type", "unknown"),
+                        "question": err.get("question", err.get("error", "")),
+                        "user_answer": err.get("user_answer", ""),
+                        "correct_answer": err.get("correct_answer", err.get("correction", "")),
+                    })
+        except Exception:
+            pass
+
+    try:
+        test_data = await generate_errors_test(
+            errors=all_errors,
+            cefr_level=user.cefr_level,
+            language=user.target_language,
+            native_language=user.native_language
+        )
+        return {"success": True, "test_type": "errors", **test_data}
+    except Exception as e:
+        logger.error(f"Error generating errors test: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/api/tests/weekly/{user_id}")
 async def get_weekly_test(
     user_id: int,

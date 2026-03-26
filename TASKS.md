@@ -42,8 +42,8 @@ _Źródła: FEEDBACK.md + ZmianyTutor.txt (2026-03-18 → 2026-03-26)_
 - [x] **FLASHCARD-3** — Fiszki: opcja dodania polskiego słowa na przód / niemieckiego na tył (zamiast tylko niem→pol). ✅ (2026-03-26)
 - [x] **FLASHCARD-4** — Nawigacja klawiaturą: Space/Enter=odwróć, ←→=poprzednia/następna, 1-4=ocena. ✅ (2026-03-26)
 - [x] **FLASHCARD-5** — Zweryfikowano: backend sprawdza duplikaty i zwraca "Fiszka X już istnieje". ✅ (2026-03-26)
-- [ ] **LESSON-3** — Historia lekcji: wskaźnik ukończenia per lekcja.
-- [ ] **LESSON-4** — Generator przycisku "Następna lekcja" (nie "Wygeneruj nową — usuwa obecną").
+- [x] **LESSON-3** — Historia lekcji: wskaźnik ukończenia per lekcja. Zweryfikowano: zielone/szare kółko + ✓ w Stats.jsx lines 293-306. ✅ (2026-03-26)
+- [x] **LESSON-4** — Generator przycisku "Następna lekcja" (nie "Wygeneruj nową — usuwa obecną"). Zweryfikowano: DailyLesson.jsx przycisk Następna lekcja → POST /api/lessons/next bez usuwania. ✅ (2026-03-26)
 - [ ] **LESSON-5** — Możliwość powrotu do wcześniejszych lekcji. Błędy z poprzednich lekcji uwzględniane w następnej.
 - [x] **LESSON-6** — Poprawiono matching: strip punctuation + prefix match (4 chars) + include match — łapie odmienione formy. ✅ (2026-03-26)
 - [x] **LESSON-7** — Zweryfikowano: TranslationReveal już istnieje i jest używany w OutputForcingCard. ✅ (2026-03-26)
@@ -51,7 +51,7 @@ _Źródła: FEEDBACK.md + ZmianyTutor.txt (2026-03-18 → 2026-03-26)_
 - [ ] **LESSON-9** — Pobrana lekcja: 3 pliki audio (Gramatyka, Słownictwo, Dialog) + film dopasowany do poziomu i tematu.
 - [ ] **TEST-4** — Test: znacznie trudniejszy, powiązany z bieżącą lekcją.
 - [ ] **TEST-5** — Po zakończeniu testu: opcja regeneracji uwzględniająca błędy z podsumowania.
-- [ ] **ERRORS-2** — Zakładka Błędy: przyciski "Generuj fiszki z błędów" i "Generuj test z błędów".
+- [x] **ERRORS-2** — Zakładka Błędy: przyciski "Generuj fiszki z błędów" i "Generuj test z błędów". ✅ (2026-03-26)
 - [ ] **ERRORS-3** — Analiza błędów w Statystykach: więcej rubryk (Gramatyka, Rozumienie, Wymowa, Rozmowa), każda rozwijalna z opisem co poprawić.
 - [x] **SPECIAL-CHARS** — SpecialCharHelper dodany do: textarea zadania produkcyjnego + textarea recall w OutputForcingCard. ✅ (2026-03-26)
 - [x] **TRANSLATE-1** — Tłumacz: autodetect języka (cyrylica/inne → target→PL, reszta → PL→target), przycisk "Wytłumacz", "Dodaj do fiszek" po tłumaczeniu, zamknięcie przez klik poza. ✅ (2026-03-26)

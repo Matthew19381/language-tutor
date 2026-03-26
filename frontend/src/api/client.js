@@ -95,6 +95,9 @@ export const getTestHistory = (userId) =>
 export const getTestResult = (resultId) =>
   api.get(`/tests/result/${resultId}`)
 
+export const getTestFromErrors = (userId) =>
+  api.get(`/tests/errors/${userId}`)
+
 // ===== Flashcards =====
 
 export const getFlashcards = (userId) =>
