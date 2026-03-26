@@ -54,11 +54,11 @@ _Źródła: FEEDBACK.md + ZmianyTutor.txt (2026-03-18 → 2026-03-26)_
 - [ ] **ERRORS-2** — Zakładka Błędy: przyciski "Generuj fiszki z błędów" i "Generuj test z błędów".
 - [ ] **ERRORS-3** — Analiza błędów w Statystykach: więcej rubryk (Gramatyka, Rozumienie, Wymowa, Rozmowa), każda rozwijalna z opisem co poprawić.
 - [x] **SPECIAL-CHARS** — SpecialCharHelper dodany do: textarea zadania produkcyjnego + textarea recall w OutputForcingCard. ✅ (2026-03-26)
-- [ ] **TRANSLATE-1** — Panel tłumacza (górny lewy): autodetect języka (uczony ↔ polski), tylko tłumaczy słowo/zdanie, "Wytłumacz" jako opcja, po tłumaczeniu przycisk "Dodaj do fiszek", zamyka się po kliknięciu poza.
+- [x] **TRANSLATE-1** — Tłumacz: autodetect języka (cyrylica/inne → target→PL, reszta → PL→target), przycisk "Wytłumacz", "Dodaj do fiszek" po tłumaczeniu, zamknięcie przez klik poza. ✅ (2026-03-26)
 - [ ] **PRONUNCIATION-1** — Zakładka Wymowa: przycisk dodania zdania do fiszek.
 - [ ] **PRONUNCIATION-2** — Zakładka Wymowa: przycisk generowania nowych zdań do ćwiczenia.
 - [ ] **VIDEOS-1** — Zakładka Filmy: dodawanie ulubionych twórców (przycisk lub wpisanie nazwy).
-- [ ] **GROK-1** — Generator promptu dla Grok: po polsku, widoczny i edytowalny przed skopiowaniem, zawiera temat dnia + błędy + słownictwo.
+- [x] **GROK-1** — Zweryfikowano: prompt po polsku (conversation.py), edytowalny textarea + przycisk kopiowania w Conversation.jsx. ✅ (2026-03-26)
 - [x] **STATS-2** — Zweryfikowano: `flashcards` jest destrukturyzowane ale nie renderowane w Stats.jsx. ✅ (2026-03-26)
 - [x] **STATS-3** — Usunięto przycisk CSV. Historia lekcji: wszystkie lekcje z backendu, domyślnie 7 ostatnich, "Pokaż wszystkie" toggle. ✅ (2026-03-26)
 

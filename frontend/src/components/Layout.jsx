@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Outlet } from 'react-router-dom'
 import NavBar from './NavBar'
 import NotificationManager from './NotificationManager'
-import { getUserId, getStats, askQuestion } from '../api/client'
+import { getUserId, getStats, askQuestion, addFlashcard } from '../api/client'
 import { useLanguage } from '../hooks/useLanguage'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Timer, Languages, X, ArrowRight } from 'lucide-react'
@@ -27,7 +27,7 @@ function getDailyTabs() {
 export default function Layout() {
   const [toasts, setToasts] = useState([])
   const userId = getUserId()
-  const { t } = useLanguage()
+  const { t, targetLanguage } = useLanguage()
   const navigate = useNavigate()
   const location = useLocation()
   const [timerDisplay, setTimerDisplay] = useState(null)
@@ -123,7 +123,7 @@ export default function Layout() {
       )}
 
       {/* Translation Widget */}
-      <TranslatorWidget userId={userId} />
+      <TranslatorWidget userId={userId} targetLanguage={targetLanguage} />
 
       {/* Achievement toasts */}
       <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-xs">
@@ -140,27 +140,61 @@ export default function Layout() {
   )
 }
 
-function TranslatorWidget({ userId }) {
+function TranslatorWidget({ userId, targetLanguage }) {
   const [open, setOpen] = useState(false)
   const [text, setText] = useState('')
   const [result, setResult] = useState('')
   const [loading, setLoading] = useState(false)
+  const [mode, setMode] = useState('translate') // 'translate' | 'explain'
+  const [flashAdded, setFlashAdded] = useState(false)
+  const ref = useRef(null)
 
-  const handleTranslate = async () => {
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) { setOpen(false); setResult(''); setText('') } }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  const handleAction = async (actionMode) => {
     if (!text.trim() || !userId) return
     setLoading(true)
+    setResult('')
+    setFlashAdded(false)
     try {
-      const res = await askQuestion(`Przetłumacz na polski (podaj samo tłumaczenie bez dodatkowych komentarzy): "${text.trim()}"`, userId)
+      const t = text.trim()
+      // Autodetect: if text looks like target language, translate to Polish; otherwise to target
+      const isTargetLang = targetLanguage && !/^[a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\s.,!?'"0-9-]+$/.test(t)
+      const toLang = isTargetLang ? 'polski' : (targetLanguage || 'angielski')
+      const fromLang = isTargetLang ? (targetLanguage || 'angielski') : 'polski'
+      let prompt
+      if (actionMode === 'explain') {
+        prompt = `Wyjaśnij po polsku znaczenie i użycie: "${t}" (język: ${fromLang}). Krótko i jasno.`
+      } else {
+        prompt = `Przetłumacz z ${fromLang} na ${toLang}: "${t}". Podaj samo tłumaczenie.`
+      }
+      const res = await askQuestion(prompt, userId)
       setResult(res.answer || '')
     } catch {
-      setResult('Błąd tłumaczenia.')
+      setResult('Błąd.')
     } finally {
       setLoading(false)
     }
   }
 
+  const handleAddFlash = async () => {
+    if (!result || !text.trim() || !userId) return
+    try {
+      await addFlashcard(userId, { word: text.trim(), translation: result.trim() })
+      setFlashAdded(true)
+    } catch {}
+  }
+
+  const close = () => { setOpen(false); setResult(''); setText(''); setFlashAdded(false) }
+
   return (
-    <div className="fixed bottom-6 left-4 z-40">
+    <div className="fixed bottom-6 left-4 z-40" ref={ref}>
       {open ? (
         <div className="bg-gray-900 border border-gray-700 rounded-xl shadow-2xl p-3 w-72">
           <div className="flex items-center justify-between mb-2">
@@ -168,27 +202,42 @@ function TranslatorWidget({ userId }) {
               <Languages className="w-4 h-4 text-indigo-400" />
               <span className="text-sm font-semibold text-gray-200">Tłumacz</span>
             </div>
-            <button onClick={() => { setOpen(false); setResult(''); setText('') }}>
-              <X className="w-4 h-4 text-gray-500 hover:text-gray-300" />
-            </button>
+            <button onClick={close}><X className="w-4 h-4 text-gray-500 hover:text-gray-300" /></button>
           </div>
           <textarea
             className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-sm text-gray-200 resize-none h-16 focus:outline-none focus:border-indigo-500"
-            placeholder="Wpisz tekst do przetłumaczenia..."
+            placeholder="Wpisz słowo lub zdanie..."
             value={text}
-            onChange={e => { setText(e.target.value); setResult('') }}
-            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleTranslate() } }}
+            onChange={e => { setText(e.target.value); setResult(''); setFlashAdded(false) }}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAction('translate') } }}
+            autoFocus
           />
-          <button
-            onClick={handleTranslate}
-            disabled={loading || !text.trim()}
-            className="w-full mt-2 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
-          >
-            {loading ? 'Tłumaczenie...' : <><ArrowRight className="w-3.5 h-3.5" /> Tłumacz</>}
-          </button>
+          <div className="flex gap-1.5 mt-2">
+            <button
+              onClick={() => handleAction('translate')}
+              disabled={loading || !text.trim()}
+              className="flex-1 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5"
+            >
+              <ArrowRight className="w-3.5 h-3.5" />{loading && mode === 'translate' ? '...' : 'Tłumacz'}
+            </button>
+            <button
+              onClick={() => { setMode('explain'); handleAction('explain') }}
+              disabled={loading || !text.trim()}
+              className="flex-1 py-1.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm font-medium disabled:opacity-50 transition-colors"
+            >
+              {loading && mode === 'explain' ? '...' : 'Wytłumacz'}
+            </button>
+          </div>
           {result && (
             <div className="mt-2 p-2.5 bg-gray-800 rounded-lg border border-indigo-700/30">
               <p className="text-sm text-emerald-300 leading-relaxed">{result}</p>
+              <button
+                onClick={handleAddFlash}
+                disabled={flashAdded}
+                className="mt-1.5 text-xs text-indigo-400 hover:text-indigo-300 disabled:text-emerald-400 transition-colors"
+              >
+                {flashAdded ? '✓ Dodano do fiszek' : '+ Dodaj do fiszek'}
+              </button>
             </div>
           )}
         </div>
