@@ -41,12 +41,27 @@ const OBSIDIAN_OFFSETS = [
   { offset: 2, key: 'lesson.dayAfterTomorrow' },
 ]
 
+function readLessonCache() {
+  try {
+    const today = new Date().toISOString().slice(0, 10)
+    const uid = getUserId()
+    const lang = localStorage.getItem('userLanguage') || ''
+    const cached = localStorage.getItem(`lesson_cache_${uid}_${lang}_${today}`)
+    return cached ? JSON.parse(cached) : null
+  } catch { return null }
+}
+
 export default function DailyLesson() {
-  const [lesson, setLesson] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const { lessonId } = useParams()
+  const [lesson, setLesson] = useState(() => lessonId ? null : readLessonCache())
+  const [loading, setLoading] = useState(() => lessonId ? true : !readLessonCache())
   const [error, setError] = useState('')
   const [completing, setCompleting] = useState(false)
-  const [completed, setCompleted] = useState(false)
+  const [completed, setCompleted] = useState(() => {
+    if (lessonId) return false
+    const cached = readLessonCache()
+    return cached ? !!cached.is_completed : false
+  })
   const [expandedSections, setExpandedSections] = useState({
     explanation: true,
     vocabulary: true,
@@ -73,7 +88,6 @@ export default function DailyLesson() {
   const [conceptsLoading, setConceptsLoading] = useState(false)
   const [conceptsMsg, setConceptsMsg] = useState('')
   const navigate = useNavigate()
-  const { lessonId } = useParams()
   const userId = getUserId()
   const { t } = useLanguage()
 
