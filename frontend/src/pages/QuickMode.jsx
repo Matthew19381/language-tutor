@@ -6,6 +6,11 @@ import { PageLoader } from '../components/LoadingSpinner'
 import { useLanguage } from '../hooks/useLanguage'
 import axios from 'axios'
 
+const LANG_DISPLAY = {
+  German: 'Niemiecki', English: 'Angielski', Spanish: 'Hiszpański',
+  Russian: 'Rosyjski', Chinese: 'Chiński',
+}
+
 const ICON_MAP = {
   BookOpen: <BookOpen className="w-5 h-5" />,
   FlaskConical: <FlaskConical className="w-5 h-5" />,
@@ -112,7 +117,7 @@ export default function QuickMode() {
         <Timer className="w-7 h-7 text-emerald-400" />
         <div>
           <h1 className="text-2xl font-bold">{t('quick.title')}</h1>
-          <p className="text-gray-400">{t('quick.subtitle')} — {plan.target_language} · {plan.cefr_level}</p>
+          <p className="text-gray-400">{t('quick.subtitle')} — {LANG_DISPLAY[plan.target_language] || plan.target_language} · {plan.cefr_level}</p>
         </div>
       </div>
 

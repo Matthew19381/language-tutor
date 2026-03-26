@@ -13,6 +13,17 @@ import { useLanguage } from '../hooks/useLanguage'
 const LANGUAGES = ['German', 'English', 'Spanish', 'Russian', 'Chinese']
 const NATIVE_LANGUAGES = ['Polish', 'English', 'German', 'French', 'Spanish', 'Russian', 'Other']
 
+const LANG_DISPLAY = {
+  German: 'Niemiecki',
+  English: 'Angielski',
+  Spanish: 'Hiszpański',
+  Russian: 'Rosyjski',
+  Chinese: 'Chiński',
+  Polish: 'Polski',
+  French: 'Francuski',
+  Other: 'Inny',
+}
+
 const STEPS = {
   SETUP: 'setup',
   TESTING: 'testing',
@@ -189,7 +200,7 @@ export default function PlacementTest() {
                     onChange={e => setTargetLanguage(e.target.value)}
                   >
                     {LANGUAGES.map(lang => (
-                      <option key={lang} value={lang}>{lang}</option>
+                      <option key={lang} value={lang}>{LANG_DISPLAY[lang] || lang}</option>
                     ))}
                   </select>
                 </div>
@@ -205,7 +216,7 @@ export default function PlacementTest() {
                   onChange={e => setNativeLanguage(e.target.value)}
                 >
                   {NATIVE_LANGUAGES.map(lang => (
-                    <option key={lang} value={lang}>{lang}</option>
+                    <option key={lang} value={lang}>{LANG_DISPLAY[lang] || lang}</option>
                   ))}
                 </select>
               </div>

@@ -9,6 +9,11 @@ import { getUserId, getStats, getDailyTips } from '../api/client'
 import { PageLoader } from '../components/LoadingSpinner'
 import { useLanguage } from '../hooks/useLanguage'
 
+const LANG_DISPLAY = {
+  German: 'Niemiecki', English: 'Angielski', Spanish: 'Hiszpański',
+  Russian: 'Rosyjski', Chinese: 'Chiński',
+}
+
 export default function Home() {
   const [stats, setStats] = useState(null)
   const [tips, setTips] = useState([])
@@ -66,7 +71,7 @@ export default function Home() {
           {t('home.welcomeBack')} <span className="gradient-text">{stats?.user?.name || t('home.learner')}</span>!
         </h1>
         <p className="text-gray-400">
-          {t('home.learning')} {stats?.user?.target_language || t('home.yourLanguage')} — {t('home.level')} {stats?.user?.cefr_level || 'A1'}
+          {t('home.learning')} {LANG_DISPLAY[stats?.user?.target_language] || stats?.user?.target_language || t('home.yourLanguage')} — {t('home.level')} {stats?.user?.cefr_level || 'A1'}
         </p>
       </div>
 

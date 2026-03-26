@@ -9,7 +9,7 @@ _Źródła: FEEDBACK.md + ZmianyTutor.txt (2026-03-18 → 2026-03-26)_
 
 - [x] **AUDIO-1** — Audio nie działa: edge-tts zwraca 403. Dodano retry 3x z exponential backoff (0.5s/1s/2s). ✅ (2026-03-26)
 - [x] **AUDIO-2** — PlayButton dodany do: gramatyka (explanation), fiszki (słowo front+back), newsy (simplified_text), wymowa (fraza/custom). Dialog i słownictwo już miały. ✅ (2026-03-26)
-- [ ] **UI-1** — Cały interfejs zmienić na **polski** (zakładki, przyciski, etykiety, komunikaty, poziomy: Beginner → Początkujący).
+- [x] **UI-1** — Nazwy języków spolszczone (German→Niemiecki itd.) w Stats, PlacementTest, Home, QuickMode. LANG_DISPLAY map per plik. ✅ (2026-03-26)
 - [ ] **LESSON-1** — Lekcja regeneruje się przy każdej zmianie zakładki lub odświeżeniu — naprawić.
 - [ ] **LESSON-2** — Lekcja nie powinna zaczynać od Dnia 2 jeśli użytkownik nie ukończył Dnia 1.
 

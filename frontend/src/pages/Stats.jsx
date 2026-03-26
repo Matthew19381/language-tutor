@@ -88,6 +88,14 @@ export default function Stats() {
     Chinese: '🇨🇳',
   }
 
+  const LANG_NAMES_PL = {
+    German: 'Niemiecki',
+    English: 'Angielski',
+    Spanish: 'Hiszpański',
+    Russian: 'Rosyjski',
+    Chinese: 'Chiński',
+  }
+
   const handleChangeLanguage = async (newLanguage) => {
     if (!userId || newLanguage === stats?.user?.target_language) return
     setChangingLanguage(true)
@@ -171,7 +179,7 @@ export default function Stats() {
         <BarChart3 className="w-7 h-7 text-blue-400" />
         <div>
           <h1 className="text-2xl font-bold">{t('stats.title')}</h1>
-          <p className="text-gray-400">{user?.name} · {user?.target_language} · {user?.cefr_level}</p>
+          <p className="text-gray-400">{user?.name} · {LANG_NAMES_PL[user?.target_language] || user?.target_language} · {user?.cefr_level}</p>
         </div>
       </div>
 
@@ -462,7 +470,7 @@ export default function Stats() {
                   } disabled:cursor-default`}
                 >
                   <span className="text-xl">{LANG_FLAGS[lng]}</span>
-                  <span className="text-xs font-medium leading-tight">{lng}</span>
+                  <span className="text-xs font-medium leading-tight">{LANG_NAMES_PL[lng] || lng}</span>
                   {cefr ? (
                     <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${
                       isActive ? 'bg-indigo-500 text-white' : 'bg-gray-700 text-gray-300'
