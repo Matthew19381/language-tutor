@@ -416,6 +416,11 @@ export default function DailyLesson() {
         <div className="prose prose-invert max-w-none">
           {renderMarkdown(content.explanation)}
         </div>
+        {content.explanation && (
+          <div className="mt-2">
+            <PlayButton text={content.explanation} language={lesson.language} />
+          </div>
+        )}
         <div className="mt-3">
           <button
             onClick={handleConceptFlashcards}
