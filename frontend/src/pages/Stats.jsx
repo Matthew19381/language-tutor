@@ -863,7 +863,17 @@ function TodayCompletion({ stats }) {
 
 function LessonPlanCard({ plan, currentLesson }) {
   const [expanded, setExpanded] = useState(false)
+
+  // Support both formats: plan.weeks[] and plan.daily_topics[]
   const weeks = plan?.weeks || []
+  const dailyTopics = plan?.daily_topics || []
+  const weeklyGoals = plan?.weekly_goals || []
+
+  // Group daily_topics into weeks of 7
+  const groupedWeeks = weeks.length > 0 ? weeks : weeklyGoals.map((goal, wi) => {
+    const weekDays = dailyTopics.filter(d => (wi * 7) < d.day && d.day <= (wi + 1) * 7)
+    return { week: goal.week || wi + 1, goal: goal.goal, key_grammar: goal.key_grammar, days: weekDays }
+  })
 
   return (
     <div className="card mb-6">
@@ -879,27 +889,41 @@ function LessonPlanCard({ plan, currentLesson }) {
       </button>
       {expanded && (
         <div className="mt-4 space-y-4">
-          {weeks.length > 0 ? (
-            weeks.map((week, wi) => (
+          {groupedWeeks.length > 0 ? (
+            groupedWeeks.map((week, wi) => (
               <div key={wi}>
-                <h3 className="text-sm font-semibold text-indigo-300 mb-2">
-                  Tydzień {week.week || wi + 1}: {week.theme || week.focus || ''}
+                <h3 className="text-sm font-semibold text-indigo-300 mb-1">
+                  Tydzień {week.week || wi + 1}{week.goal ? `: ${week.goal}` : (week.theme || week.focus ? `: ${week.theme || week.focus}` : '')}
                 </h3>
+                {week.key_grammar && (
+                  <p className="text-xs text-gray-500 mb-2">Gramatyka: {week.key_grammar}</p>
+                )}
                 <div className="space-y-1">
                   {(week.days || week.lessons || []).map((day, di) => (
-                    <div key={di} className="flex items-start gap-2 text-sm py-1 border-b border-gray-800 last:border-0">
-                      <span className="text-gray-600 shrink-0 w-16 text-xs">
-                        {day.day ? `Dzień ${day.day}` : `Lekcja ${di + 1}`}
-                      </span>
-                      <span className="text-gray-300 flex-1">{day.topic || day.title || day.content || JSON.stringify(day)}</span>
+                    <div key={di} className={`flex items-start gap-2 text-sm py-1 border-b border-gray-800 last:border-0 ${currentLesson === day.day ? 'bg-indigo-900/20 rounded px-1' : ''}`}>
+                      <span className="text-gray-600 shrink-0 w-16 text-xs">Dzień {day.day || di + 1}</span>
+                      <div className="flex-1">
+                        <span className="text-gray-300">{day.grammar_topic || day.topic || day.title || ''}</span>
+                        {day.vocabulary_theme && <span className="text-gray-500 text-xs ml-2">· {day.vocabulary_theme}</span>}
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
             ))
-          ) : (
-            <pre className="text-gray-400 text-xs whitespace-pre-wrap">{JSON.stringify(plan, null, 2)}</pre>
-          )}
+          ) : dailyTopics.length > 0 ? (
+            <div className="space-y-1">
+              {dailyTopics.map((day) => (
+                <div key={day.day} className={`flex items-start gap-2 text-sm py-1 border-b border-gray-800 last:border-0 ${currentLesson === day.day ? 'bg-indigo-900/20 rounded px-1' : ''}`}>
+                  <span className="text-gray-600 shrink-0 w-16 text-xs">Dzień {day.day}</span>
+                  <div className="flex-1">
+                    <span className="text-gray-300">{day.grammar_topic}</span>
+                    {day.vocabulary_theme && <span className="text-gray-500 text-xs ml-2">· {day.vocabulary_theme}</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
         </div>
       )}
     </div>

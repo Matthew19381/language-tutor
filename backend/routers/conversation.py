@@ -277,6 +277,28 @@ async def ask_question(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+class TranslateRequest(BaseModel):
+    text: str
+    from_lang: str
+    to_lang: str
+
+
+@router.post("/api/conversation/translate")
+async def translate_word(request: TranslateRequest):
+    """Translate a word or short phrase. Returns only the translation, no explanation."""
+    from backend.services.gemini_service import generate_text
+    prompt = (
+        f'Translate from {request.from_lang} to {request.to_lang}: "{request.text}"\n'
+        f'Reply with the translation ONLY. No explanations, no alternatives, no context.'
+    )
+    try:
+        result = await generate_text(prompt)
+        return {"success": True, "translation": result.strip()}
+    except Exception as e:
+        logger.error(f"Translation error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/api/conversation/grok-prompt")
 async def get_grok_prompt(user_id: int, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()

@@ -95,9 +95,15 @@ async def get_stats(user_id: int, db: Session = Depends(get_db)):
             "type": result.test_type
         })
 
-    # Lesson completion history — all lessons sorted by day number
+    # Deduplicate by day_number — keep the latest lesson per day
+    seen_days = {}
+    for lesson in all_lessons:
+        if lesson.day_number not in seen_days or lesson.id > seen_days[lesson.day_number].id:
+            seen_days[lesson.day_number] = lesson
+    unique_lessons = sorted(seen_days.values(), key=lambda x: x.day_number)
+
     lesson_history = []
-    for lesson in sorted(all_lessons, key=lambda x: x.day_number):
+    for lesson in unique_lessons:
         lesson_history.append({
             "id": lesson.id,
             "day": lesson.day_number,
@@ -125,9 +131,9 @@ async def get_stats(user_id: int, db: Session = Depends(get_db)):
         },
         "level_info": level_info,
         "lessons": {
-            "total": len(all_lessons),
-            "completed": len(completed_lessons),
-            "completion_rate": round(len(completed_lessons) / len(all_lessons) * 100, 1) if all_lessons else 0,
+            "total": len(unique_lessons),
+            "completed": len([l for l in unique_lessons if l.is_completed]),
+            "completion_rate": round(len([l for l in unique_lessons if l.is_completed]) / len(unique_lessons) * 100, 1) if unique_lessons else 0,
             "history": lesson_history
         },
         "tests": {

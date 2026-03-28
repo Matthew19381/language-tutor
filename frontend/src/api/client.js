@@ -141,6 +141,9 @@ export const getGrokPrompt = (userId) =>
 export const askQuestion = (question, userId) =>
   api.post('/conversation/question', { question, user_id: userId })
 
+export const translateWord = (text, fromLang, toLang) =>
+  api.post('/conversation/translate', { text, from_lang: fromLang, to_lang: toLang })
+
 // ===== Stats =====
 
 export const getStats = (userId) =>

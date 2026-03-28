@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { Outlet } from 'react-router-dom'
 import NavBar from './NavBar'
 import NotificationManager from './NotificationManager'
-import { getUserId, getStats, askQuestion, addFlashcard } from '../api/client'
+import { getUserId, getStats, askQuestion, translateWord, addFlashcard } from '../api/client'
 import { useLanguage } from '../hooks/useLanguage'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Timer, Languages, X, ArrowRight } from 'lucide-react'
@@ -164,18 +164,18 @@ function TranslatorWidget({ userId, targetLanguage }) {
     setFlashAdded(false)
     try {
       const t = text.trim()
-      // Autodetect: if text looks like target language, translate to Polish; otherwise to target
-      const isTargetLang = targetLanguage && !/^[a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\s.,!?'"0-9-]+$/.test(t)
-      const toLang = isTargetLang ? 'polski' : (targetLanguage || 'angielski')
-      const fromLang = isTargetLang ? (targetLanguage || 'angielski') : 'polski'
-      let prompt
+      // Autodetect direction: German chars (ä ö ü ß etc.) or non-ASCII = target lang → Polish
+      const isTargetLang = targetLanguage && /[^\u0000-\u007FąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/.test(t)
+      const toLang = isTargetLang ? 'Polish' : (targetLanguage || 'English')
+      const fromLang = isTargetLang ? (targetLanguage || 'English') : 'Polish'
       if (actionMode === 'explain') {
-        prompt = `Wyjaśnij po polsku znaczenie i użycie: "${t}" (język: ${fromLang}). Krótko i jasno.`
+        const prompt = `Wyjaśnij po polsku znaczenie i użycie: "${t}" (język: ${fromLang}). Krótko i jasno.`
+        const res = await askQuestion(prompt, userId)
+        setResult(res.answer || '')
       } else {
-        prompt = `Przetłumacz z ${fromLang} na ${toLang}: "${t}". Podaj samo tłumaczenie.`
+        const res = await translateWord(t, fromLang, toLang)
+        setResult(res.translation || '')
       }
-      const res = await askQuestion(prompt, userId)
-      setResult(res.answer || '')
     } catch {
       setResult('Błąd.')
     } finally {
