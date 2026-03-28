@@ -19,9 +19,9 @@ const ICON_MAP = {
   Newspaper: <Newspaper className="w-5 h-5" />,
 }
 
-const TIMER_SECONDS = 15 * 60
 const STORAGE_KEY_START = 'quickmode_start'
 const STORAGE_KEY_DURATION = 'quickmode_duration'
+const STORAGE_KEY_PAUSED = 'quickmode_paused_remaining'
 
 export default function QuickMode() {
   const [plan, setPlan] = useState(null)
@@ -40,13 +40,15 @@ export default function QuickMode() {
   })
   const [secondsLeft, setSecondsLeft] = useState(() => {
     const startTime = localStorage.getItem(STORAGE_KEY_START)
+    const paused = localStorage.getItem(STORAGE_KEY_PAUSED)
     const duration = parseInt(localStorage.getItem(STORAGE_KEY_DURATION) || '15') * 60
     if (startTime) {
       const elapsed = Math.floor((Date.now() - parseInt(startTime)) / 1000)
       const remaining = duration - elapsed
       return remaining > 0 ? remaining : 0
     }
-    return parseInt(localStorage.getItem(STORAGE_KEY_DURATION) || '15') * 60
+    if (paused) return parseInt(paused)
+    return duration
   })
   const intervalRef = useRef(null)
   const navigate = useNavigate()
@@ -84,8 +86,10 @@ export default function QuickMode() {
       if (!a) {
         localStorage.setItem(STORAGE_KEY_START, String(Date.now() - (customMinutes * 60 - secondsLeft) * 1000))
         localStorage.setItem(STORAGE_KEY_DURATION, String(customMinutes))
+        localStorage.removeItem(STORAGE_KEY_PAUSED)
       } else {
         localStorage.removeItem(STORAGE_KEY_START)
+        localStorage.setItem(STORAGE_KEY_PAUSED, String(secondsLeft))
       }
       return !a
     })
@@ -93,6 +97,7 @@ export default function QuickMode() {
   const resetTimer = () => {
     setTimerActive(false)
     localStorage.removeItem(STORAGE_KEY_START)
+    localStorage.removeItem(STORAGE_KEY_PAUSED)
     setSecondsLeft(customMinutes * 60)
   }
 

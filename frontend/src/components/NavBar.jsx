@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   BookOpen, FlaskConical, MessageSquare, LayoutGrid,
   BarChart3, Flame, Star, Brain, Timer, Newspaper, Mic,
@@ -7,6 +7,36 @@ import {
 } from 'lucide-react'
 import { getUserId, getStats, addFlashcardAI } from '../api/client'
 import { useLanguage } from '../hooks/useLanguage'
+
+function useQuickModeTimer() {
+  const getState = () => {
+    const startTime = localStorage.getItem('quickmode_start')
+    const paused = localStorage.getItem('quickmode_paused_remaining')
+    const duration = parseInt(localStorage.getItem('quickmode_duration') || '15') * 60
+    if (startTime) {
+      const elapsed = Math.floor((Date.now() - parseInt(startTime)) / 1000)
+      const remaining = duration - elapsed
+      return remaining > 0 ? { active: true, seconds: remaining } : null
+    }
+    if (paused) return { active: false, seconds: parseInt(paused) }
+    return null
+  }
+  const [state, setState] = useState(getState)
+  const intervalRef = useRef(null)
+
+  useEffect(() => {
+    intervalRef.current = setInterval(() => setState(getState()), 1000)
+    return () => clearInterval(intervalRef.current)
+  }, [])
+
+  return state
+}
+
+function fmtTimer(s) {
+  const m = Math.floor(s / 60)
+  const sec = s % 60
+  return `${m}:${String(sec).padStart(2, '0')}`
+}
 
 function getDailyTabsNav() {
   try {
@@ -24,6 +54,7 @@ export default function NavBar({ dailyTabs: dailyTabsProp }) {
   const [userStats, setUserStats] = useState(null)
   const userId = getUserId()
   const { t } = useLanguage()
+  const quickTimer = useQuickModeTimer()
   const dailyTabs = dailyTabsProp || getDailyTabsNav()
   const dailyProgress = Math.min(100, Math.round((dailyTabs.length / 4) * 100))
 
@@ -122,6 +153,12 @@ export default function NavBar({ dailyTabs: dailyTabsProp }) {
 
           {/* Right side: stats + flash quick-add */}
           <div className="flex items-center gap-2">
+            {quickTimer && (
+              <Link to="/quickmode" className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold ${quickTimer.active ? 'bg-indigo-900/60 text-indigo-300 animate-pulse' : 'bg-gray-800 text-gray-400'}`} title="QuickMode timer">
+                <Timer className="w-4 h-4" />
+                <span>{fmtTimer(quickTimer.seconds)}</span>
+              </Link>
+            )}
             {userStats && (
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1.5 bg-gray-800 rounded-lg px-3 py-1.5">

@@ -31,8 +31,11 @@ async def get_stats(user_id: int, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Get lesson stats
-    all_lessons = db.query(Lesson).filter(Lesson.user_id == user_id).all()
+    # Get lesson stats (filter by current target language)
+    all_lessons = db.query(Lesson).filter(
+        Lesson.user_id == user_id,
+        Lesson.language == user.target_language
+    ).all()
     completed_lessons = [l for l in all_lessons if l.is_completed]
 
     # Get test history

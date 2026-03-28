@@ -510,12 +510,21 @@ async def analyze_test_errors(
         if is_correct:
             earned_points += points
 
+        # Resolve letter (A/B/C/D) to full option text for MC questions
+        opts = q.get("options", [])
+        opts_map = {}
+        for opt in opts:
+            letter = opt.split(".")[0].strip()
+            opts_map[letter.upper()] = opt
+        user_ans_display = opts_map.get(str(user_ans).upper(), user_ans)
+        correct_ans_display = opts_map.get(str(q["correct"]).upper(), q["correct"])
+
         results.append({
             "question_id": q["id"],
             "type": q.get("type", "unknown"),
             "question": q.get("question", ""),
-            "user_answer": user_ans,
-            "correct_answer": q["correct"],
+            "user_answer": user_ans_display,
+            "correct_answer": correct_ans_display,
             "is_correct": is_correct,
             "points": points
         })
@@ -674,21 +683,28 @@ Rules:
 - Do NOT include the answer in the question text
 - Options A/B/C/D for multiple choice questions
 
-Return JSON:
+Return JSON with MIXED question types — fill_blank has NO options, multiple_choice HAS options:
 {{
     "questions": [
         {{
             "id": 1,
             "type": "fill_blank",
-            "question": "Question text with ___",
-            "options": ["A. option", "B. option", "C. option", "D. option"],
-            "correct": "A",
+            "question": "Sentence with ___ to fill.",
+            "correct": "exact word",
+            "points": 10
+        }},
+        {{
+            "id": 2,
+            "type": "multiple_choice",
+            "question": "Choose the correct form:",
+            "options": ["A. option1", "B. option2", "C. option3", "D. option4"],
+            "correct": "B",
             "points": 10
         }}
     ]
 }}
 
-Points total 100."""
+Use at least 5 fill_blank and at most 5 multiple_choice questions. Points total 100."""
 
     try:
         return await generate_json(prompt)
