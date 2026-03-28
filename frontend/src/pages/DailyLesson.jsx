@@ -1135,7 +1135,15 @@ function ExerciseCard({ exercise, number, language, lessonId, t }) {
         <span className="badge-blue capitalize text-xs">{exercise.type?.replace('_', ' ')}</span>
       </div>
       <p className="text-gray-300 font-medium mb-3">{exercise.instruction}</p>
-      <p className="text-gray-100 mb-3 text-lg">{exercise.content}</p>
+      {isCorrect && exercise.content?.includes('___') ? (
+        <p className="text-gray-100 mb-3 text-lg">
+          {exercise.content.split('___')[0]}
+          <span className="text-emerald-400 font-semibold bg-emerald-900/30 px-1 rounded">{userAnswer}</span>
+          {exercise.content.split('___')[1]}
+        </p>
+      ) : (
+        <p className="text-gray-100 mb-3 text-lg">{exercise.content}</p>
+      )}
 
       {exercise.type === 'multiple_choice' && exercise.options ? (
         <div className="space-y-2">

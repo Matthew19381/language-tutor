@@ -77,6 +77,7 @@ export default function DailyTest() {
 
   const questions = testData?.questions || []
   const currentQuestion = questions[currentIndex]
+  const [hintVisible, setHintVisible] = useState({})
 
   const handleSelectAnswer = (questionId, letter) => {
     setAnswers(prev => ({ ...prev, [questionId]: letter }))
@@ -86,6 +87,29 @@ export default function DailyTest() {
     setTextInputs(prev => ({ ...prev, [questionId]: value }))
     setAnswers(prev => ({ ...prev, [questionId]: value }))
   }
+
+  // Keyboard shortcuts: 1-4 select MC option, Enter → next question
+  useEffect(() => {
+    if (step !== STEPS.TESTING || !currentQuestion) return
+    const handleKey = (e) => {
+      const tag = e.target.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return
+      if (currentQuestion.options?.length > 0) {
+        const idx = parseInt(e.key) - 1
+        if (!isNaN(idx) && idx >= 0 && idx < currentQuestion.options.length) {
+          const letter = currentQuestion.options[idx].split('.')[0]?.trim()
+          if (letter) setAnswers(prev => ({ ...prev, [currentQuestion.id]: letter }))
+          return
+        }
+      }
+      if (e.key === 'Enter') {
+        e.preventDefault()
+        if (currentIndex < questions.length - 1) setCurrentIndex(i => i + 1)
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [step, currentQuestion, currentIndex, questions.length])
 
   const handleSubmit = async () => {
     setStep(STEPS.SUBMITTING)
@@ -222,13 +246,33 @@ export default function DailyTest() {
             })}
           </div>
         ) : (
-          <input
-            type="text"
-            className="input-field"
-            placeholder={t('test.typeAnswer')}
-            value={textInputs[currentQuestion.id] || ''}
-            onChange={e => handleTextInput(currentQuestion.id, e.target.value)}
-          />
+          <div>
+            <input
+              key={currentQuestion.id}
+              type="text"
+              className="input-field"
+              placeholder={t('test.typeAnswer')}
+              value={textInputs[currentQuestion.id] || ''}
+              onChange={e => handleTextInput(currentQuestion.id, e.target.value)}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="false"
+            />
+            {currentQuestion.hint && (
+              <div className="mt-2">
+                <button
+                  className="text-xs text-gray-500 hover:text-indigo-400 transition-colors flex items-center gap-1"
+                  onClick={() => setHintVisible(h => ({ ...h, [currentQuestion.id]: !h[currentQuestion.id] }))}
+                >
+                  {hintVisible[currentQuestion.id] ? '▼ Ukryj podpowiedź' : '? Pokaż podpowiedź'}
+                </button>
+                {hintVisible[currentQuestion.id] && (
+                  <p className="text-xs text-yellow-400 mt-1 italic">{currentQuestion.hint}</p>
+                )}
+              </div>
+            )}
+          </div>
         )}
       </div>
 

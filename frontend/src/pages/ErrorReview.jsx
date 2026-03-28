@@ -29,6 +29,7 @@ export default function ErrorReview() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState({})
+  const [practiceState, setPracticeState] = useState({})
   const [flashMsg, setFlashMsg] = useState('')
   const [flashLoading, setFlashLoading] = useState(false)
   const [testLoading, setTestLoading] = useState(false)
@@ -205,12 +206,55 @@ ${grokText.trim()}`
                         <p className="text-gray-400 text-xs leading-relaxed">{err.explanation}</p>
                       )}
 
-                      {err.practice && (
-                        <div className="flex items-center gap-1 mt-2 pt-2 border-t border-gray-700/40">
-                          <p className="text-yellow-300 text-xs italic flex-1">Ćwicz: {err.practice}</p>
-                          <PlayButton text={err.practice} language={data.language} />
-                        </div>
-                      )}
+                      {err.practice && (() => {
+                        const pk = `${group.type}_${i}`
+                        const ps = practiceState[pk] || {}
+                        const checkPractice = () => {
+                          const correct = (err.correct_answer || '').trim().toLowerCase()
+                          const given = (ps.answer || '').trim().toLowerCase()
+                          const ok = given === correct || correct.includes(given) || given.includes(correct)
+                          setPracticeState(prev => ({ ...prev, [pk]: { ...prev[pk], checked: true, correct: ok } }))
+                        }
+                        return (
+                          <div className="mt-2 pt-2 border-t border-gray-700/40">
+                            <div className="flex items-center gap-1 mb-1.5">
+                              <p className="text-yellow-300 text-xs italic flex-1">Ćwicz: {err.practice}</p>
+                              <PlayButton text={err.practice} language={data.language} />
+                            </div>
+                            {!ps.checked ? (
+                              <div className="flex gap-1.5">
+                                <input
+                                  type="text"
+                                  className={`flex-1 bg-gray-700 border border-gray-600 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-indigo-500`}
+                                  placeholder="Wpisz odpowiedź..."
+                                  value={ps.answer || ''}
+                                  onChange={e => setPracticeState(prev => ({ ...prev, [pk]: { ...prev[pk], answer: e.target.value } }))}
+                                  onKeyDown={e => e.key === 'Enter' && (ps.answer || '').trim() && checkPractice()}
+                                />
+                                <button
+                                  onClick={checkPractice}
+                                  disabled={!(ps.answer || '').trim()}
+                                  className="px-2 py-1 rounded bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium disabled:opacity-40 transition-colors"
+                                >
+                                  Sprawdź
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <p className={`text-xs font-medium ${ps.correct ? 'text-emerald-400' : 'text-red-400'}`}>
+                                  {ps.correct ? '✓ Dobrze!' : `✗ Poprawna: ${err.correct_answer}`}
+                                </p>
+                                <button
+                                  onClick={() => setPracticeState(prev => ({ ...prev, [pk]: {} }))}
+                                  className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+                                >
+                                  Spróbuj jeszcze
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })()}
                     </div>
                   ))}
                 </div>

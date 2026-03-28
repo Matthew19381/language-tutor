@@ -451,6 +451,7 @@ DIFFICULTY: High. Wrong options must be plausible. Fill-blank and translation qu
 CRITICAL: The answer must NEVER appear literally in the question text.
 CRITICAL: For fill_blank type, use ___ (three underscores) exactly ONCE per question. Never two blanks.
 CRITICAL: For multiple_choice type, the question stem must be a complete sentence or clear question — NOT a sentence with blanks. Put the blank only if absolutely needed, and then ONLY ONE blank. The options must be single words or short forms (e.g. "A. hat" not "A. hat...geschehen").
+CRITICAL: For fill_blank type, add a "hint" field with a short {native_language} hint for the missing word (e.g. the translation or grammar hint like "czas przeszły 'sein'").
 
 Return ONLY valid JSON:
 {{
@@ -459,6 +460,7 @@ Return ONLY valid JSON:
             "id": 1,
             "type": "fill_blank",
             "question": "Sentence with ___ to fill in.",
+            "hint": "Short {native_language} hint for the missing word",
             "correct": "exact word",
             "points": 7
         }},
