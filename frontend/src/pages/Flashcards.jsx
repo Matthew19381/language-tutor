@@ -207,118 +207,6 @@ export default function Flashcards() {
         </button>
       </div>
 
-      {/* Add Card Panel */}
-      {showAddForm && (
-        <div className="card mb-6 max-w-lg">
-          <h2 className="text-xl font-semibold mb-2">{t('flash.addNew')}</h2>
-          <p className="text-gray-500 text-sm mb-4">Wpisz słowo — AI automatycznie doda tłumaczenie i przykład.</p>
-          {addMsg && (
-            <div className={`p-3 rounded-lg mb-4 text-sm ${
-              addMsg.includes('successfully') || addMsg.includes('dodana') || addMsg.includes('AI')
-                ? 'bg-emerald-900/30 text-emerald-300'
-                : 'bg-yellow-900/30 text-yellow-300'
-            }`}>
-              {addMsg}
-            </div>
-          )}
-          <div className="space-y-3">
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">{t('flash.wordPhrase')}</label>
-              <input
-                className="input-field"
-                placeholder={t('flash.wordPlaceholder')}
-                value={newWord}
-                onChange={e => { setNewWord(e.target.value); setAiPreview(null) }}
-              />
-            </div>
-
-            {aiPreview && (
-              <div className="bg-gray-800 rounded-lg p-3 border border-indigo-700/40">
-                <p className="text-xs text-gray-500 mb-2">Podgląd fiszki (wygenerowane przez AI):</p>
-                <div className="space-y-1 text-sm">
-                  <p><span className="text-gray-500">Słowo:</span> <span className="text-indigo-300 font-medium">{newWord}</span></p>
-                  <p><span className="text-gray-500">Tłumaczenie:</span> <span className="text-emerald-300">{aiPreview.translation || '(brak)'}</span></p>
-                  <p><span className="text-gray-500">Przykład:</span> <span className="text-gray-300 italic">{aiPreview.example || '(brak)'}</span></p>
-                </div>
-              </div>
-            )}
-
-            {!aiPreview ? (
-              <button
-                className="btn-primary w-full flex items-center justify-center gap-2"
-                onClick={async () => {
-                  if (!newWord.trim()) return
-                  setAiLoading(true)
-                  setAddMsg('')
-                  try {
-                    const res = await addFlashcardAI(userId, newWord.trim())
-                    if (res.success) {
-                      setAiPreview({ translation: res.translation, example: res.example })
-                      setAddMsg('AI wygenerowało fiszkę. Sprawdź podgląd poniżej.')
-                    } else {
-                      setAddMsg(res.message || t('flash.cardExists'))
-                      setNewWord('')
-                    }
-                  } catch (e) {
-                    setAddMsg('Błąd: ' + e.message)
-                  } finally {
-                    setAiLoading(false)
-                  }
-                }}
-                disabled={!newWord.trim() || aiLoading}
-              >
-                {aiLoading ? <><Plus className="w-4 h-4 animate-spin" /> Generowanie AI...</> : <><Plus className="w-4 h-4" /> Dodaj z AI</>}
-              </button>
-            ) : (
-              <div className="flex gap-2">
-                <button
-                  className="btn-primary flex-1"
-                  onClick={() => {
-                    setAddMsg('Fiszka dodana! ✓')
-                    setNewWord('')
-                    setAiPreview(null)
-                    loadCards()
-                  }}
-                >
-                  Zapisz fiszkę
-                </button>
-                <button
-                  className="btn-secondary"
-                  onClick={() => { setAiPreview(null); setAddMsg('') }}
-                >
-                  Anuluj
-                </button>
-              </div>
-            )}
-
-            <div className="border-t border-gray-700 pt-3">
-              <p className="text-xs text-gray-600 mb-2">Lub dodaj ręcznie:</p>
-              <div className="space-y-2">
-                <input
-                  className="input-field text-sm"
-                  placeholder={t('flash.translationPlaceholder')}
-                  value={newTranslation}
-                  onChange={e => setNewTranslation(e.target.value)}
-                />
-                <input
-                  className="input-field text-sm"
-                  placeholder={t('flash.examplePlaceholder')}
-                  value={newExample}
-                  onChange={e => setNewExample(e.target.value)}
-                />
-                <button
-                  className="btn-secondary w-full text-sm"
-                  onClick={handleAddCard}
-                  disabled={!newWord || !newTranslation}
-                >
-                  {t('flash.addButton')}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Flashcard Viewer */}
       {(tab === TABS.ALL || tab === TABS.DUE) && (
         <>
@@ -530,6 +418,118 @@ export default function Flashcards() {
             </div>
           )}
         </>
+      )}
+
+      {/* Add Card Panel */}
+      {showAddForm && (
+        <div className="card mt-6 max-w-lg">
+          <h2 className="text-xl font-semibold mb-2">{t('flash.addNew')}</h2>
+          <p className="text-gray-500 text-sm mb-4">Wpisz słowo — AI automatycznie doda tłumaczenie i przykład.</p>
+          {addMsg && (
+            <div className={`p-3 rounded-lg mb-4 text-sm ${
+              addMsg.includes('successfully') || addMsg.includes('dodana') || addMsg.includes('AI')
+                ? 'bg-emerald-900/30 text-emerald-300'
+                : 'bg-yellow-900/30 text-yellow-300'
+            }`}>
+              {addMsg}
+            </div>
+          )}
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">{t('flash.wordPhrase')}</label>
+              <input
+                className="input-field"
+                placeholder={t('flash.wordPlaceholder')}
+                value={newWord}
+                onChange={e => { setNewWord(e.target.value); setAiPreview(null) }}
+              />
+            </div>
+
+            {aiPreview && (
+              <div className="bg-gray-800 rounded-lg p-3 border border-indigo-700/40">
+                <p className="text-xs text-gray-500 mb-2">Podgląd fiszki (wygenerowane przez AI):</p>
+                <div className="space-y-1 text-sm">
+                  <p><span className="text-gray-500">Słowo:</span> <span className="text-indigo-300 font-medium">{newWord}</span></p>
+                  <p><span className="text-gray-500">Tłumaczenie:</span> <span className="text-emerald-300">{aiPreview.translation || '(brak)'}</span></p>
+                  <p><span className="text-gray-500">Przykład:</span> <span className="text-gray-300 italic">{aiPreview.example || '(brak)'}</span></p>
+                </div>
+              </div>
+            )}
+
+            {!aiPreview ? (
+              <button
+                className="btn-primary w-full flex items-center justify-center gap-2"
+                onClick={async () => {
+                  if (!newWord.trim()) return
+                  setAiLoading(true)
+                  setAddMsg('')
+                  try {
+                    const res = await addFlashcardAI(userId, newWord.trim())
+                    if (res.success) {
+                      setAiPreview({ translation: res.translation, example: res.example })
+                      setAddMsg('AI wygenerowało fiszkę. Sprawdź podgląd poniżej.')
+                    } else {
+                      setAddMsg(res.message || t('flash.cardExists'))
+                      setNewWord('')
+                    }
+                  } catch (e) {
+                    setAddMsg('Błąd: ' + e.message)
+                  } finally {
+                    setAiLoading(false)
+                  }
+                }}
+                disabled={!newWord.trim() || aiLoading}
+              >
+                {aiLoading ? <><Plus className="w-4 h-4 animate-spin" /> Generowanie AI...</> : <><Plus className="w-4 h-4" /> Dodaj z AI</>}
+              </button>
+            ) : (
+              <div className="flex gap-2">
+                <button
+                  className="btn-primary flex-1"
+                  onClick={() => {
+                    setAddMsg('Fiszka dodana! ✓')
+                    setNewWord('')
+                    setAiPreview(null)
+                    loadCards()
+                  }}
+                >
+                  Zapisz fiszkę
+                </button>
+                <button
+                  className="btn-secondary"
+                  onClick={() => { setAiPreview(null); setAddMsg('') }}
+                >
+                  Anuluj
+                </button>
+              </div>
+            )}
+
+            <div className="border-t border-gray-700 pt-3">
+              <p className="text-xs text-gray-600 mb-2">Lub dodaj ręcznie:</p>
+              <div className="space-y-2">
+                <input
+                  className="input-field text-sm"
+                  placeholder={t('flash.translationPlaceholder')}
+                  value={newTranslation}
+                  onChange={e => setNewTranslation(e.target.value)}
+                />
+                <input
+                  className="input-field text-sm"
+                  placeholder={t('flash.examplePlaceholder')}
+                  value={newExample}
+                  onChange={e => setNewExample(e.target.value)}
+                />
+                <button
+                  className="btn-secondary w-full text-sm"
+                  onClick={handleAddCard}
+                  disabled={!newWord || !newTranslation}
+                >
+                  {t('flash.addButton')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

@@ -105,9 +105,10 @@ export default function Stats() {
       // Clear cached data for old language
       localStorage.removeItem('tips_date')
       localStorage.removeItem('tips_data')
-      // Clear lesson cache for all languages so fresh lesson loads
+      localStorage.removeItem('daily_tabs')
+      // Clear lesson + test cache for all languages
       Object.keys(localStorage)
-        .filter(k => k.startsWith('lesson_cache_'))
+        .filter(k => k.startsWith('lesson_cache_') || k.startsWith('test_cache_'))
         .forEach(k => localStorage.removeItem(k))
       localStorage.setItem('userLanguage', newLanguage)
       if (result.needs_placement) {
@@ -487,14 +488,20 @@ export default function Stats() {
             >
               {t('stats.polishMode')}
             </button>
-            <button
-              onClick={() => setLang('hardcore')}
-              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                lang === 'hardcore' ? 'bg-indigo-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-gray-200'
-              }`}
-            >
-              Hardcore ({targetLanguage})
-            </button>
+            {targetLanguage === 'English' ? (
+              <button
+                onClick={() => setLang('hardcore')}
+                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  lang === 'hardcore' ? 'bg-indigo-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-gray-200'
+                }`}
+              >
+                Hardcore (EN)
+              </button>
+            ) : (
+              <span className="px-4 py-1.5 rounded-lg text-sm bg-gray-800/50 text-gray-600" title="Dostępne tylko dla języka angielskiego">
+                Hardcore (tylko EN)
+              </span>
+            )}
           </div>
         </div>
 

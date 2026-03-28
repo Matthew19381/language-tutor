@@ -26,7 +26,18 @@ const STORAGE_KEY_PAUSED = 'quickmode_paused_remaining'
 export default function QuickMode() {
   const [plan, setPlan] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [checked, setChecked] = useState({})
+  const [checked, setChecked] = useState(() => {
+    try {
+      const today = new Date().toISOString().slice(0, 10)
+      const raw = localStorage.getItem('daily_tabs')
+      if (!raw) return {}
+      const parsed = JSON.parse(raw)
+      if (parsed.date !== today) return {}
+      const result = {}
+      ;(parsed.tabs || []).forEach(tab => { result[tab] = true })
+      return result
+    } catch { return {} }
+  })
   const [customMinutes, setCustomMinutes] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEY_DURATION)
     return saved ? parseInt(saved) : 15

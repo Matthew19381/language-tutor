@@ -349,7 +349,10 @@ export default function PronunciationTrainer() {
             </div>
             <div>
               <span className="text-gray-500">{t('pronun.target')}</span>
-              <p className="text-indigo-200 mt-0.5">{result.target}</p>
+              <div className="flex items-center gap-2 mt-0.5">
+                <p className="text-indigo-200">{result.target}</p>
+                <PlayButton text={result.target} language={targetLanguage} />
+              </div>
             </div>
           </div>
 
