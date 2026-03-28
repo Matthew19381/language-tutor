@@ -56,7 +56,7 @@ export default function NavBar({ dailyTabs: dailyTabsProp }) {
   const { t } = useLanguage()
   const quickTimer = useQuickModeTimer()
   const dailyTabs = dailyTabsProp || getDailyTabsNav()
-  const dailyProgress = Math.min(100, Math.round((dailyTabs.length / 4) * 100))
+  const dailyProgress = Math.min(100, Math.round((dailyTabs.length / 5) * 100))
 
   const [flashOpen, setFlashOpen] = useState(false)
   const [flashWord, setFlashWord] = useState('')

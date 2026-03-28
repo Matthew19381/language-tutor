@@ -300,17 +300,22 @@ export default function Conversation() {
                   <div>
                     <p className="text-sm font-semibold text-gray-400 mb-2">Znalezione błędy ({pasteResult.errors.length}):</p>
                     <div className="space-y-2">
-                      {pasteResult.errors.slice(0, 8).map((err, i) => (
-                        <div key={i} className="bg-gray-800 rounded-lg px-3 py-2 text-sm">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-xs px-2 py-0.5 rounded bg-red-900/40 text-red-300">{err.type}</span>
-                            <span className="text-red-400 line-through">{err.question}</span>
-                            <span className="text-gray-500">→</span>
-                            <span className="text-emerald-400">{err.correct_answer}</span>
+                      {pasteResult.errors.slice(0, 8).map((err, i) => {
+                        const isCritical = err.severity !== 'minor'
+                        return (
+                          <div key={i} className={`rounded-lg px-3 py-2 text-sm border-l-2 bg-gray-800 ${isCritical ? 'border-red-600' : 'border-yellow-600'}`}>
+                            <div className="flex flex-wrap items-center gap-2 mb-1">
+                              <span className={`text-xs px-2 py-0.5 rounded ${isCritical ? 'bg-red-900/40 text-red-300' : 'bg-yellow-900/40 text-yellow-300'}`}>
+                                {err.type}
+                              </span>
+                              <span className={`${isCritical ? 'text-red-400' : 'text-yellow-400'} line-through`}>{err.question}</span>
+                              <span className="text-gray-500">→</span>
+                              <span className="text-emerald-400">{err.correct_answer}</span>
+                            </div>
+                            {err.explanation && <p className="text-gray-500 text-xs">{err.explanation}</p>}
                           </div>
-                          {err.explanation && <p className="text-gray-500 text-xs">{err.explanation}</p>}
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   </div>
                 )}
@@ -480,16 +485,23 @@ export default function Conversation() {
           <div className="card mb-4">
             <h3 className="font-semibold text-red-400 mb-3">{t('conv.errorsReview')}</h3>
             <div className="space-y-3">
-              {analysis.errors.map((err, i) => (
-                <div key={i} className="border-l-2 border-red-700 pl-3">
-                  <div className="flex gap-2 text-sm mb-1">
-                    <span className="text-red-400 line-through">{err.original}</span>
-                    <span className="text-gray-500">→</span>
-                    <span className="text-emerald-400">{err.correction}</span>
+              {analysis.errors.map((err, i) => {
+                const isCritical = err.severity !== 'minor'
+                return (
+                  <div key={i} className={`border-l-2 pl-3 ${isCritical ? 'border-red-600' : 'border-yellow-600'}`}>
+                    <div className="flex flex-wrap items-center gap-2 text-sm mb-1">
+                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${isCritical ? 'bg-red-900/40 text-red-300' : 'bg-yellow-900/40 text-yellow-300'}`}>
+                        {isCritical ? 'krytyczny' : 'drobny'}
+                      </span>
+                      {err.type && <span className="text-xs text-gray-500">{err.type}</span>}
+                      <span className={`${isCritical ? 'text-red-400' : 'text-yellow-400'} line-through`}>{err.question || err.original}</span>
+                      <span className="text-gray-500">→</span>
+                      <span className="text-emerald-400">{err.correct_answer || err.correction}</span>
+                    </div>
+                    {err.explanation && <p className="text-gray-500 text-xs">{err.explanation}</p>}
                   </div>
-                  <p className="text-gray-500 text-xs">{err.explanation}</p>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         )}

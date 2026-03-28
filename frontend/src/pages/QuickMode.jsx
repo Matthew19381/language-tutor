@@ -112,7 +112,25 @@ export default function QuickMode() {
     setSecondsLeft(customMinutes * 60)
   }
 
-  const toggleCheck = (id) => setChecked(prev => ({ ...prev, [id]: !prev[id] }))
+  const toggleCheck = (id, route) => {
+    setChecked(prev => {
+      const nowChecked = !prev[id]
+      if (nowChecked && route) {
+        const key = route.replace('/', '')
+        const today = new Date().toISOString().slice(0, 10)
+        try {
+          const raw = localStorage.getItem('daily_tabs')
+          const stored = raw ? JSON.parse(raw) : { date: today, tabs: [] }
+          if (stored.date !== today) stored.tabs = []
+          if (!stored.tabs.includes(key)) {
+            stored.tabs.push(key)
+            localStorage.setItem('daily_tabs', JSON.stringify({ date: today, tabs: stored.tabs }))
+          }
+        } catch {}
+      }
+      return { ...prev, [id]: nowChecked }
+    })
+  }
 
   const formatTime = (s) => {
     const m = Math.floor(s / 60)
@@ -220,7 +238,7 @@ export default function QuickMode() {
               }`}
             >
               <button
-                onClick={() => !activity.completed && toggleCheck(activity.id)}
+                onClick={() => !activity.completed && toggleCheck(activity.id, activity.route)}
                 className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
                   isDone ? 'bg-emerald-600 border-emerald-600' : 'border-gray-600 hover:border-emerald-500'
                 }`}

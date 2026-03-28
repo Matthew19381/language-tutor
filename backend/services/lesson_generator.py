@@ -795,12 +795,17 @@ Produce a DETAILED analysis with SPECIFIC error categories. Use these category t
 - "fluency" — overly simple/broken sentences for the level
 - "register" — too formal/informal for the context
 
+Severity rules:
+- "critical" — errors that impede comprehension or break fundamental grammar rules (wrong verb form, wrong case, missing key word)
+- "minor" — stylistic issues, slight awkwardness, or non-essential improvement suggestions
+
 Return JSON:
 {{
     "summary": "2-3 sentence overall assessment in {native_language}",
     "errors": [
         {{
             "type": "grammar|vocabulary|word_order|articles|verb_conjugation|prepositions|pronunciation_spelling|fluency|register",
+            "severity": "critical|minor",
             "question": "the problematic phrase the student wrote",
             "correct_answer": "the corrected form",
             "explanation": "brief explanation in {native_language} why it's wrong and what rule applies"
