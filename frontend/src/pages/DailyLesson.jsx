@@ -7,7 +7,7 @@ import {
   History, ArrowRight
 } from 'lucide-react'
 import axios from 'axios'
-import { getUserId, getTodayLesson, getLesson, completeLesson, addFlashcardAI, evaluateProduction, generateNextLesson, generateConceptFlashcards, recordExerciseError } from '../api/client'
+import { getUserId, getTodayLesson, getLesson, completeLesson, addFlashcardAI, evaluateProduction, generateNextLesson, generateConceptFlashcards, recordExerciseError, getDailyTest, getNews, searchYouTube } from '../api/client'
 import PlayButton from '../components/PlayButton'
 import { PageLoader } from '../components/LoadingSpinner'
 import { useLanguage } from '../hooks/useLanguage'
@@ -182,6 +182,16 @@ export default function DailyLesson() {
         exercises: false, production: false, errorReview: false,
         comprehensibleInput: false, interleaved: false, outputForcing: false,
       })
+
+      // Pre-fetch test, news and videos in the background so they're ready immediately
+      const today = new Date().toISOString().slice(0, 10)
+      const lang = localStorage.getItem('userLanguage') || ''
+      localStorage.removeItem(`test_cache_${userId}_${lang}_${today}`)
+      getDailyTest(userId).then(test => {
+        localStorage.setItem(`test_cache_${userId}_${lang}_${today}`, JSON.stringify(test))
+      }).catch(() => {})
+      getNews(userId).catch(() => {})
+      searchYouTube(userId, '').catch(() => {})
     } catch (e) {
       setError(e.message)
     } finally {

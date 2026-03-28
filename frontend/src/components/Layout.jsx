@@ -145,31 +145,27 @@ function TranslatorWidget({ userId, targetLanguage }) {
   const [text, setText] = useState('')
   const [result, setResult] = useState('')
   const [loading, setLoading] = useState(false)
-  const [mode, setMode] = useState('translate') // 'translate' | 'explain'
+  const [activeMode, setActiveMode] = useState(null) // 'translate' | 'explain'
   const [flashAdded, setFlashAdded] = useState(false)
-  const ref = useRef(null)
+  // 'to_native' = target lang → Polish, 'to_target' = Polish → target lang
+  const [dir, setDir] = useState('to_native')
 
-  // Close on outside click
-  useEffect(() => {
-    if (!open) return
-    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) { setOpen(false); setResult(''); setText('') } }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [open])
+  const targetShort = targetLanguage || 'EN'
+  const fromLang = dir === 'to_native' ? targetLanguage || 'English' : 'Polish'
+  const toLang   = dir === 'to_native' ? 'Polish' : targetLanguage || 'English'
+  const dirLabel = dir === 'to_native' ? `${targetShort} → PL` : `PL → ${targetShort}`
+  const flipDir  = () => { setDir(d => d === 'to_native' ? 'to_target' : 'to_native'); setResult(''); setFlashAdded(false) }
 
   const handleAction = async (actionMode) => {
     if (!text.trim() || !userId) return
     setLoading(true)
+    setActiveMode(actionMode)
     setResult('')
     setFlashAdded(false)
     try {
       const t = text.trim()
-      // Autodetect direction: German chars (ä ö ü ß etc.) or non-ASCII = target lang → Polish
-      const isTargetLang = targetLanguage && /[^\u0000-\u007FąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/.test(t)
-      const toLang = isTargetLang ? 'Polish' : (targetLanguage || 'English')
-      const fromLang = isTargetLang ? (targetLanguage || 'English') : 'Polish'
       if (actionMode === 'explain') {
-        const prompt = `Wyjaśnij po polsku znaczenie i użycie: "${t}" (język: ${fromLang}). Krótko i jasno.`
+        const prompt = `Wyjaśnij po polsku znaczenie i użycie wyrazu/frazy: "${t}" (język: ${fromLang}). Napisz 2-3 zdania: znaczenie, kiedy się używa, przykład.`
         const res = await askQuestion(prompt, userId)
         setResult(res.answer || '')
       } else {
@@ -180,6 +176,7 @@ function TranslatorWidget({ userId, targetLanguage }) {
       setResult('Błąd.')
     } finally {
       setLoading(false)
+      setActiveMode(null)
     }
   }
 
@@ -194,7 +191,7 @@ function TranslatorWidget({ userId, targetLanguage }) {
   const close = () => { setOpen(false); setResult(''); setText(''); setFlashAdded(false) }
 
   return (
-    <div className="fixed bottom-6 left-4 z-40" ref={ref}>
+    <div className="fixed bottom-6 left-4 z-40">
       {open ? (
         <div className="bg-gray-900 border border-gray-700 rounded-xl shadow-2xl p-3 w-72">
           <div className="flex items-center justify-between mb-2">
@@ -204,9 +201,17 @@ function TranslatorWidget({ userId, targetLanguage }) {
             </div>
             <button onClick={close}><X className="w-4 h-4 text-gray-500 hover:text-gray-300" /></button>
           </div>
+          {/* Direction toggle */}
+          <button
+            onClick={flipDir}
+            className="w-full mb-2 py-1 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700 text-xs text-indigo-300 font-medium flex items-center justify-center gap-1.5 transition-colors"
+          >
+            <ArrowRight className="w-3 h-3" />
+            {dirLabel} — kliknij aby odwrócić
+          </button>
           <textarea
             className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-sm text-gray-200 resize-none h-16 focus:outline-none focus:border-indigo-500"
-            placeholder="Wpisz słowo lub zdanie..."
+            placeholder={dir === 'to_native' ? `Wpisz po ${targetShort}...` : 'Wpisz po polsku...'}
             value={text}
             onChange={e => { setText(e.target.value); setResult(''); setFlashAdded(false) }}
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAction('translate') } }}
@@ -218,14 +223,14 @@ function TranslatorWidget({ userId, targetLanguage }) {
               disabled={loading || !text.trim()}
               className="flex-1 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5"
             >
-              <ArrowRight className="w-3.5 h-3.5" />{loading && mode === 'translate' ? '...' : 'Tłumacz'}
+              {loading && activeMode === 'translate' ? '...' : 'Tłumacz'}
             </button>
             <button
-              onClick={() => { setMode('explain'); handleAction('explain') }}
+              onClick={() => handleAction('explain')}
               disabled={loading || !text.trim()}
               className="flex-1 py-1.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm font-medium disabled:opacity-50 transition-colors"
             >
-              {loading && mode === 'explain' ? '...' : 'Wytłumacz'}
+              {loading && activeMode === 'explain' ? '...' : 'Wytłumacz'}
             </button>
           </div>
           {result && (
