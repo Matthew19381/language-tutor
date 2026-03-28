@@ -49,7 +49,9 @@ async def analyze_pronunciation(
         fmt = "webm"  # default for MediaRecorder
 
     try:
-        transcribed = transcribe_audio(audio_bytes, audio_format=fmt)
+        from backend.services.pronunciation_service import LANGUAGE_CODES
+        lang_code = LANGUAGE_CODES.get(user.target_language, "de")
+        transcribed = transcribe_audio(audio_bytes, audio_format=fmt, language=lang_code)
         result = score_pronunciation(transcribed, target_text)
         result["language"] = user.target_language
         return {"success": True, **result}

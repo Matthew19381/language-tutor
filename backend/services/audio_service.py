@@ -36,14 +36,17 @@ async def generate_audio(text: str, language: str, output_path: str) -> str:
     for attempt in range(3):
         try:
             communicate = edge_tts.Communicate(text, voice)
-            await communicate.save(output_path)
+            await asyncio.wait_for(communicate.save(output_path), timeout=15.0)
             logger.info(f"Audio generated: {output_path}")
             return output_path
+        except asyncio.TimeoutError:
+            last_exc = TimeoutError(f"edge-tts timed out after 15s (attempt {attempt + 1})")
+            logger.warning(f"Audio attempt {attempt + 1}/3 timed out")
         except Exception as e:
             last_exc = e
             logger.warning(f"Audio attempt {attempt + 1}/3 failed: {e}")
-            if attempt < 2:
-                await asyncio.sleep(0.5 * (2 ** attempt))
+        if attempt < 2:
+            await asyncio.sleep(0.5 * (2 ** attempt))
     logger.error(f"Error generating audio after 3 attempts: {last_exc}")
     raise last_exc
 

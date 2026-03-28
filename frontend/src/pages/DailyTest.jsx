@@ -200,7 +200,7 @@ export default function DailyTest() {
           {currentQuestion.question}
         </h3>
 
-        {currentQuestion.options ? (
+        {currentQuestion.options?.length > 0 ? (
           <div className="space-y-3">
             {currentQuestion.options.map((opt, i) => {
               const letter = opt.split('.')[0]?.trim()

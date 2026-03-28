@@ -27,7 +27,10 @@ async def get_flashcards(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    query = db.query(Flashcard).filter(Flashcard.user_id == user_id)
+    query = db.query(Flashcard).filter(
+        Flashcard.user_id == user_id,
+        Flashcard.language == user.target_language
+    )
     if active_only:
         query = query.filter(Flashcard.is_active == True)
 

@@ -9,6 +9,21 @@ logger = logging.getLogger(__name__)
 _whisper_model = None
 WHISPER_MODEL_SIZE = "tiny"
 
+LANGUAGE_CODES = {
+    "German": "de",
+    "English": "en",
+    "French": "fr",
+    "Spanish": "es",
+    "Italian": "it",
+    "Portuguese": "pt",
+    "Dutch": "nl",
+    "Polish": "pl",
+    "Russian": "ru",
+    "Japanese": "ja",
+    "Chinese": "zh",
+    "Korean": "ko",
+}
+
 
 def _get_model():
     global _whisper_model
@@ -24,7 +39,7 @@ def _get_model():
     return _whisper_model
 
 
-def transcribe_audio(audio_bytes: bytes, audio_format: str = "webm") -> str:
+def transcribe_audio(audio_bytes: bytes, audio_format: str = "webm", language: str = "de") -> str:
     """Transcribe audio bytes using faster-whisper. Returns transcribed text."""
     model = _get_model()
 
@@ -35,7 +50,7 @@ def transcribe_audio(audio_bytes: bytes, audio_format: str = "webm") -> str:
         tmp_path = tmp.name
 
     try:
-        segments, info = model.transcribe(tmp_path, beam_size=5)
+        segments, info = model.transcribe(tmp_path, beam_size=5, language=language)
         text = " ".join(seg.text.strip() for seg in segments)
         logger.info(f"Transcribed ({info.language}): {text!r}")
         return text.strip()

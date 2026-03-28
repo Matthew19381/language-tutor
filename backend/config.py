@@ -2,7 +2,9 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    GEMINI_API_KEY: str
+    GEMINI_API_KEY: str = ""
+    OLLAMA_BASE_URL: str = "http://localhost:11434/v1"
+    OLLAMA_MODEL: str = "qwen2.5:7b"
     DATABASE_URL: str = "sqlite:///./language_tutor.db"
     SECRET_KEY: str = "changeme"
     TARGET_LANGUAGE: str = "German"
