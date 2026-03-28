@@ -471,8 +471,20 @@ export default function DailyLesson() {
           {renderMarkdown(content.explanation)}
         </div>
         {content.explanation && (
-          <div className="mt-2">
-            <PlayButton text={content.explanation} language={lesson.language} />
+          <div className="mt-2 flex items-center gap-2">
+            <PlayButton
+              text={content.explanation
+                .replace(/#{1,6}\s*/g, '')
+                .replace(/\*\*(.+?)\*\*/g, '$1')
+                .replace(/\*(.+?)\*/g, '$1')
+                .replace(/`(.+?)`/g, '$1')
+                .replace(/\n{2,}/g, '. ')
+                .replace(/\n/g, ' ')
+                .trim()
+                .slice(0, 400)}
+              language={lesson.language}
+            />
+            <span className="text-xs text-gray-500">Przesłuchaj wyjaśnienie</span>
           </div>
         )}
         <div className="mt-3">
