@@ -379,7 +379,7 @@ export default function Videos() {
         <div>
           {topicVideos.length > 0 && (
             <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-              Ogólne · poziom {data?.cefr_level}
+              Ogólne Podkasty · poziom {data?.cefr_level}
             </h2>
           )}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -48,7 +48,7 @@ export default function Conversation() {
   const messagesEndRef = useRef(null)
   const navigate = useNavigate()
   const userId = getUserId()
-  const { t } = useLanguage()
+  const { t, targetLanguage } = useLanguage()
 
   useEffect(() => {
     if (!userId) { navigate('/placement'); return }
@@ -433,6 +433,7 @@ export default function Conversation() {
               <Send className="w-4 h-4" />
             </button>
           </div>
+          <ConvSpecialChars language={targetLanguage} onInsert={ch => setInputText(t => t + ch)} />
           <p className="text-gray-600 text-xs mt-2 text-center">
             {messages.filter(m => m.role === 'user').length} {t('conv.messagesSent')}
           </p>
@@ -517,4 +518,31 @@ export default function Conversation() {
   }
 
   return null
+}
+
+const CONV_SPECIAL_CHARS = {
+  German: ['ä', 'ö', 'ü', 'ß', 'Ä', 'Ö', 'Ü'],
+  Spanish: ['á', 'é', 'í', 'ó', 'ú', 'ñ', '¿', '¡'],
+  French: ['à', 'â', 'é', 'è', 'ê', 'î', 'ô', 'ù', 'û', 'ç'],
+  Portuguese: ['ã', 'â', 'á', 'à', 'ê', 'é', 'í', 'ó', 'ô', 'ú', 'ç'],
+  Italian: ['à', 'è', 'é', 'ì', 'ò', 'ó', 'ù'],
+}
+
+function ConvSpecialChars({ language, onInsert }) {
+  const chars = CONV_SPECIAL_CHARS[language]
+  if (!chars) return null
+  return (
+    <div className="flex flex-wrap gap-1 mt-2">
+      {chars.map(ch => (
+        <button
+          key={ch}
+          type="button"
+          onClick={() => onInsert(ch)}
+          className="px-2 py-0.5 rounded bg-gray-700 hover:bg-indigo-700 text-gray-200 text-sm font-mono transition-colors"
+        >
+          {ch}
+        </button>
+      ))}
+    </div>
+  )
 }

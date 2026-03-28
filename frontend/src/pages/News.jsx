@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Newspaper, BookOpen, ChevronDown, ChevronUp, ExternalLink, Plus, CheckCircle } from 'lucide-react'
-import { getUserId, addFlashcard, addXP } from '../api/client'
+import { getUserId, addFlashcard, addFlashcardAI, addXP, translateWord } from '../api/client'
 import { PageLoader } from '../components/LoadingSpinner'
 import { useLanguage } from '../hooks/useLanguage'
 import PlayButton from '../components/PlayButton'
@@ -134,9 +134,10 @@ export default function News() {
                 <div>
                   <h3 className="text-sm font-semibold text-gray-400 mb-2 flex items-center gap-1">
                     <BookOpen className="w-4 h-4" /> {t('news.simplified')}
+                    <span className="text-xs text-gray-600 font-normal ml-1">· kliknij słowo → fiszka</span>
                   </h3>
                   <div className="flex items-start gap-2">
-                    <p className="text-gray-200 leading-relaxed flex-1">{article.simplified_text}</p>
+                    <ClickableText text={article.simplified_text} userId={userId} language={targetLanguage} />
                     <PlayButton text={article.simplified_text} language={targetLanguage} />
                   </div>
                 </div>
@@ -200,6 +201,83 @@ export default function News() {
           </div>
         ))}
       </div>
+    </div>
+  )
+}
+
+function ClickableText({ text, userId, language }) {
+  const [addedWords, setAddedWords] = useState({})
+  const [translations, setTranslations] = useState({})
+  const [loadingTrans, setLoadingTrans] = useState({})
+
+  const sentences = text
+    ? text.match(/[^.!?]+[.!?]*/g)?.map(s => s.trim()).filter(Boolean) || [text]
+    : []
+
+  const handleWordClick = async (word) => {
+    const clean = word.replace(/[^a-zA-ZäöüßÄÖÜáéíóúñàâêîôùûçőőűéàèìòù]/gi, '').toLowerCase()
+    if (!clean || clean.length < 3 || addedWords[clean]) return
+    setAddedWords(prev => ({ ...prev, [clean]: 'loading' }))
+    try {
+      await addFlashcardAI(userId, clean)
+      setAddedWords(prev => ({ ...prev, [clean]: 'done' }))
+      setTimeout(() => setAddedWords(prev => { const n = { ...prev }; delete n[clean]; return n }), 2000)
+    } catch {
+      setAddedWords(prev => { const n = { ...prev }; delete n[clean]; return n })
+    }
+  }
+
+  const handleTranslate = async (sentence, idx) => {
+    if (translations[idx] || loadingTrans[idx]) return
+    setLoadingTrans(prev => ({ ...prev, [idx]: true }))
+    try {
+      const res = await translateWord(sentence, language, 'Polish')
+      setTranslations(prev => ({ ...prev, [idx]: res.translation }))
+    } catch {
+      setTranslations(prev => ({ ...prev, [idx]: '—' }))
+    } finally {
+      setLoadingTrans(prev => ({ ...prev, [idx]: false }))
+    }
+  }
+
+  return (
+    <div className="flex-1 leading-relaxed space-y-2">
+      {sentences.map((sentence, idx) => (
+        <div key={idx}>
+          <span>
+            {sentence.split(/(\s+)/).map((token, ti) => {
+              if (/^\s+$/.test(token)) return <span key={ti}>{token}</span>
+              const clean = token.replace(/[^a-zA-ZäöüßÄÖÜáéíóúñàâêîôùûç]/gi, '').toLowerCase()
+              const status = addedWords[clean]
+              return (
+                <span
+                  key={ti}
+                  onClick={() => handleWordClick(token)}
+                  className={`cursor-pointer rounded px-0.5 transition-colors ${
+                    status === 'done' ? 'text-emerald-400 bg-emerald-900/20' :
+                    status === 'loading' ? 'text-gray-500' :
+                    'text-gray-200 hover:text-indigo-300 hover:bg-indigo-900/20'
+                  }`}
+                  title="Kliknij aby dodać do fiszek"
+                >
+                  {token}
+                </span>
+              )
+            })}
+          </span>
+          <button
+            onClick={() => handleTranslate(sentence, idx)}
+            disabled={!!loadingTrans[idx]}
+            className="ml-1.5 text-xs text-gray-600 hover:text-indigo-400 transition-colors align-middle"
+            title="Przetłumacz zdanie"
+          >
+            {loadingTrans[idx] ? '...' : translations[idx] ? '▲' : 'PL'}
+          </button>
+          {translations[idx] && (
+            <p className="text-yellow-300/80 text-xs italic mt-0.5 ml-1">{translations[idx]}</p>
+          )}
+        </div>
+      ))}
     </div>
   )
 }

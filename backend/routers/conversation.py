@@ -313,6 +313,16 @@ async def get_grok_prompt(user_id: int, db: Session = Depends(get_db)):
     topic = latest_lesson.topic if latest_lesson else "everyday conversation"
     lesson_title = latest_lesson.title if latest_lesson else "General"
 
+    # Extract vocabulary from lesson content
+    vocab_list = []
+    if latest_lesson and latest_lesson.content:
+        try:
+            import json as _json
+            lc = _json.loads(latest_lesson.content)
+            vocab_list = [f"{v.get('word','')} ({v.get('translation','')})" for v in lc.get('vocabulary', [])[:10]]
+        except Exception:
+            pass
+
     # Get recent errors
     recent_tests = db.query(TestResult).filter(
         TestResult.user_id == user_id
@@ -336,12 +346,13 @@ async def get_grok_prompt(user_id: int, db: Session = Depends(get_db)):
 
     weak_areas_text = ", ".join(weak_areas[:4]) if weak_areas else "general grammar"
 
+    vocab_section = "\nSłownictwo z dzisiejszej lekcji: " + ", ".join(vocab_list) if vocab_list else ""
     prompt = f"""Jesteś nauczycielem języka {user.target_language}. Mój język ojczysty to polski.
 Mój aktualny poziom: {user.cefr_level}
-Dzisiaj uczyłem/am się: {topic} ({lesson_title})
+Dzisiaj uczyłem/am się: {topic} ({lesson_title}){vocab_section}
 Moje słabe obszary: {weak_areas_text}
 
-Proszę, rozmawiaj ze mną po {user.target_language} na poziomie {user.cefr_level}. Poprawiaj moje błędy delikatnie (pokazuj poprawną formę w nawiasach kwadratowych). Pomóż mi ćwiczyć: {topic}. Zacznij od krótkiego wprowadzenia do dzisiejszego tematu, a następnie zaangażuj mnie w rozmowę."""
+Proszę, rozmawiaj ze mną po {user.target_language} na poziomie {user.cefr_level}. Poprawiaj moje błędy delikatnie (pokazuj poprawną formę w nawiasach kwadratowych). Postaraj się użyć w rozmowie słownictwa z dzisiejszej lekcji. Pomóż mi ćwiczyć: {topic}. Zacznij od krótkiego wprowadzenia do dzisiejszego tematu, a następnie zaangażuj mnie w rozmowę."""
 
     return {
         "success": True,
