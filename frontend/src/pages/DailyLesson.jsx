@@ -797,7 +797,15 @@ export default function DailyLesson() {
                 return <span key={i}>{part}</span>
               })}
             </p>
-            <div className="mt-2 flex justify-end">
+            <div className="mt-2 flex items-center justify-between">
+              <button
+                onClick={() => handleAddFlashcard(content.comprehensible_input.text.trim())}
+                disabled={addingWord === 'full_text'}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-700/30 hover:bg-teal-600/40 text-teal-200 text-sm transition-colors disabled:opacity-50"
+              >
+                {addingWord === 'full_text' ? <Loader2 className="w-3 h-3 animate-spin" /> : <BookmarkPlus className="w-3 h-3" />}
+                Dodaj całe zdanie do fiszek
+              </button>
               <PlayButton text={content.comprehensible_input.text} language={lesson.language} />
             </div>
           </div>

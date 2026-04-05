@@ -20,11 +20,33 @@ export default function News() {
 
   useEffect(() => {
     if (!userId) { navigate('/placement'); return }
+    const today = new Date().toISOString().slice(0, 10)
+    const cacheDateKey = `news_date_${userId}_${targetLanguage}`
+    const cacheDataKey = `news_data_${userId}_${targetLanguage}`
+    const cachedDate = localStorage.getItem(cacheDateKey)
+    const cachedData = localStorage.getItem(cacheDataKey)
+    const hasCached = cachedDate === today && cachedData
+
+    if (hasCached) {
+      try {
+        setArticles(JSON.parse(cachedData))
+        setLoading(false)
+        return
+      } catch (e) {
+        // ignore parsing errors, will fetch fresh
+      }
+    }
+
     axios.get(`/api/news/${userId}`)
-      .then(r => setArticles(r.data.articles || []))
+      .then(r => {
+        const arts = r.data.articles || []
+        setArticles(arts)
+        localStorage.setItem(cacheDateKey, today)
+        localStorage.setItem(cacheDataKey, JSON.stringify(arts))
+      })
       .catch(e => setError(e.response?.data?.detail || e.message))
       .finally(() => setLoading(false))
-  }, [userId])
+  }, [userId, targetLanguage])
 
   const markTabComplete = (tabKey) => {
     try {
