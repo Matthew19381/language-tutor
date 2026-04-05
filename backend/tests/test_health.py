@@ -6,5 +6,5 @@ def test_health_check(client):
     assert r.status_code == 200
     data = r.json()
     assert data["status"] == "healthy"
-    assert data["service"] == "Language Tutor API"
+    assert data["service"] == "LinguaAI API"
     assert "version" in data

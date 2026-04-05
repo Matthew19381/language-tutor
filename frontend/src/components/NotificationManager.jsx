@@ -54,7 +54,7 @@ export default function NotificationManager() {
       "15 minutes of practice keeps your streak alive! ⚡",
     ]
     const msg = messages[Math.floor(Math.random() * messages.length)]
-    new Notification('Language Tutor', {
+    new Notification('LinguaAI', {
       body: msg,
       icon: '/favicon.ico',
     })

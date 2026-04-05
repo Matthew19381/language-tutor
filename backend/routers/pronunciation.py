@@ -60,9 +60,9 @@ async def analyze_pronunciation(
             status_code=503,
             detail="Pronunciation service unavailable. Please run: pip install faster-whisper==1.0.3"
         )
-    except Exception as e:
-        logger.error(f"Pronunciation analysis error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        logger.exception("Unexpected error in pronunciation analysis")
+        raise HTTPException(status_code=500, detail="Failed to analyze pronunciation")
 
 
 @router.get("/api/pronunciation/phrases/{user_id}")

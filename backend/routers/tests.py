@@ -1,5 +1,6 @@
 import json
 import logging
+import httpx
 from datetime import datetime, date
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -58,9 +59,12 @@ async def get_daily_test(user_id: int, db: Session = Depends(get_db)):
             "lesson_title": today_lesson.title,
             **test_data
         }
+    except httpx.RequestError as e:
+        logger.error(f"AI service error getting daily test: {e}")
+        raise HTTPException(status_code=503, detail="AI service unavailable")
     except Exception as e:
-        logger.error(f"Error getting daily test: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Unexpected error getting daily test")
+        raise HTTPException(status_code=500, detail="Failed to load daily test")
 
 
 class SubmitTestRequest(BaseModel):
@@ -94,11 +98,14 @@ async def submit_test_answers(
             "new_achievements": newly_awarded,
             **result
         }
+    except httpx.RequestError as e:
+        logger.error(f"AI service error submitting test: {e}")
+        raise HTTPException(status_code=503, detail="AI service unavailable")
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
-        logger.error(f"Error submitting test: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Unexpected error submitting test")
+        raise HTTPException(status_code=500, detail="Failed to submit test")
 
 
 @router.get("/api/tests/errors/{user_id}")
@@ -142,9 +149,12 @@ async def get_errors_test(user_id: int, db: Session = Depends(get_db)):
             native_language=user.native_language
         )
         return {"success": True, "test_type": "errors", **test_data}
+    except httpx.RequestError as e:
+        logger.error(f"AI service error generating errors test: {e}")
+        raise HTTPException(status_code=503, detail="AI service unavailable")
     except Exception as e:
-        logger.error(f"Error generating errors test: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Unexpected error generating errors test")
+        raise HTTPException(status_code=500, detail="Failed to generate error test")
 
 
 @router.get("/api/tests/weekly/{user_id}")
@@ -171,11 +181,14 @@ async def get_weekly_test(
             "success": True,
             **test_data
         }
+    except httpx.RequestError as e:
+        logger.error(f"AI service error getting weekly test: {e}")
+        raise HTTPException(status_code=503, detail="AI service unavailable")
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
-        logger.error(f"Error getting weekly test: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Unexpected error getting weekly test")
+        raise HTTPException(status_code=500, detail="Failed to load weekly test")
 
 
 @router.get("/api/tests/history/{user_id}")

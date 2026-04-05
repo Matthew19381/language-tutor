@@ -28,13 +28,13 @@ def generate_anki_deck(flashcards: list, language: str, user_name: str = "Studen
     ensure_exports_dir()
 
     # Generate stable model and deck IDs based on language
-    model_id = abs(hash(f"language_tutor_{language}")) % (10 ** 10)
-    deck_id = abs(hash(f"language_tutor_{language}_{user_name}")) % (10 ** 10)
+    model_id = abs(hash(f"LinguaAI_{language}")) % (10 ** 10)
+    deck_id = abs(hash(f"LinguaAI_{language}_{user_name}")) % (10 ** 10)
 
     # Define the Anki note model
     model = genanki.Model(
         model_id,
-        f"{language} Language Tutor",
+        f"{language} - LinguaAI",
         fields=[
             {"name": "Word"},
             {"name": "Translation"},
@@ -139,7 +139,7 @@ def generate_anki_deck(flashcards: list, language: str, user_name: str = "Studen
     # Create the deck
     deck = genanki.Deck(
         deck_id,
-        f"Language Tutor: {language} ({user_name})"
+        f"LinguaAI: {language} ({user_name})"
     )
 
     # Add notes (cards) to the deck
@@ -166,7 +166,7 @@ def generate_anki_deck(flashcards: list, language: str, user_name: str = "Studen
     # Generate output filename
     safe_language = language.replace(" ", "_").lower()
     safe_name = user_name.replace(" ", "_").lower()
-    filename = f"language_tutor_{safe_language}_{safe_name}.apkg"
+    filename = f"LinguaAI_{safe_language}_{safe_name}.apkg"
     output_path = os.path.join(EXPORTS_DIR, filename)
 
     # Create the package and write to file

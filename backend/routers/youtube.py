@@ -231,5 +231,5 @@ async def search_videos(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"YouTube search error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("YouTube search error")
+        raise HTTPException(status_code=500, detail="Failed to search YouTube videos")

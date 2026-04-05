@@ -210,7 +210,7 @@ export default function Videos() {
             type="text"
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="Szukaj filmów... (np. Deutsche Grammatik, Spanish music)"
+            placeholder="Szukaj filmów... (np. niemiecka gramatyka, hiszpańska muzyka)"
             className="w-full bg-gray-800 border border-gray-700 rounded-lg pl-10 pr-4 py-2.5 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-indigo-500"
           />
           {query && (

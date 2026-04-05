@@ -2,7 +2,7 @@
 Standalone Discord notifier — runs via Windows Task Scheduler.
 Does NOT require FastAPI to be running. Reads SQLite directly.
 
-Usage: python backend/notifier.py  (run from language-tutor/ directory)
+Usage: python backend/notifier.py  (run from LinguaAI/ directory)
 Setup: run backend/setup_scheduler.bat once to register scheduled tasks.
 """
 
@@ -13,7 +13,7 @@ import sys
 from datetime import datetime, date, timedelta
 from pathlib import Path
 
-# Ensure language-tutor/ is in the path so backend.* imports work
+# Ensure LinguaAI/ is in the path so backend.* imports work
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import httpx
@@ -32,7 +32,7 @@ from backend.models.flashcard import Flashcard
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
-DB_PATH = Path(__file__).parent / "language_tutor.db"
+DB_PATH = Path(__file__).parent / "LinguaAI.db"
 STATE_FILE = Path(__file__).parent / "notifier_state.json"
 DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL", "")
 

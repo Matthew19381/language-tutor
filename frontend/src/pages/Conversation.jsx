@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import {
   MessageSquare, Send, Square, User, Bot,
   Lightbulb, ChevronDown, ChevronUp, BarChart3,
-  HelpCircle, AlertCircle
+  HelpCircle, AlertCircle, Mic, MicOff
 } from 'lucide-react'
 import LoadingSpinner from '../components/LoadingSpinner'
+import PlayButton from '../components/PlayButton'
 import { getUserId, startConversation, sendMessage, analyzeConversation, askQuestion, getGrokPrompt, analyzePastedConversation } from '../api/client'
 import { useLanguage } from '../hooks/useLanguage'
 
@@ -23,6 +24,27 @@ const TOPICS = [
 ]
 
 const MODES = { SETUP: 'setup', CHAT: 'chat', RESULTS: 'results', QA: 'qa' }
+
+// Speech recognition setup
+const getSpeechRecognition = () => {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+  if (!SpeechRecognition) return null
+  const recognition = new SpeechRecognition()
+  recognition.continuous = false
+  recognition.interimResults = false
+  return recognition
+}
+
+// Map targetLanguage to BCP-47 locale
+const LANGUAGE_LOCALES = {
+  German: 'de-DE',
+  English: 'en-US',
+  Spanish: 'es-ES',
+  Russian: 'ru-RU',
+  Chinese: 'zh-CN',
+  Polish: 'pl-PL',
+  French: 'fr-FR',
+}
 
 export default function Conversation() {
   const [mode, setMode] = useState(MODES.SETUP)
@@ -45,7 +67,10 @@ export default function Conversation() {
   const [pasteText, setPasteText] = useState('')
   const [pasteLoading, setPasteLoading] = useState(false)
   const [pasteResult, setPasteResult] = useState(null)
+  const [isRecording, setIsRecording] = useState(false)
+  const [recognitionError, setRecognitionError] = useState('')
   const messagesEndRef = useRef(null)
+  const recognitionRef = useRef(null)
   const navigate = useNavigate()
   const userId = getUserId()
   const { t, targetLanguage } = useLanguage()
@@ -138,6 +163,54 @@ export default function Conversation() {
       setTimeout(() => setGrokCopied(false), 3000)
     } catch (e) {
       alert('Copy failed: ' + e.message)
+    }
+  }
+
+  const toggleRecording = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (!SpeechRecognition) {
+      setRecognitionError('Speech recognition not supported in this browser')
+      return
+    }
+
+    if (isRecording) {
+      // Stop current recognition (user cancel)
+      recognitionRef.current?.stop()
+      setIsRecording(false)
+      return
+    }
+
+    const recognition = new SpeechRecognition()
+    recognition.continuous = false
+    recognition.interimResults = false
+    const locale = LANGUAGE_LOCALES[targetLanguage] || 'en-US'
+    recognition.lang = locale
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript
+      setInputText(prev => prev + transcript)
+      setIsRecording(false)
+      setRecognitionError('')
+    }
+
+    recognition.onerror = (event) => {
+      console.error('Speech recognition error:', event.error)
+      setRecognitionError('Błąd rozpoznawania mowy: ' + event.error)
+      setIsRecording(false)
+    }
+
+    recognition.onend = () => {
+      setIsRecording(false)
+    }
+
+    try {
+      recognition.start()
+      recognitionRef.current = recognition
+      setIsRecording(true)
+      setRecognitionError('')
+    } catch (e) {
+      setRecognitionError('Failed to start recognition: ' + e.message)
+      setIsRecording(false)
     }
   }
 
@@ -391,7 +464,7 @@ export default function Conversation() {
               }`}>
                 {msg.role === 'assistant' ? <Bot className="w-4 h-4 text-white" /> : <User className="w-4 h-4 text-white" />}
               </div>
-              <div className={`max-w-xs lg:max-w-sm rounded-2xl px-4 py-3 ${
+              <div className={`max-w-xs lg:max-w-sm rounded-2xl px-4 py-3 relative ${
                 msg.role === 'user'
                   ? 'bg-indigo-600 text-white rounded-tr-sm'
                   : msg.role === 'system'
@@ -399,6 +472,11 @@ export default function Conversation() {
                   : 'bg-gray-800 text-gray-100 rounded-tl-sm'
               }`}>
                 <p className="text-sm leading-relaxed">{msg.content}</p>
+                {msg.role === 'assistant' && (
+                  <div className="absolute -top-2 -right-2">
+                    <PlayButton text={msg.content} language={targetLanguage} className="w-6 h-6 bg-gray-800 border border-gray-700" />
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -431,6 +509,18 @@ export default function Conversation() {
               disabled={aiTyping}
             />
             <button
+              className={`px-3 flex items-center justify-center ${
+                isRecording
+                  ? 'bg-red-600 hover:bg-red-700 text-white'
+                  : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+              }`}
+              onClick={toggleRecording}
+              disabled={aiTyping}
+              title={isRecording ? 'Zatrzymaj nagrywanie' : 'Rozpocznij nagrywanie'}
+            >
+              {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+            </button>
+            <button
               className="btn-primary px-4 flex items-center justify-center"
               onClick={handleSend}
               disabled={!inputText.trim() || aiTyping}
@@ -438,6 +528,9 @@ export default function Conversation() {
               <Send className="w-4 h-4" />
             </button>
           </div>
+          {recognitionError && (
+            <p className="text-red-400 text-xs mt-1 text-center">{recognitionError}</p>
+          )}
           <ConvSpecialChars language={targetLanguage} onInsert={ch => setInputText(t => t + ch)} />
           <p className="text-gray-600 text-xs mt-2 text-center">
             {messages.filter(m => m.role === 'user').length} {t('conv.messagesSent')}

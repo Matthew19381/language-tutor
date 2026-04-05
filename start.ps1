@@ -1,6 +1,6 @@
-# Language Tutor - PowerShell Launcher
+# LinguaAI - PowerShell Launcher
 Write-Host "============================================" -ForegroundColor Cyan
-Write-Host "  Language Tutor - AI-Powered Learning App" -ForegroundColor Cyan
+Write-Host "  LinguaAI - AI-Powered Learning App" -ForegroundColor Cyan
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -15,13 +15,13 @@ if (-not (Test-Path "backend\.env")) {
 
 $rootDir = $PWD.Path
 
-Write-Host "Starting Language Tutor Backend..." -ForegroundColor Green
+Write-Host "Starting LinguaAI Backend..." -ForegroundColor Green
 $backendCmd = "Set-Location '$rootDir'; Write-Host 'Starting backend on http://localhost:8000' -ForegroundColor Green; py -3.11 -m pip install -r backend\requirements.txt; py -3.11 -m uvicorn backend.main:app --reload --port 8000"
 Start-Process powershell -ArgumentList "-NoExit", "-Command", $backendCmd
 
 Start-Sleep -Seconds 2
 
-Write-Host "Starting Language Tutor Frontend..." -ForegroundColor Green
+Write-Host "Starting LinguaAI Frontend..." -ForegroundColor Green
 $frontendCmd = "Set-Location '$rootDir\frontend'; Write-Host 'Starting frontend on http://localhost:5173' -ForegroundColor Green; npm install; npm run dev"
 Start-Process powershell -ArgumentList "-NoExit", "-Command", $frontendCmd
 

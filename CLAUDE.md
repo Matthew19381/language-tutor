@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Starting the App
 
-Run from the **project root** (`language-tutor/`). Never `cd` into `backend/` first — the backend must be launched from the root so that `backend.*` absolute imports resolve correctly.
+Run from the **project root** (`LinguaAI/`). Never `cd` into `backend/` first — the backend must be launched from the root so that `backend.*` absolute imports resolve correctly.
 
 ```bash
 # Windows CMD (opens two terminal windows)
@@ -13,10 +13,10 @@ start.bat
 # PowerShell
 .\start.ps1
 
-# Manual — backend (from language-tutor/)
+# Manual — backend (from LinguaAI/)
 uvicorn backend.main:app --reload --port 8000
 
-# Manual — frontend (from language-tutor/frontend/)
+# Manual — frontend (from LinguaAI/frontend/)
 npm run dev
 ```
 
@@ -24,7 +24,7 @@ Frontend dev server runs on `:5173` and proxies `/api` and `/audio` to `http://l
 
 ## Environment
 
-Copy `backend/.env.example` → `backend/.env` and set `GEMINI_API_KEY`. The SQLite database (`language_tutor.db`) is created automatically in `backend/` on first startup via `Base.metadata.create_all()` in `main.py`'s lifespan handler.
+Copy `backend/.env.example` → `backend/.env` and set `GEMINI_API_KEY`. The SQLite database (`lingua_ai.db`) is created automatically in `backend/` on first startup via `Base.metadata.create_all()` in `main.py`'s lifespan handler.
 
 **When adding a new SQLAlchemy model**: import it inside the lifespan block in `main.py` (alongside the existing `achievement` import) so it registers with `Base` before `create_all` runs.
 
@@ -153,7 +153,7 @@ wip
 
 ### Commands
 
-All git commands run from `language-tutor/` (the repo root):
+All git commands run from `LinguaAI/` (the repo root):
 
 ```bash
 git add -A

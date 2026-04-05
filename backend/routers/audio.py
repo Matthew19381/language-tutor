@@ -1,6 +1,7 @@
 import hashlib
 import logging
 import os
+import httpx
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from backend.services.audio_service import generate_audio, AUDIO_DIR
@@ -27,8 +28,11 @@ async def text_to_speech(request: TTSRequest):
     if not os.path.exists(output_path):
         try:
             await generate_audio(request.text.strip(), request.language, output_path)
+        except httpx.RequestError as e:
+            logger.error(f"TTS service error: {e}")
+            raise HTTPException(status_code=503, detail="TTS service unavailable")
         except Exception as e:
-            logger.error(f"TTS generation error: {e}")
-            raise HTTPException(status_code=500, detail=f"Audio generation failed: {str(e)}")
+            logger.exception("Unexpected error generating TTS")
+            raise HTTPException(status_code=500, detail="Audio generation failed")
 
     return {"url": f"/audio/{filename}"}

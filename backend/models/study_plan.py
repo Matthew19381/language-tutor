@@ -8,7 +8,7 @@ class StudyPlan(Base):
     __tablename__ = "study_plans"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     language = Column(String, nullable=False)
     cefr_level = Column(String, nullable=False)
     plan_data = Column(Text, nullable=False)  # JSON text storing the full plan

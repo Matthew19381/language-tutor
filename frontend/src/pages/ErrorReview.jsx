@@ -78,7 +78,7 @@ export default function ErrorReview() {
     setGrokLoading(true)
     setGrokAnalysis('')
     try {
-      const lang = data?.language || targetLanguage || 'angielski'
+      const lang = data?.language || targetLanguage || 'English'
       const prompt = `Przeanalizuj poniższe podsumowanie rozmowy w języku ${lang}. Oceń:
 1. Wymowę/pisownię (błędy ortograficzne lub wymowa opisana w tekście)
 2. Gramatykę (błędne formy, koniugacje, deklinacje)

@@ -1,5 +1,6 @@
 import json
 import logging
+import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import Optional
@@ -19,6 +20,27 @@ from backend.config import settings
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+# Map friendly (Polish) language names to canonical English names
+LANGUAGE_MAP = {
+    "Niemiecki": "German",
+    "Angielski": "English",
+    "Hiszpański": "Spanish",
+    "Rosyjski": "Russian",
+    "Chiński": "Chinese",
+    "Francuski": "French",
+    "Włoski": "Italian",
+    "Polski": "Polish",
+    "German": "German",
+    "English": "English",
+    "Spanish": "Spanish",
+    "Russian": "Russian",
+    "Chinese": "Chinese",
+    "French": "French",
+    "Italian": "Italian",
+}
+
+SUPPORTED_LANGUAGES = ["German", "English", "Spanish", "Russian", "Chinese"]
 
 
 class StartPlacementRequest(BaseModel):
@@ -49,6 +71,10 @@ async def start_placement(
     language = request.language or settings.TARGET_LANGUAGE
     native_language = request.native_language or settings.NATIVE_LANGUAGE
 
+    # Map Polish/other language names to canonical English
+    language = LANGUAGE_MAP.get(language, language)
+    native_language = LANGUAGE_MAP.get(native_language, native_language) if native_language else native_language
+
     try:
         test_data = await generate_placement_test(language, native_language)
         return {
@@ -58,9 +84,15 @@ async def start_placement(
             "questions": test_data.get("questions", []),
             "total_questions": len(test_data.get("questions", []))
         }
+    except ValueError as e:
+        logger.error(f"Validation error in placement test: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except httpx.RequestError as e:
+        logger.error(f"AI service error in placement test: {e}")
+        raise HTTPException(status_code=503, detail="AI service unavailable")
     except Exception as e:
-        logger.error(f"Error starting placement test: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Unexpected error in placement test")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.post("/api/placement/submit")
@@ -70,6 +102,10 @@ async def submit_placement(
 ):
     language = request.language or settings.TARGET_LANGUAGE
     native_language = request.native_language or settings.NATIVE_LANGUAGE
+
+    # Map Polish/other language names to canonical English
+    language = LANGUAGE_MAP.get(language, language)
+    native_language = LANGUAGE_MAP.get(native_language, native_language) if native_language else native_language
 
     try:
         # Analyze results
@@ -147,9 +183,15 @@ async def submit_placement(
             "recommendations": analysis.get("recommendations", ""),
             "study_plan": study_plan_data
         }
+    except ValueError as e:
+        logger.error(f"Validation error in placement submit: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except httpx.RequestError as e:
+        logger.error(f"AI service error in placement submit: {e}")
+        raise HTTPException(status_code=503, detail="AI service unavailable")
     except Exception as e:
-        logger.error(f"Error submitting placement test: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Unexpected error in placement submit")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.post("/api/placement/create-user")
@@ -161,10 +203,13 @@ async def create_user(
         native_language = request.native_language or settings.NATIVE_LANGUAGE
         target_language = request.target_language or settings.TARGET_LANGUAGE
 
+        # MapPolish/other language names to canonical English for internal storage
+        canonical_target = LANGUAGE_MAP.get(target_language, target_language)
+
         user = User(
             name=request.name,
             native_language=native_language,
-            target_language=target_language,
+            target_language=canonical_target,
             cefr_level="A1",
             streak_days=0,
             total_xp=0
@@ -181,9 +226,12 @@ async def create_user(
             "target_language": user.target_language,
             "cefr_level": user.cefr_level
         }
+    except ValueError as e:
+        logger.error(f"Validation error creating user: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"Error creating user: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception(f"Unexpected error creating user")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/api/placement/user/{user_id}")

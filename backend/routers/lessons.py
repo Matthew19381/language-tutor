@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import httpx
 from datetime import datetime, date, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import FileResponse
@@ -52,7 +53,7 @@ def get_recent_errors(user_id: int, db: Session, limit: int = 10) -> list:
             try:
                 test_errors = json.loads(test.errors)
                 errors.extend(test_errors[:3])
-            except Exception:
+            except (json.JSONDecodeError, TypeError, KeyError):
                 pass
 
     return errors[:limit]
@@ -278,7 +279,7 @@ async def save_exercise_error(
 
     try:
         content = json.loads(lesson.content)
-    except Exception:
+    except (json.JSONDecodeError, TypeError):
         content = {}
 
     errors = content.get("user_exercise_errors", [])
@@ -315,9 +316,12 @@ async def get_lesson_audio(lesson_id: int, db: Session = Depends(get_db)):
             "lesson_id": lesson_id,
             "audio_files": audio_files
         }
+    except httpx.RequestError as e:
+        logger.error(f"Audio service connection error: {e}")
+        raise HTTPException(status_code=503, detail="Audio service unavailable")
     except Exception as e:
-        logger.error(f"Error generating audio: {e}")
-        raise HTTPException(status_code=500, detail=f"Error generating audio: {str(e)}")
+        logger.exception("Unexpected error generating audio")
+        raise HTTPException(status_code=500, detail="Failed to generate audio")
 
 
 @router.get("/api/lessons/{lesson_id}/export-pdf")

@@ -157,7 +157,7 @@ Return JSON:
             "simplified_text": "...",
             "vocabulary": [{{"word": "...", "translation": "...", "cefr_level": "..."}}],
             "comprehension_questions": [{{"question": "...", "answer": "..."}}],
-            "source": "Language Tutor AI",
+            "source": "LinguaAI",
             "link": ""
         }}
     ]

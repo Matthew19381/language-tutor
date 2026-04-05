@@ -8,7 +8,7 @@ class TestResult(Base):
     __tablename__ = "test_results"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     test_type = Column(String, nullable=False)  # daily / weekly / placement
     score = Column(Float, nullable=False)  # 0-100
     answers = Column(Text, nullable=False)  # JSON text

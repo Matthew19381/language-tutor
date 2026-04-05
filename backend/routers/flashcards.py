@@ -1,5 +1,6 @@
 import logging
 import os
+import httpx
 from datetime import datetime, date
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
@@ -175,9 +176,9 @@ async def export_anki(user_id: int, db: Session = Depends(get_db)):
             filename=os.path.basename(deck_path),
             media_type="application/octet-stream"
         )
-    except Exception as e:
-        logger.error(f"Error exporting Anki deck: {e}")
-        raise HTTPException(status_code=500, detail=f"Error generating Anki deck: {str(e)}")
+    except Exception:
+        logger.exception("Unexpected error exporting Anki deck")
+        raise HTTPException(status_code=500, detail="Failed to generate Anki deck")
 
 
 @router.post("/api/flashcards/{flashcard_id}/audio")
@@ -197,9 +198,12 @@ async def generate_audio(flashcard_id: int, db: Session = Depends(get_db)):
             db.commit()
 
         return {"success": True, "audio_path": audio_path}
+    except httpx.RequestError as e:
+        logger.error(f"Audio service error: {e}")
+        raise HTTPException(status_code=503, detail="Audio service unavailable")
     except Exception as e:
-        logger.error(f"Error generating flashcard audio: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Unexpected error generating flashcard audio")
+        raise HTTPException(status_code=500, detail="Failed to generate audio")
 
 
 class AddFlashcardRequest(BaseModel):

@@ -8,7 +8,7 @@ class Flashcard(Base):
     __tablename__ = "flashcards"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     word = Column(String, nullable=False)
     translation = Column(String, nullable=False)
     example_sentence = Column(Text, nullable=True)

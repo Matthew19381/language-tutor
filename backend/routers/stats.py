@@ -2,6 +2,7 @@ import csv
 import io
 import json
 import logging
+import httpx
 from datetime import datetime, date
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
@@ -201,9 +202,12 @@ async def get_daily_tips(user_id: int, db: Session = Depends(get_db)):
             "language": user.target_language,
             "tips": tips.get("tips", [])
         }
+    except httpx.RequestError as e:
+        logger.error(f"AI service error generating tips: {e}")
+        raise HTTPException(status_code=503, detail="AI service unavailable")
     except Exception as e:
-        logger.error(f"Error getting daily tips: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Unexpected error getting daily tips")
+        raise HTTPException(status_code=500, detail="Failed to generate tips")
 
 
 @router.get("/api/stats/{user_id}/leaderboard")

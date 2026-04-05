@@ -167,7 +167,7 @@ export default function PlacementTest() {
 
             {isLanguageChange && (
               <div className="bg-indigo-900/20 border border-indigo-700/30 rounded-lg p-3 mb-4 text-sm text-indigo-300">
-                Test plasujący dla języka: <strong>{preselectedLang}</strong>
+                Test plasujący dla języka: <strong>{LANG_DISPLAY[preselectedLang] || preselectedLang}</strong>
               </div>
             )}
             <div className="space-y-4">

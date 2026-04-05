@@ -1,5 +1,6 @@
 import json
 import logging
+import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List
@@ -113,9 +114,12 @@ async def start_conversation(
             "suggested_phrases": scenario.get("suggested_phrases", []),
             "opening_line": opening_line
         }
+    except httpx.RequestError as e:
+        logger.error(f"AI service error starting conversation: {e}")
+        raise HTTPException(status_code=503, detail="AI service unavailable")
     except Exception as e:
-        logger.error(f"Error starting conversation: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Unexpected error starting conversation")
+        raise HTTPException(status_code=500, detail="Failed to start conversation")
 
 
 @router.post("/api/conversation/message")
@@ -168,9 +172,12 @@ Response should be 1-3 sentences in {language}."""
             "response": ai_response,
             "message_count": len(session["history"])
         }
+    except httpx.RequestError as e:
+        logger.error(f"AI service error in conversation: {e}")
+        raise HTTPException(status_code=503, detail="AI service unavailable")
     except Exception as e:
-        logger.error(f"Error generating conversation response: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Unexpected error generating conversation response")
+        raise HTTPException(status_code=500, detail="Failed to generate response")
 
 
 @router.post("/api/conversation/analyze")
@@ -239,9 +246,12 @@ async def analyze_session(
             "success": True,
             **analysis
         }
+    except httpx.RequestError as e:
+        logger.error(f"AI service error analyzing conversation: {e}")
+        raise HTTPException(status_code=503, detail="AI service unavailable")
     except Exception as e:
-        logger.error(f"Error analyzing conversation: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Unexpected error analyzing conversation")
+        raise HTTPException(status_code=500, detail="Failed to analyze conversation")
 
 
 @router.post("/api/conversation/question")
@@ -272,9 +282,12 @@ async def ask_question(
             "question": request.question,
             "answer": answer
         }
+    except httpx.RequestError as e:
+        logger.error(f"AI service error answering question: {e}")
+        raise HTTPException(status_code=503, detail="AI service unavailable")
     except Exception as e:
-        logger.error(f"Error answering question: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Unexpected error answering question")
+        raise HTTPException(status_code=500, detail="Failed to answer question")
 
 
 class TranslateRequest(BaseModel):
@@ -294,9 +307,12 @@ async def translate_word(request: TranslateRequest):
     try:
         result = await generate_text(prompt)
         return {"success": True, "translation": result.strip()}
+    except httpx.RequestError as e:
+        logger.error(f"AI service error in translation: {e}")
+        raise HTTPException(status_code=503, detail="AI service unavailable")
     except Exception as e:
-        logger.error(f"Translation error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Unexpected translation error")
+        raise HTTPException(status_code=500, detail="Translation failed")
 
 
 @router.get("/api/conversation/grok-prompt")

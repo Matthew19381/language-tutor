@@ -51,6 +51,17 @@ function readLessonCache() {
   } catch { return null }
 }
 
+function clearLessonCache() {
+  try {
+    const uid = getUserId()
+    const lang = localStorage.getItem('userLanguage') || ''
+    const today = new Date().toISOString().slice(0, 10)
+    localStorage.removeItem(`lesson_cache_${uid}_${lang}_${today}`)
+  } catch (e) {
+    console.error('Failed to clear lesson cache:', e)
+  }
+}
+
 export default function DailyLesson() {
   const { lessonId } = useParams()
   const [lesson, setLesson] = useState(() => lessonId ? null : readLessonCache())
@@ -152,6 +163,8 @@ export default function DailyLesson() {
     try {
       await completeLesson(lesson.lesson_id, userId)
       setCompleted(true)
+      // Clear lesson cache so next day fetches fresh lesson
+      clearLessonCache()
       // Mark lesson as completed in daily tabs
       const today = new Date().toISOString().slice(0, 10)
       try {
@@ -163,6 +176,8 @@ export default function DailyLesson() {
           localStorage.setItem('daily_tabs', JSON.stringify({ date: today, tabs: stored.tabs }))
         }
       } catch {}
+      // Reload to reflect new lesson state
+      window.location.reload()
     } catch (e) {
       setError(e.message)
     } finally {

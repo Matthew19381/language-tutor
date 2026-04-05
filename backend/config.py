@@ -5,8 +5,8 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
     OLLAMA_BASE_URL: str = "http://localhost:11434/v1"
     OLLAMA_MODEL: str = "qwen2.5:7b"
-    DATABASE_URL: str = "sqlite:///./language_tutor.db"
-    SECRET_KEY: str = "changeme"
+    DATABASE_URL: str = "sqlite:///./LinguaAI.db"
+    SECRET_KEY: str = ""  # Must be set in .env file
     TARGET_LANGUAGE: str = "German"
     NATIVE_LANGUAGE: str = "Polish"
     DISCORD_WEBHOOK_URL: str = ""

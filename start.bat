@@ -1,6 +1,6 @@
 @echo off
 echo ============================================
-echo   Language Tutor - AI-Powered Learning App
+echo   LinguaAI - AI-Powered Learning App
 echo ============================================
 echo.
 
@@ -13,11 +13,11 @@ if not exist "backend\.env" (
     pause
 )
 
-echo Starting Language Tutor Backend...
+echo Starting LinguaAI Backend...
 start cmd /k "title LinguaAI - Backend && py -3.11 -m uvicorn backend.main:app --reload --port 8000"
 
 cd frontend
-echo Starting Language Tutor Frontend...
+echo Starting LinguaAI Frontend...
 start cmd /k "title LinguaAI - Frontend && npm run dev"
 
 echo.

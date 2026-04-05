@@ -1,0 +1,37 @@
+# Backend Dockerfile
+FROM python:3.14-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements.txt .
+
+# Install Python dependencies (exclude google-genai for now due to conflicts)
+RUN pip install --no-cache-dir -r requirements.txt --no-deps
+
+# Install google-genai specific version that works
+RUN pip install --no-cache-dir google-genai==0.5.0
+
+# Copy application
+COPY backend/ ./backend/
+COPY frontend-simple/ ./frontend-simple/
+
+# Create necessary directories
+RUN mkdir -p backend/audio backend/exports
+
+# Expose port
+EXPOSE 8000
+
+# Environment
+ENV PYTHONUNBUFFERED=1
+ENV OLLAMA_BASE_URL=http://ollama:11434/v1
+ENV OLLAMA_MODEL=qwen2.5:7b
+
+# Run
+CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]

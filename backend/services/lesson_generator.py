@@ -1,9 +1,10 @@
 import logging
-from backend.services.gemini_service import generate_json, generate_text
+from backend.services.gemini_service import generate_json, generate_text, with_model
 
 logger = logging.getLogger(__name__)
 
 
+@with_model("placement")
 async def generate_placement_test(language: str, native_language: str) -> dict:
     prompt = f"""You are a strict certified {language} language examiner. Create a 30-question DIAGNOSTIC placement test for a native {native_language} speaker learning {language}.
 
@@ -86,6 +87,7 @@ Return ONLY valid JSON:
         }
 
 
+@with_model("placement")
 async def analyze_placement_results(questions: list, answers: dict, language: str, native_language: str = "Polish") -> dict:
     questions_summary = []
     for q in questions:
@@ -160,6 +162,7 @@ Return JSON:
         }
 
 
+@with_model("lesson")
 async def generate_study_plan(user_data: dict, language: str, native_language: str) -> dict:
     cefr_level = user_data.get("cefr_level", "A1")
     name = user_data.get("name", "Student")
@@ -239,6 +242,7 @@ Generate all 30 days and 4 weekly goals."""
         }
 
 
+@with_model("lesson")
 async def generate_daily_lesson(
     day_number: int,
     study_plan_data: dict,
@@ -407,6 +411,7 @@ If there are errors to address, add them to the error_review array with format:
         }
 
 
+@with_model("lesson")
 async def generate_daily_test(
     lesson_content: dict,
     cefr_level: str,
@@ -596,6 +601,7 @@ Return JSON:
         }
 
 
+@with_model("lesson")
 async def generate_weekly_test(
     study_plan_data: dict,
     week_number: int,
@@ -773,6 +779,7 @@ Return JSON:
         }
 
 
+@with_model("conversation")
 async def analyze_conversation(
     conversation_history: list,
     cefr_level: str,

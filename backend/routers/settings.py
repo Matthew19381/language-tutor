@@ -187,8 +187,8 @@ async def gdrive_auth():
             "error": "gdrive_credentials.json not found. Download OAuth2 credentials from Google Cloud Console and save as backend/gdrive_credentials.json"
         }
     except Exception as e:
-        logger.error(f"Error getting GDrive auth URL: {e}")
-        return {"authorized": False, "auth_url": None, "error": str(e)}
+        logger.exception("Unexpected error in GDrive auth")
+        return {"authorized": False, "auth_url": None, "error": "Failed to get authorization URL"}
 
 
 @router.get("/api/settings/gdrive/callback")
@@ -201,8 +201,8 @@ async def gdrive_callback(code: str):
             return {"success": True, "message": "Google Drive authorized successfully! You can now upload Obsidian exports."}
         return {"success": False, "message": "Failed to save authorization token"}
     except Exception as e:
-        logger.error(f"GDrive callback error: {e}")
-        return {"success": False, "message": str(e)}
+        logger.exception("GDrive callback error")
+        return {"success": False, "message": "Failed to authorize Google Drive"}
 
 
 @router.get("/api/settings/gdrive/status")

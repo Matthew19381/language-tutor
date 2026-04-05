@@ -1,5 +1,6 @@
 import logging
 import time
+import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from backend.database import get_db
@@ -49,6 +50,9 @@ async def get_news(user_id: int, limit: int = 5, db: Session = Depends(get_db)):
             "articles": articles,
             "cached": False,
         }
+    except httpx.RequestError as e:
+        logger.error(f"AI service error fetching news: {e}")
+        raise HTTPException(status_code=503, detail="AI service unavailable")
     except Exception as e:
-        logger.error(f"Error fetching news for user {user_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception(f"Unexpected error fetching news for user {user_id}")
+        raise HTTPException(status_code=500, detail="Failed to fetch news")

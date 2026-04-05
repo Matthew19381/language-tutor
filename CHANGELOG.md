@@ -1,4 +1,4 @@
-# CHANGELOG — Language Tutor
+# CHANGELOG — LinguaAI
 
 Format: newest first. Każdy wpis: wersja (jeśli dotyczy) + data + opis.
 

@@ -1,6 +1,6 @@
 import os
 import logging
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -22,7 +22,7 @@ async def lifespan(app: FastAPI):
     # Startup: create database tables and required directories
     logger.info("Creating database tables...")
     # Import all models so SQLAlchemy registers them before create_all
-    from backend.models import achievement  # noqa
+    from backend.models import achievement, user, lesson, test_result, study_plan, flashcard  # noqa
     Base.metadata.create_all(bind=engine)
 
     _sa = __import__('sqlalchemy')
@@ -47,23 +47,23 @@ async def lifespan(app: FastAPI):
     os.makedirs(audio_dir, exist_ok=True)
     os.makedirs(exports_dir, exist_ok=True)
 
-    logger.info("Language Tutor API started successfully!")
+    logger.info("LinguaAI API started successfully!")
     yield
     # Shutdown
-    logger.info("Language Tutor API shutting down...")
+    logger.info("LinguaAI API shutting down...")
 
 
 app = FastAPI(
-    title="Language Tutor API",
+    title="LinguaAI API",
     description="AI-powered language learning application using Google Gemini",
     version="1.0.0",
     lifespan=lifespan
 )
 
-# CORS - allow all origins for local development
+# CORS - restrict to trusted origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],  # Development frontend
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -88,32 +88,30 @@ audio_dir = os.path.join(os.path.dirname(__file__), "audio")
 os.makedirs(audio_dir, exist_ok=True)
 app.mount("/audio", StaticFiles(directory=audio_dir), name="audio")
 
-# Serve frontend in production (if dist exists)
-frontend_dist = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "dist")
-if os.path.exists(frontend_dist):
-    app.mount("/assets", StaticFiles(directory=os.path.join(frontend_dist, "assets")), name="assets")
+@app.get("/api/health")
+async def health_check():
+    return {
+        "status": "healthy",
+        "service": "LinguaAI API",
+        "version": "1.0.0"
+    }
+
+# Serve simple frontend (no Vite, just static files)
+# Use relative path to avoid Unicode issues in absolute paths
+frontend_simple_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend-simple"))
+if os.path.exists(frontend_simple_dir):
+    app.mount("/static", StaticFiles(directory=frontend_simple_dir), name="static")
 
     @app.get("/", include_in_schema=False)
     async def serve_frontend():
-        return FileResponse(os.path.join(frontend_dist, "index.html"))
+        return FileResponse(os.path.join(frontend_simple_dir, "index.html"))
 
     @app.get("/{full_path:path}", include_in_schema=False)
     async def serve_spa(full_path: str):
         # Don't catch API routes
         if full_path.startswith("api/"):
-            from fastapi import HTTPException
             raise HTTPException(status_code=404)
-        index_path = os.path.join(frontend_dist, "index.html")
+        index_path = os.path.join(frontend_simple_dir, "index.html")
         if os.path.exists(index_path):
             return FileResponse(index_path)
-        from fastapi import HTTPException
         raise HTTPException(status_code=404)
-
-
-@app.get("/api/health")
-async def health_check():
-    return {
-        "status": "healthy",
-        "service": "Language Tutor API",
-        "version": "1.0.0"
-    }
