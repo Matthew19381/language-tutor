@@ -186,8 +186,8 @@ export const analyzePronunciation = (formData) =>
 
 // ===== YouTube =====
 
-export const searchYouTube = (userId, query = '') =>
-  api.get(`/youtube/search`, { params: { user_id: userId, query } })
+export const searchYouTube = (userId, query = '', includePolish = false) =>
+  api.get(`/youtube/search`, { params: { user_id: userId, query, include_polish: includePolish } })
 
 // ===== Achievements =====
 

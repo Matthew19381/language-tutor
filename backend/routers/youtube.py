@@ -49,60 +49,54 @@ async def _suggest_queries(
     cefr_level: str,
     native_language: str,
     lesson_context: dict | None = None,
+    include_polish: bool = False,
 ) -> list[str]:
     cefr_desc = CEFR_DESCRIPTIONS.get(cefr_level, "")
 
     if lesson_context:
         topic = lesson_context.get("topic", "")
-        title = lesson_context.get("title", "")
-        vocab = lesson_context.get("vocab", [])
-        vocab_str = ", ".join(vocab) if vocab else "brak"
+        prompt = f"""You are helping a {native_language} speaker learn {language} at CEFR {cefr_level}.
 
-        prompt = f"""Pomagasz osobie mówiącej po {native_language} uczyć się {language} na poziomie CEFR {cefr_level}.
+Today's lesson topic: "{topic}"
 
-Dzisiejsza lekcja:
-- Tytuł: {title}
-- Temat: {topic}
-- Słownictwo z lekcji: {vocab_str}
+Generate 6{'+2 Polish' if include_polish else ''} YouTube search queries:
+1. First 3: EXACTLY about the topic "{topic}" in {language}
+2. Next 3: General {language} learning content for {cefr_level} ({cefr_desc})
+{'''3. Last 2: Polish-language videos explaining {language} (e.g., "niemiecka gramatyka po polsku")''' if include_polish else ''}
 
-Zaproponuj 6 zapytań do YouTube które:
-1. Pierwsze 3 są BEZPOŚREDNIO powiązane z tematem lekcji ("{topic}") — szukaj filmów po {language} NA TEN KONKRETNY TEMAT
-2. Następne 3 są ogólne ale dostosowane do poziomu {cefr_level} ({cefr_desc}) w języku {language}
+Important:
+- Videos must be SPOKEN in {language} (not just subtitles)
+- Queries can be in English or {language}
+- A1/A2: slow speech, educational channels
+- B1+: authentic content (vlogs, podcasts, news)
 
-Ważne:
-- Filmy mają być MÓWIONE po {language} (nie z napisami)
-- Zapytania po angielsku lub w języku {language}
-- Dla A1/A2: wolna mowa, lektor, kanały edukacyjne
-- Dla B1+: autentyczne treści (vlogi, podcasty, wiadomości)
-
-Zwróć JSON:
-{{"queries": ["query1", "query2", "query3", "query4", "query5", "query6"],
-  "topic_queries": [0, 1, 2]}}
-
-Przykłady dla German B1, temat "Wohnung mieten" (wynajmowanie mieszkania):
-queries: ["Wohnung mieten Deutschland Tipps", "Mietvertrag erklärung Deutsch", "Wohnungssuche Berlin Vlog", "Deutsch B1 Alltag", "Deutsche Gespräche B1", "Deutsch lernen Alltag"]"""
+Return JSON: {{"queries": [...], "topic_queries": [0,1,2]}}"""
     else:
-        prompt = f"""Pomagasz osobie mówiącej po {native_language} uczyć się {language} na poziomie CEFR {cefr_level} ({cefr_desc}).
+        prompt = f"""You are helping a {native_language} speaker learn {language} at CEFR {cefr_level} ({cefr_desc}).
 
-Zaproponuj 6 zapytań YouTube do nauki {language}. Filmy mają być MÓWIONE po {language}.
-Dla {cefr_level}: {cefr_desc}.
+Generate {8 if include_polish else 6} YouTube search queries for general {language} learning.
+{'''Include 2 Polish queries about learning {language} (e.g., "polskie lekcje niemieckiego")''' if include_polish else ''}
 
-Zwróć JSON:
-{{"queries": ["q1", "q2", "q3", "q4", "q5", "q6"], "topic_queries": []}}"""
+Videos must be SPOKEN in {language}.
+
+Return JSON: {{"queries": [...], "topic_queries": []}}"""
 
     try:
         result = await generate_json(prompt)
         return result.get("queries", []), result.get("topic_queries", [])
     except Exception:
-        fallback = {
-            "A1": [f"{language} für Anfänger langsam", f"easy {language} A1 slow", f"learn {language} beginners"],
-            "A2": [f"einfaches {language} A2", f"easy {language} conversation A2"],
-            "B1": [f"{language} B1 Alltag", f"{language} intermediate listening"],
-            "B2": [f"{language} Nachrichten einfach", f"{language} podcast B2"],
-            "C1": [f"{language} Dokumentation", f"authentic {language} content C1"],
-            "C2": [f"{language} Literatur", f"native {language} speakers"],
-        }
-        return fallback.get(cefr_level, [f"learn {language}"]), []
+        # Fallback queries if AI fails
+        base = {
+            "A1": [f"{language} for beginners slow", f"easy {language} A1", f"learn {language} basics"],
+            "A2": [f"{language} A2 conversation", f"simple {language} practice"],
+            "B1": [f"{language} B1 listening", f"{language} everyday conversation"],
+            "B2": [f"{language} news slow", f"{language} podcast"],
+            "C1": [f"{language} documentary", f"authentic {language}"],
+            "C2": [f"{language} native content", f"{language} advanced discussion"],
+        }.get(cefr_level, [f"learn {language}"])
+        if include_polish:
+            base += [f"learn {language} in Polish", f"{language} grammar explained in Polish"]
+        return base, []
 
 
 async def _search_youtube(query: str, language_code: str, max_results: int = 6) -> list[dict]:
@@ -149,6 +143,7 @@ async def _search_youtube(query: str, language_code: str, max_results: int = 6) 
 async def search_videos(
     user_id: int,
     query: str = Query(default=""),
+    include_polish: bool = Query(default=False, alias="include_polish"),
     db: Session = Depends(get_db)
 ):
     user = db.query(User).filter(User.id == user_id).first()
@@ -179,7 +174,7 @@ async def search_videos(
         lesson_context = _extract_lesson_context(latest_lesson) if latest_lesson else None
 
         queries, topic_query_indices = await _suggest_queries(
-            language, cefr_level, native_language, lesson_context
+            language, cefr_level, native_language, lesson_context, include_polish
         )
         if not queries:
             queries = [f"learn {language} {cefr_level}"]

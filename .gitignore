@@ -48,5 +48,20 @@ desktop.ini
 .vscode/
 .idea/
 
+# Logs
+*.log
+logs/
+
+# Temporary build/test artifacts
+frontend_dev.log
+backend.log
+backend/startup.log
+frontend/install.log
+
+# Temp plugin caches (Vite/ Rollout)
+frontend/temp_plugins/
+frontend/temp_rollup/
+frontend/temp_vite/
+
 # Whisper model cache (downloaded automatically ~75MB on first use)
 # Stored in ~/.cache/huggingface/ — not in project directory

@@ -24,7 +24,7 @@ function saveCreators(creators) {
 export default function Videos() {
   const navigate = useNavigate()
   const userId = getUserId()
-  const { t } = useLanguage()
+  const { t, targetLanguage } = useLanguage()
 
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -37,6 +37,7 @@ export default function Videos() {
   const [showFavs, setShowFavs] = useState(false)
   const [creators, setCreators] = useState(loadCreators)
   const [creatorInput, setCreatorInput] = useState('')
+  const [includePolish, setIncludePolish] = useState(false) // Polish explanations toggle
 
   const toggleFavorite = (video) => {
     setFavorites(prev => {
@@ -76,7 +77,7 @@ export default function Videos() {
     setActiveVideoId(null)
     setQuery('')
     try {
-      const result = await searchYouTube(userId, '')
+      const result = await searchYouTube(userId, '', includePolish)
       setData(result)
     } catch (e) {
       setError(e.message)
@@ -92,7 +93,7 @@ export default function Videos() {
     setError('')
     setActiveVideoId(null)
     try {
-      const result = await searchYouTube(userId, query.trim())
+      const result = await searchYouTube(userId, query.trim(), includePolish)
       setData(result)
     } catch (e) {
       setError(e.message)
@@ -107,7 +108,7 @@ export default function Videos() {
     setError('')
     setActiveVideoId(null)
     try {
-      const result = await searchYouTube(userId, sq)
+      const result = await searchYouTube(userId, sq, includePolish)
       setData({ ...result, suggested: false })
     } catch (e) {
       setError(e.message)
@@ -191,6 +192,29 @@ export default function Videos() {
           Filmy ukończone dziś ✓
         </div>
       )}
+
+      {/* Mode toggle */}
+      <div className="flex items-center gap-3 mb-4 text-sm">
+        <span className="text-gray-400">{t('stats.uiLanguage') || 'Rodzaj treści'}:</span>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setIncludePolish(false)}
+            className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+              !includePolish ? 'bg-indigo-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-gray-200'
+            }`}
+          >
+            Tylko {targetLanguage}
+          </button>
+          <button
+            onClick={() => setIncludePolish(true)}
+            className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+              includePolish ? 'bg-indigo-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-gray-200'
+            }`}
+          >
+            {targetLanguage} + polskie wyjaśnienia
+          </button>
+        </div>
+      </div>
 
       {/* Lesson context banner */}
       {data?.lesson_title && !isCustomSearch && (

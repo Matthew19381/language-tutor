@@ -3,8 +3,8 @@
 ## Krytyczne — do naprawy w pierwszej kolejności
 
 ### Model AI
-- [ ] Zweryfikować czy Gemini to najlepszy darmowy wybór — rozważyć alternatywy
-- [ ] Zmienić interfejs na **polski** (cały UI po angielsku — nie do zaakceptowania)
+- [x] Zweryfikowano: Aplikacja używa **Ollama** (qwen2.5:7b, llama3.1, deepseek-coder-v2:16b) zamiast Gemini. Task router wybiera model w zależności od zadania. Jest to darmowe, lokalne rozwiązanie — najlepszy wybór.
+- [x] Zmienić interfejs na **polski** (cały UI po angielsku — nie do zaakceptowania)
 
 ### Test poziomujący
 - [ ] Test jest za łatwy i intuicyjny — użytkownik ma niższy poziom niż B1 (brak znajomości gramatyki, czasów, mianowników) — poprawić pytania i kalibrację poziomu
