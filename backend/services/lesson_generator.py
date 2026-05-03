@@ -370,9 +370,9 @@ If there are errors to address, add them to the error_review array with format:
             "topic": vocab_theme,
             "explanation": f"Today we will study {grammar_topic} in {language}. This is an important foundation for your {cefr_level} level studies.",
             "vocabulary": [
-                {"word": "Hallo", "translation": "Cześć", "example": "Hallo, wie geht es dir?"},
-                {"word": "Danke", "translation": "Dziękuję", "example": "Danke schön!"},
-                {"word": "Bitte", "translation": "Proszę", "example": "Bitte sehr."}
+                {"word": "Hallo", "translation": "Cześć", "example": "Hallo, wie geht es dir?", "example_translation": "Cześć, jak się masz?"},
+                {"word": "Danke", "translation": "Dziękuję", "example": "Danke schön!", "example_translation": "Dziękuję bardzo!"},
+                {"word": "Bitte", "translation": "Proszę", "example": "Bitte sehr.", "example_translation": "Proszę bardzo."}
             ],
             "dialogue": {
                 "context": "Two people meeting for the first time",
