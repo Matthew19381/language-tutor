@@ -12,11 +12,8 @@ RUN apt-get update && apt-get install -y \
 # Copy requirements
 COPY requirements.txt .
 
-# Install Python dependencies (exclude google-genai for now due to conflicts)
-RUN pip install --no-cache-dir -r requirements.txt --no-deps
-
-# Install google-genai specific version that works
-RUN pip install --no-cache-dir google-genai==0.5.0
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application
 COPY backend/ ./backend/

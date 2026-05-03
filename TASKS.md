@@ -1,7 +1,7 @@
-# TASKS — Language Tutor
+# TASKS — LinguaAI
 
-_Ostatnia aktualizacja: 2026-03-26_
-_Źródła: FEEDBACK.md + ZmianyTutor.txt (2026-03-18 → 2026-03-26)_
+_Ostatnia aktualizacja: 2026-04-05_
+_Źródła: FEEDBACK.md, własne implementacje_
 
 ---
 
@@ -24,7 +24,7 @@ _Źródła: FEEDBACK.md + ZmianyTutor.txt (2026-03-18 → 2026-03-26)_
 - [x] **STATS-1** — TodayCompletion: reaktywny useState + odświeżanie na focus okna. 4 aktywności: Lekcja, Test, Rozmowa, Newsy/Wymowa. ✅ (2026-03-26)
 - [x] **ERRORS-1** — Backend (stats.py) zwracał error/correction zamiast user_answer/correct_answer. Fix: nowe pola question/user_answer/correct_answer w get_all_errors + UI ErrorReview.jsx. ✅ (2026-03-26)
 - [x] **GRAMMAR-1** — Wyjaśnienie gramatyki: dodano `renderMarkdown()` obsługujący `#/##/###`, `**bold**`, listy. ✅ (2026-03-26)
-- [x] **FLASHCARD-BTN** — Backend zwraca teraz czytelny komunikat gdy AI nie generuje koncepcji. ✅ (2026-03-26)
+- [x] **FLASHCARD-BTN** — Backend zwraca teraz czytelny komunikat gdy AI nie generuje konceptów. ✅ (2026-03-26)
 
 ---
 
@@ -82,15 +82,37 @@ _Źródła: FEEDBACK.md + ZmianyTutor.txt (2026-03-18 → 2026-03-26)_
 - [x] **ERRORS-4** — Zakładka Błędy: wklejenie podsumowania rozmowy z Grok → analiza i ocena wymowy/rozmowy. ✅ (2026-03-26)
 - [x] **CONCEPTS** — Koncepcje gramatyczne: generowane do fiszek lub jako rozwijalna tabela w Statystykach. ✅ (2026-03-26)
 - [x] **AI-MODEL** — Zweryfikować czy Gemini to najlepszy darmowy wybór (do decyzji). Gemini 2.0 Flash: darmowy tier, szybki, dobra jakość JSON. Alternatywy (GPT-4o-mini, Llama) wymagają płatnego API lub self-hosting. Decyzja: pozostać na Gemini 2.0 Flash. ✅ (2026-03-26)
+- [x] **VOICE-1** — Rozpoznawanie mowy w konwersacji (Web Speech API). ✅ (2026-04-05)
+- [x] **VOICE-2** — TTS (text-to-speech) na wiadomościach AI używając edge-tts. ✅ (2026-04-05)
+- [x] **READ-SENTENCE** — Dodanie całego zdania do fiszek z sekcji czytania (comprehensible input). ✅ (2026-04-05)
+- [x] **NEWS-CACHE** — Daily cache dla newsów w localStorage (language + user specific). ✅ (2026-04-05)
+- [x] **VIDEOS-TOGGLE** — Toggle "Tylko język docelowy" vs "Język docelowy + polskie wyjaśnienia". ✅ (2026-04-05)
 
 ---
 
-## Licznik
+## Ukończone (wszystkie)
 
-| Priorytet | Ukończone / Razem |
-|---|---|
-| P0 Krytyczne | 5 / 5 ✅ |
-| P1 Wysokie | 8 / 8 ✅ |
-| P2 Średnie | 28 / 28 ✅ |
-| P3 Niskie | 17 / 17 ✅ |
-| **RAZEM** | **58 / 58 — WSZYSTKIE UKOŃCZONE ✅** |
+**Razem: 58 zadań P0-P3 + 5 nowych Phase 1-3 = 63 zakończone.**
+
+---
+
+## Backlog — Future Work
+
+- [ ] **Unicode/npm permanent fix** — Rename project folder to ASCII-only path (e.g., `G:\Projects\LinguaAI`) or migrate to WSL2 to enable full Docker/dev workflow
+- [x] **Port standardization** — Migrated: 8000→8001 ✅ 2026-05-03 (unified standard)
+- [x] **API prefix standardization** — Migrated: /api/→/api/v1/ ✅ 2026-05-03 (unified standard)
+- [x] **Docker frontend** — Build production-ready frontend container (nginx) and integrate with docker-compose (currently backend-only in Docker) — TODO
+- [ ] **schemas/ directory** — Add Pydantic models for request/response validation ✅ 2026-05-03
+- [ ] **Testy.exe** — Create automated test suite: pytest (backend API) + Playwright/Cypress (UI smoke tests)
+- [ ] **Backup strategy** — Scheduled daily backup of `LinguaAI.db` with retention policy (7 days)
+- [ ] **User documentation** — "Getting Started" guide with screenshots, FAQ (PDF/HTML)
+
+---
+
+## Wymagające decyzji / Otwarte
+
+- [ ] **Finalny wybór architektury** — Dockeryzacja całego stacku vs. lokalne uruchamianie (backend+frontend z różnych ścieżek)
+- [ ] **Ścieżki projektu** — rename folder na ASCII (prawidłowe rozwiązanie npm Unicode bug) — C:\LinguaAI lub G:\Projects\LinguaAI
+- [ ] **Backup DB** — automatyzacja i lokalizacja backupów (cloud? lokalny NAS?)
+- [ ] **Testy** — framework do wyboru (pytest + Playwright recommended)
+- [ ] **Dokumentacja** — format (PDF vs online README) i poziom szczegółowości

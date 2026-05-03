@@ -14,13 +14,13 @@ start.bat
 .\start.ps1
 
 # Manual — backend (from LinguaAI/)
-uvicorn backend.main:app --reload --port 8000
+uvicorn backend.main:app --reload --port 8001
 
 # Manual — frontend (from LinguaAI/frontend/)
 npm run dev
 ```
 
-Frontend dev server runs on `:5173` and proxies `/api` and `/audio` to `http://localhost:8000` (configured in `frontend/vite.config.js`), so all API calls use relative paths like `/api/...`.
+Frontend dev server runs on `:5173` and proxies `/api/v1` to `http://localhost:8001` (configured in `frontend/vite.config.js`), so all API calls use relative paths like `/api/v1/...`.
 
 ## Environment
 
@@ -45,7 +45,11 @@ Router → Service → SQLAlchemy Session (get_db dependency)
 
 Every function in every service that calls Gemini has a hardcoded fallback dict/string so the app degrades gracefully when the API fails.
 
+**`backend/schemas/`** — Pydantic models for request/response validation (unified standard across ecosystem).
+
 **`backend/services/lesson_generator.py`** contains all AI prompt logic: placement test, study plan, daily lesson, daily/weekly tests, conversation, tips. `generate_daily_lesson()` accepts `recent_topics` (list of strings from the last 7 days of lessons) to produce an `interleaved_review` section in the output.
+
+**Adding a new router**: import it in `main.py` with `prefix="/api/v1"` and call `app.include_router(...)`.
 
 **`backend/services/test_generator.py`** is a non-router service layer that wraps lesson_generator calls for test creation/submission. It handles XP award on submit (`score × 0.5`, max 50 XP) and writes `TestResult` rows.
 
@@ -60,15 +64,15 @@ Every function in every service that calls Gemini has a hardcoded fallback dict/
 
 | File | API prefix | Responsibility |
 |---|---|---|
-| `placement.py` | `/api/placement/` | User creation, 20-question CEFR test, study plan generation |
-| `lessons.py` | `/api/lessons/` | Daily lesson get/create, complete (+25 XP), audio, PDF export |
-| `tests.py` | `/api/tests/` | Daily/weekly test get + submit (delegates to `test_generator`) |
-| `flashcards.py` | `/api/flashcards/` | Spaced repetition review, Anki deck export |
-| `conversation.py` | `/api/conversation/` | AI conversation sessions and analysis |
-| `stats.py` | `/api/stats/`, `/api/tips/` | XP/level, achievements, leaderboard, daily tips |
-| `quickmode.py` | `/api/quickmode/` | 15-minute daily activity plan |
-| `news.py` | `/api/news/` | RSS fetch (feedparser) + Gemini simplification per CEFR level |
-| `pronunciation.py` | `/api/pronunciation/` | faster-whisper transcription + word-level scoring |
+| `placement.py` | `/api/v1/placement/` | User creation, 20-question CEFR test, study plan generation |
+| `lessons.py` | `/api/v1/lessons/` | Daily lesson get/create, complete (+25 XP), audio, PDF export |
+| `tests.py` | `/api/v1/tests/` | Daily/weekly test get + submit (delegates to `test_generator`) |
+| `flashcards.py` | `/api/v1/flashcards/` | Spaced repetition review, Anki deck export |
+| `conversation.py` | `/api/v1/conversation/` | AI conversation sessions and analysis |
+| `stats.py` | `/api/v1/stats/`, `/api/v1/tips/` | XP/level, achievements, leaderboard, daily tips |
+| `quickmode.py` | `/api/v1/quickmode/` | 15-minute daily activity plan |
+| `news.py` | `/api/v1/news/` | RSS fetch (feedparser) + Gemini simplification per CEFR level |
+| `pronunciation.py` | `/api/v1/pronunciation/` | faster-whisper transcription + word-level scoring |
 
 **Adding a new router**: import it in `main.py` and call `app.include_router(...)`.
 
@@ -96,7 +100,8 @@ Every function in every service that calls Gemini has a hardcoded fallback dict/
 | Level curve | `(n-1)² × 20` XP, 50 levels | `services/achievement_service.py` |
 | Gemini model | `gemini-2.0-flash` | `services/gemini_service.py` |
 | Whisper model | `tiny` (~75 MB, CPU, int8) | `services/pronunciation_service.py` |
-| API timeout (frontend) | 60 s | `api/client.js` |
+| API timeout (frontend) | 120 s | `api/client.js` (baseURL: `/api/v1`) |
+| Backend port | `8001` (unified standard) | `start.bat`, `docker-compose.yml` |
 
 ## Git — Mandatory Push Policy
 
@@ -154,6 +159,8 @@ wip
 ### Commands
 
 All git commands run from `LinguaAI/` (the repo root):
+
+**Unified Standards**: See `07_Context/UNIFIED_STANDARDS.md` for cross-project standards (System-Główny + LinguaAI + ForgeBody + HackerLabAcademy).
 
 ```bash
 git add -A

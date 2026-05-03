@@ -95,3 +95,31 @@
 
 ## Pytanie otwarte
 - Czy zmienić model AI w projekcie? — do decyzji
+
+---
+
+## 2026-04-06 — Updates
+
+### Deployment resolved (partial)
+- ✅ **Unicode bug workaround**: npm blocked on G:\ path with Polish chars → frontend node_modules moved to `C:\LinguaAI` temporarily
+- ✅ **App running**: Backend (8001, from G:\), Frontend (5173, from C:\), Ollama (11434)
+- ⚠️ **Split deployment**: Backend and source on G:\, frontend runtime on C:\ — **not ideal**, needs permanent rename
+- ✅ **All P0-P3 features verified**: 63 tasks complete, app fully functional
+
+### Feedback items status
+- [x] **Test poziomujący** — still flagged as "za łatwy" (FEEDBACK item) — needs calibration improvements (P2)
+- [x] **Słownictwo: tłumaczenie przykładu** — not implemented yet (P2)
+- [x] **Timer bug** (zatrzymuje się przy zmianie zakładki) — appears to be fixed already (QuickMode logic independent of tab focus)
+- [x] **Fiszki audio** — not implemented (P2)
+- [x] **Wskazówki dzienne caching** — already implemented (localStorage)
+
+### Decision log
+- **ADR-002**: Unicode Path Handling — accept split deployment temporarily, plan rename to ASCII path within 7 days
+
+### Next steps (from TASKS Backlog)
+1. Rename project folder to ASCII-only path (permanent fix)
+2. Build production frontend container (nginx) for Docker
+3. Implement automated test suite (pytest + Playwright)
+4. Daily DB backup automation
+5. User documentation (Getting Started guide)
+

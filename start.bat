@@ -14,7 +14,7 @@ if not exist "backend\.env" (
 )
 
 echo Starting LinguaAI Backend...
-start cmd /k "title LinguaAI - Backend && py -3.11 -m uvicorn backend.main:app --reload --port 8000"
+start cmd /k "title LinguaAI - Backend && py -3.11 -m uvicorn backend.main:app --reload --port 8001"
 
 cd frontend
 echo Starting LinguaAI Frontend...
@@ -23,7 +23,7 @@ start cmd /k "title LinguaAI - Frontend && npm run dev"
 echo.
 echo ============================================
 echo   Uruchamianie...
-echo   Backend:  http://localhost:8000
+echo   Backend:  http://localhost:8001
 echo   Frontend: http://localhost:5173
 echo ============================================
 echo.

@@ -6,9 +6,9 @@ services:
       context: .
       dockerfile: Dockerfile.backend
     ports:
-      - "8000:8000"
+      - "8001:8001"
     environment:
-      - OLLAMA_BASE_URL=http://ollama:11434/v1
+      - OLLAMA_BASE_URL=http://host.docker.internal:11436/v1
       - OLLAMA_MODEL=qwen2.5:7b
       - DATABASE_URL=sqlite:///./LinguaAI.db
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
@@ -16,48 +16,29 @@ services:
       - ./backend/audio:/app/backend/audio
       - ./backend/exports:/app/backend/exports
       - ./LinguaAI.db:/app/backend/LinguaAI.db
-    depends_on:
-      ollama:
-        condition: service_healthy
-    networks:
-      - lingua-network
     restart: unless-stopped
     command: >
       sh -c "
-        echo 'Waiting for Ollama...' &&
-        while ! curl -s http://ollama:11434/api/tags > /dev/null; do
+        echo 'Waiting for global Ollama (host.docker.internal:11435)...' &&
+        while ! curl -s http://host.docker.internal:11435/api/tags > /dev/null; do
           sleep 2
         done &&
         echo 'Ollama ready. Starting backend...' &&
-        uvicorn backend.main:app --host 0.0.0.0 --port 8000
+        uvicorn backend.main:app --host 0.0.0.0 --port 8001
       "
 
-  ollama:
-    image: ollama/ollama:latest
-    ports:
-      - "11435:11434"
+  frontend:
+    image: node:18-alpine
+    working_dir: /app
     volumes:
-      - ollama_data:/root/.ollama
-    networks:
-      - lingua-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    entrypoint: >
-      sh -c "
-        if ! ollama list | grep -q 'qwen2.5:7b'; then
-          echo 'Pulling qwen2.5:7b model (this may take a few minutes)...' &&
-          ollama pull qwen2.5:7b
-        fi &&
-        ollama serve
-      "
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://backend:8001
+      - CHOKIDAR_USE_POLLING=true
+    depends_on:
+      - backend
+    command: npm run dev
 
-volumes:
-  ollama_data:
-
-networks:
-  lingua-network:
-    driver: bridge
