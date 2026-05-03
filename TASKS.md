@@ -20,6 +20,7 @@ _Źródła: FEEDBACK.md, własne implementacje_
 - [x] **TEST-1** — Cache pytań testu w localStorage per dzień/język. ✅ (2026-03-26)
 - [x] **TEST-2** — Prompt wzmocniony: zakaz dawania odpowiedzi w treści pytania, zakaz ujawniania tłumaczenia. ✅ (2026-03-26)
 - [x] **TEST-3** — Prompt: fill_blank musi mieć DOKŁADNIE JEDNO ___ — nie więcej. ✅ (2026-03-26)
+- [x] **TEST-4** — Placement test calibration: stricter scoring (A1 <30%, B1 <65%), conservative AI analysis — FIXED 2026-05-03
 - [x] **TIMER-1** — Już zaimplementowany: Layout.jsx ma globalny badge (quickmode_start z localStorage), niezależny od stanu QuickMode. Timer nie zatrzymuje się przy zmianie zakładki. ✅ (2026-03-26)
 - [x] **STATS-1** — TodayCompletion: reaktywny useState + odświeżanie na focus okna. 4 aktywności: Lekcja, Test, Rozmowa, Newsy/Wymowa. ✅ (2026-03-26)
 - [x] **ERRORS-1** — Backend (stats.py) zwracał error/correction zamiast user_answer/correct_answer. Fix: nowe pola question/user_answer/correct_answer w get_all_errors + UI ErrorReview.jsx. ✅ (2026-03-26)
@@ -92,13 +93,39 @@ _Źródła: FEEDBACK.md, własne implementacje_
 
 ## Ukończone (wszystkie)
 
-**Razem: 58 zadań P0-P3 + 5 nowych Phase 1-3 = 63 zakończone.**
+**Razem: 58 zadań P0-P3 + 6 nowych Phase 1-3 + 1 calibration fix = 64 zakończone.**
+
+---
+
+## FEEDBACK.md — Bugs to Fix
+
+- [x] **PLACEMENT-CAL** — Placement test too easy, bad calibration → FIXED 2026-05-03 (stricter scoring + conservative AI analysis)
+- [ ] **VOCAB-EXAMPLE** — Słownictwo: dodać tłumaczenie przykładowego zdania
+- [ ] **DIALOG-LAYOUT** — Dialog: układ 1 osoba po lewej / 1 osoba po prawej (marked [x] in FEEDBACK but needs verification)
+- [~] **EXERCISES-VARIETY** — Ćwiczenia: bardziej zróżnicowane → IN PROGRESS (prompt enforced: 5 unique types required) 2026-05-03
+- [x] **PRODUCTION-TASK** — Zadanie produkcyjne: sprawdzanie odpowiedzi przez AI → FIXED 2026-05-03 (backend: /api/lessons/{id}/evaluate-production, frontend: UI with score/feedback/corrections)
+- [x] **SENTENCE-MEMORY** — Wymuszenie produkcji: zapamiętywanie 5 długich zdań → FIXED 2026-05-03 (changed from 1-2 short sentences to 5 LONG sentences, 75-100 words total)
+- [x] **AUDIO-LESSON** — Audio dla całej lekcji: treść, dialogi, czytanie, przegląd błędów, słownictwo → FIXED 2026-05-03 (backend: generate_full_lesson_audio, frontend: PlayButton for vocab/dialogue/reading/errors)
+- [ ] **READING-COPY** — Opcja kopiowania słowa/zdania do tabeli widocznej w interfejsie → automatyczne tworzenie fiszki
+- [x] **FLASHCARD-AUTO** — Dodawanie fiszki: tylko wpisanie słowa/frazy → reszta generowana przez AI → FIXED 2026-05-03 (backend: /flashcards/{id}/add-ai, frontend: addFlashcardAI)
+- [x] **FLASHCARD-FILTER** — Filtr fiszek po dacie dodania → FIXED 2026-05-03 (frontend: dateFilter 'today'/'week'/'month', lessonFilter by day)
+- [x] **FLASHCARD-VOCAB** — Fiszki nie odzwierciedlają poziomu słownictwa → FIXED 2026-05-03 (frontend: filterCards() + CEFR UI added, backend: cefr_level already set)
+- [x] **FLASHCARD-AUDIO** — Audio dla fiszek → FIXED 2026-05-03 (backend: generate_flashcard_audio, frontend: PlayButton on each card)
+- [~] **STATS-COMPLETION** — Wskaźnik ukończenia lekcji: przesuwać wraz z ukończeniem ćwiczeń → IN PROGRESS (frontend: flashcards added to TodayCompletion activities, needs backend completion check) 2026-05-03
+- [ ] **STATS-FLASHCARDS** — Fiszki w statystykach: pole do ręcznego odhaczenia
+- [ ] **STATS-TIPS** — Wskazówki dzienne: generować raz dziennie przy pierwszym wejściu
+- [ ] **PRONUNCIATION-AUDIO** — Plik audio wskazujący poprawną wymowę zdania
+- [ ] **PRONUNCIATION-SUMMARY** — Podsumowanie odnośnie wymowy
+- [~] **TIMER-BUG** — Bug: minutnik zatrzymuje się i nie jest widoczny po kliknięciu w inną zakładkę → IN PROGRESS (Layout.jsx: visibilitychange listener added, QuickMode.jsx: timer recalculation) 2026-05-03
+- [ ] **SETTINGS-LANG** — Dodać możliwość zmiany języka nauki
+- [ ] **GROK-PROMPT** — Dodać generator promptu dla Grok
+- [ ] **GROK-VOICE** — Dialog: opcja rozmowy z audio
 
 ---
 
 ## Backlog — Future Work
 
-- [ ] **Unicode/npm permanent fix** — Rename project folder to ASCII-only path (e.g., `G:\Projects\LinguaAI`) or migrate to WSL2 to enable full Docker/dev workflow
+- [ ] **Unicode/npm permanent fix** — Rename project folder to ASCII-only path (e.g., `G:\Projects\LinguaAI`) or migrate to WSL2 to enable full Docker/dev workflow | 🔧 IN PROGRESS
 - [x] **Port standardization** — Migrated: 8000→8001 ✅ 2026-05-03 (unified standard)
 - [x] **API prefix standardization** — Migrated: /api/→/api/v1/ ✅ 2026-05-03 (unified standard)
 - [x] **Docker frontend** — Build production-ready frontend container (nginx) and integrate with docker-compose (currently backend-only in Docker) — TODO

@@ -77,14 +77,23 @@ export default function QuickMode() {
   useEffect(() => {
     if (timerActive && secondsLeft > 0) {
       intervalRef.current = setInterval(() => {
-        setSecondsLeft(s => {
-          if (s <= 1) {
-            clearInterval(intervalRef.current)
-            setTimerActive(false)
-            return 0
-          }
-          return s - 1
-        })
+        // Always recalculate from localStorage for accuracy
+        const startTime = localStorage.getItem(STORAGE_KEY_START)
+        const duration = parseInt(localStorage.getItem(STORAGE_KEY_DURATION) || '15') * 60
+        if (!startTime) {
+          setSecondsLeft(0)
+          setTimerActive(false)
+          return
+        }
+        const elapsed = Math.floor((Date.now() - parseInt(startTime)) / 1000)
+        const remaining = duration - elapsed
+        if (remaining <= 0) {
+          clearInterval(intervalRef.current)
+          setTimerActive(false)
+          setSecondsLeft(0)
+        } else {
+          setSecondsLeft(remaining)
+        }
       }, 1000)
     } else {
       clearInterval(intervalRef.current)

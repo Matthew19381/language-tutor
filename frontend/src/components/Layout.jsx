@@ -57,7 +57,17 @@ export default function Layout() {
     }
     updateTimer()
     const interval = setInterval(updateTimer, 1000)
-    return () => clearInterval(interval)
+
+    // Handle tab visibility changes - immediately resync when user returns
+    const handleVisibilityChange = () => {
+      if (!document.hidden) updateTimer()
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [])
 
   // Poll for new achievements every time the layout mounts (route changes)

@@ -22,6 +22,7 @@ export default function Flashcards() {
   const [reviewDone, setReviewDone] = useState(new Set())
   const [dateFilter, setDateFilter] = useState('all') // 'all', 'today', 'week', 'month'
   const [lessonFilter, setLessonFilter] = useState('all') // 'all' or lesson_day number
+  const [cefrFilter, setCefrFilter] = useState('all') // 'all', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2'
   const navigate = useNavigate()
   const userId = getUserId()
   const { t, targetLanguage } = useLanguage()
@@ -69,6 +70,8 @@ export default function Flashcards() {
       }
       // Lesson day filter
       if (lessonFilter !== 'all' && c.lesson_day !== parseInt(lessonFilter)) return false
+      // CEFR level filter
+      if (cefrFilter !== 'all' && c.cefr_level !== cefrFilter) return false
       return true
     })
   }
@@ -254,6 +257,22 @@ export default function Flashcards() {
                   </div>
                 )
               })()}
+
+                {/* CEFR level filter */}
+                <div className="flex gap-2 flex-wrap">
+                  <span className="text-gray-500 text-sm self-center">Poziom:</span>
+                  <button
+                    onClick={() => { setCefrFilter("all"); setCurrentIndex(0) }}
+                    className={`px-3 py-1 rounded text-xs font-medium transition-colors ${cefrFilter === "all" ? "bg-purple-600 text-white" : "bg-gray-800 text-gray-400 hover:text-gray-200"}`}
+                  >Wszystkie</button>
+                  {["A1", "A2", "B1", "B2", "C1", "C2"].map(level => (
+                    <button
+                      key={level}
+                      onClick={() => { setCefrFilter(level); setCurrentIndex(0) }}
+                      className={`px-3 py-1 rounded text-xs font-medium transition-colors ${cefrFilter === level ? "bg-purple-600 text-white" : "bg-gray-800 text-gray-400 hover:text-gray-200"}`}
+                    >{level}</button>
+                  ))}
+                </div>
             </div>
           )}
           {displayCards.length === 0 ? (
