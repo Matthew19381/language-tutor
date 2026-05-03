@@ -18,8 +18,8 @@
 - Możliwość pobrania lekcji lokalnie lub na Google Drive (4 dni) — świetne
 
 ### Do poprawy
-- [ ] Słownictwo: dodać tłumaczenie przykładowego zdania (jest słowo, tłumaczenie, przykład — brak tłumaczenia przykładu)
-- [ ] Dialog: układ 1 osoba po lewej / 1 osoba po prawej
+- [x] Słownictwo: dodać tłumaczenie przykładowego zdania (jest słowo, tłumaczenie, przykład — ✅ frontend wyświetla example_translation, fallback poprawiony 2026-05-03)
+- [x] Dialog: układ 1 osoba po lewej / 1 osoba po prawej — ✅ zaimplementowane w DailyLesson.jsx (isB → flex-row-reverse, linia 602-627)
 - [ ] Ćwiczenia: bardziej zróżnicowane
 - [ ] Zadanie produkcyjne: dodać możliwość sprawdzenia odpowiedzi przez AI (kto ma sprawdzić?)
 - [ ] Wymuszanie produkcji: zapamiętywanie 5 długich zdań — przemyśleć inny format
