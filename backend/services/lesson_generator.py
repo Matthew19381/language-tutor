@@ -334,6 +334,22 @@ Generate a complete lesson with rich content. Return JSON:
             "instruction": "Translate to {language}",
             "content": "Sentence in {native_language}",
             "answer": "Translation in {language}"
+        }},
+        {{
+            "type": "matching",
+            "instruction": "Match words with their translations",
+            "pairs": [
+                {{"left": "word1", "right": "translation1"}},
+                {{"left": "word2", "right": "translation2"}}
+            ],
+            "answer": "1-A, 2-B"
+        }},
+        {{
+            "type": "error_correction",
+            "instruction": "Find and correct the error",
+            "content": "Sentence with ONE error in {language}",
+            "answer": "Corrected sentence",
+            "explanation": "What was wrong (in {native_language})"
         }}
     ],
     "production_task": {{
@@ -389,7 +405,14 @@ If there are errors to address, add them to the error_review array with format:
                  "options": ["A. Gute Nacht", "B. Guten Morgen", "C. Auf Wiedersehen", "D. Danke"],
                  "answer": "B"},
                 {"type": "translation", "instruction": "Translate to German",
-                 "content": "My name is Anna.", "answer": "Ich heiße Anna."}
+                 "content": "My name is Anna.", "answer": "Ich heiße Anna."},
+                {"type": "matching", "instruction": "Match words with translations",
+                 "pairs": [{"left": "Hallo", "right": "Cześć"}, {"left": "Danke", "right": "Dziękuję"}],
+                 "answer": "1-A, 2-B"},
+                {"type": "error_correction", "instruction": "Find and correct the error",
+                 "content": "Ich heiße Anna und lerne Deutsch.",
+                 "answer": "Ich heiße Anna und lerne Deutsch.",
+                 "explanation": "'lerne' should be 'lerne' - separable verb with 'lernen'"}
             ],
             "production_task": {
                 "instruction": "Write 3 sentences introducing yourself in German",

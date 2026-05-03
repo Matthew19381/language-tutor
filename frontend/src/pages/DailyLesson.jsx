@@ -1180,7 +1180,56 @@ function ExerciseCard({ exercise, number, language, lessonId, t }) {
         <p className="text-gray-100 mb-3 text-lg">{exercise.content}</p>
       )}
 
-      {exercise.type === 'multiple_choice' && exercise.options ? (
+      {exercise.type === 'matching' && exercise.pairs ? (
+        <div className="space-y-3">
+          <p className="text-sm text-gray-300">{exercise.instruction}</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <p className="text-xs text-gray-400 mb-1">{t('lesson.leftColumn') || 'Kolumna lewa'}</p>
+              {exercise.pairs.map((p, i) => (
+                <div key={i} className="p-2 bg-gray-700 rounded mb-1 text-sm">{p.left}</div>
+              ))}
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 mb-1">{t('lesson.rightColumn') || 'Kolumna prawa'}</p>
+              {exercise.pairs.map((p, i) => (
+                <div key={i} className="p-2 bg-gray-800 rounded mb-1 text-sm">{p.right}</div>
+              ))}
+            </div>
+          </div>
+          {isAllRevealed && (
+            <p className="text-xs text-emerald-400 mt-2">{t('lesson.correctMatches') || 'Poprawne pary'}: {exercise.answer}</p>
+          )}
+        </div>
+      ) : exercise.type === 'error_correction' ? (
+        <div className="space-y-3">
+          <div className="p-3 bg-gray-900 rounded-lg border border-red-800/50">
+            <p className="text-sm text-red-400 font-medium">{t('lesson.findError') || 'Znajdź błąd:'}</p>
+            <p className="text-gray-100 mt-1">{exercise.content}</p>
+          </div>
+          <div>
+            <label className="text-xs text-gray-400">{t('lesson.yourCorrection') || 'Twoja poprawka:'}</label>
+            <input
+              ref={inputRef}
+              type="text"
+              className={`input-field text-sm flex-1 ${checked ? (isCorrect ? 'border-emerald-500' : 'border-red-500') : ''}`}
+              placeholder={t('lesson.correctSentence') || 'Poprawna zdania...'}
+              value={userAnswer}
+              onChange={e => { setUserAnswer(e.target.value); setChecked(false); setIsCorrect(null) }}
+              onKeyDown={e => e.key === 'Enter' && !checked && handleCheck()}
+              disabled={isAllRevealed}
+            />
+          </div>
+          {checked && (
+            <p className={`text-xs mt-1 font-medium ${isCorrect ? 'text-emerald-400' : 'text-red-400'}`}>
+              {isCorrect ? '✓ Dobrze!' : `✗ Poprawnie: ${exercise.answer}`}
+            </p>
+          )}
+          {isAllRevealed && exercise.explanation && (
+            <p className="text-xs text-gray-400 mt-1 italic">{exercise.explanation}</p>
+          )}
+        </div>
+      ) : exercise.type === 'multiple_choice' && exercise.options ? (
         <div className="space-y-2">
           {exercise.options.map((opt, i) => {
             const letter = opt.split('.')[0]?.trim()
