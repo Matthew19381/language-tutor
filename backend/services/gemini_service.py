@@ -7,8 +7,8 @@ from backend.config import settings
 
 logger = logging.getLogger(__name__)
 
-_OLLAMA_URL = f"{settings.OLLAMA_BASE_URL}/chat/completions"
-_MODEL = settings.OLLAMA_MODEL
+_OPENROUTER_URL = f"{settings.OPENROUTER_BASE_URL}/chat/completions"
+_DEFAULT_MODEL = "google/gemini-2.0-flash-exp:free"
 
 # ContextVar for per-request model override (async-safe)
 _model_override: contextvars.ContextVar[str] = contextvars.ContextVar('model_override', default=None)
@@ -27,7 +27,7 @@ def reset_model_override(token):
 def with_model(task: str):
     """
     Decorator for AI-generating functions.
-    Sets the appropriate Ollama model for the duration of the function call.
+    Sets the appropriate OpenRouter model for the duration of the function call.
     """
     def decorator(func):
         @functools.wraps(func)
@@ -45,9 +45,15 @@ def with_model(task: str):
 
 
 async def generate_text(prompt: str, model: str = None) -> str:
-    # Use context override if no explicit model provided
+    """Generate text using OpenRouter API."""
     if model is None:
-        model = _model_override.get() or _MODEL
+        model = _model_override.get() or _DEFAULT_MODEL
+    headers = {
+        "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": "http://localhost:5173",
+        "X-Title": "LinguaAI",
+    }
     payload = {
         "model": model,
         "messages": [{"role": "user", "content": prompt}],
@@ -55,20 +61,26 @@ async def generate_text(prompt: str, model: str = None) -> str:
     }
     async with httpx.AsyncClient(timeout=60.0) as client:
         try:
-            response = await client.post(_OLLAMA_URL, json=payload)
+            response = await client.post(_OPENROUTER_URL, json=payload, headers=headers)
             response.raise_for_status()
             data = response.json()
             return data["choices"][0]["message"]["content"]
         except Exception as e:
-            logger.error(f"Error generating text via Ollama: {e}")
+            logger.error(f"Error generating text via OpenRouter: {e}")
             raise
 
 
 async def generate_json(prompt: str, model: str = None) -> dict:
-    # Use context override if no explicit model provided
+    """Generate JSON using OpenRouter API."""
     if model is None:
-        model = _model_override.get() or _MODEL
+        model = _model_override.get() or _DEFAULT_MODEL
     full_prompt = prompt + "\n\nRespond ONLY with valid JSON, no markdown, no code blocks."
+    headers = {
+        "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": "http://localhost:5173",
+        "X-Title": "LinguaAI",
+    }
     payload = {
         "model": model,
         "messages": [{"role": "user", "content": full_prompt}],
@@ -76,7 +88,7 @@ async def generate_json(prompt: str, model: str = None) -> dict:
     }
     async with httpx.AsyncClient(timeout=120.0) as client:
         try:
-            response = await client.post(_OLLAMA_URL, json=payload)
+            response = await client.post(_OPENROUTER_URL, json=payload, headers=headers)
             response.raise_for_status()
             data = response.json()
             text = data["choices"][0]["message"]["content"].strip()
@@ -95,7 +107,7 @@ async def generate_json(prompt: str, model: str = None) -> dict:
             return json.loads(text)
         except json.JSONDecodeError as e:
             logger.error(f"JSON decode error: {e}. Raw response: {text[:500]}")
-            raise ValueError(f"Invalid JSON response from Ollama: {e}")
+            raise ValueError(f"Invalid JSON response from OpenRouter: {e}")
         except Exception as e:
-            logger.error(f"Error generating JSON via Ollama: {e}")
+            logger.error(f"Error generating JSON via OpenRouter: {e}")
             raise

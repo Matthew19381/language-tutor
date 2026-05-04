@@ -2,9 +2,8 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    GEMINI_API_KEY: str = ""
-    OLLAMA_BASE_URL: str = "http://localhost:11434/v1"
-    OLLAMA_MODEL: str = "qwen2.5:7b"
+    OPENROUTER_API_KEY: str = ""
+    OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
     DATABASE_URL: str = "sqlite:///./LinguaAI.db"
     SECRET_KEY: str = ""  # Must be set in .env file
     TARGET_LANGUAGE: str = "German"

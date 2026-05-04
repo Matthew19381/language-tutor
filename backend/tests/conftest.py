@@ -4,14 +4,14 @@ Shared test fixtures for the Language Tutor backend.
 Uses an in-memory SQLite database (separate from production) and overrides
 the get_db dependency so each test runs in isolation.
 
-GEMINI_API_KEY is set to a dummy value via environment variable so the
+OPENROUTER_API_KEY is set to a dummy value via environment variable so the
 Settings validator passes without a real .env file.
 """
 import os
 import pytest
 
 # Provide a dummy API key so pydantic_settings doesn't raise on import
-os.environ.setdefault("GEMINI_API_KEY", "test-dummy-key")
+os.environ.setdefault("OPENROUTER_API_KEY", "test-dummy-key")
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker

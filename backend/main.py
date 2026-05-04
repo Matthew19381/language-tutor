@@ -7,7 +7,7 @@ from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
 
 from backend.database import engine, Base
-from backend.routers import placement, lessons, tests, flashcards, conversation, stats
+from backend.routers import placement, lessons, tests, flashcards, conversation, stats, grok
 from backend.routers import quickmode, news, pronunciation, settings, audio, youtube
 
 logging.basicConfig(
@@ -55,7 +55,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="LinguaAI API",
-    description="AI-powered language learning application using Google Gemini",
+    description="AI-powered language learning application using OpenRouter",
     version="1.0.0",
     lifespan=lifespan
 )
@@ -82,6 +82,7 @@ app.include_router(pronunciation.router, prefix="/api/v1", tags=["Pronunciation"
 app.include_router(settings.router, prefix="/api/v1", tags=["Settings"])
 app.include_router(audio.router, prefix="/api/v1", tags=["Audio"])
 app.include_router(youtube.router, prefix="/api/v1", tags=["YouTube"])
+app.include_router(grok.router, prefix="/api/v1", tags=["Grok"])
 
 # Serve audio files
 audio_dir = os.path.join(os.path.dirname(__file__), "audio")
