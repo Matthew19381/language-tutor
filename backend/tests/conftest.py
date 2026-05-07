@@ -29,12 +29,13 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_
 def create_tables():
     """Create all tables once per test session, drop them at the end."""
     # Import all models so SQLAlchemy registers them with Base
+    # Achievement must be imported BEFORE User (User has relationship to Achievement)
+    from backend.models.achievement import Achievement  # noqa
     from backend.models.user import User          # noqa
     from backend.models.lesson import Lesson      # noqa
     from backend.models.test_result import TestResult  # noqa
     from backend.models.flashcard import Flashcard  # noqa
     from backend.models.study_plan import StudyPlan  # noqa
-    from backend.models.achievement import Achievement  # noqa
     from backend.database import Base
 
     Base.metadata.create_all(bind=test_engine)

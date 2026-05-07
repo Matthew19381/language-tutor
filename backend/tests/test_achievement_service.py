@@ -54,11 +54,11 @@ class TestCalculateLevelFromXP:
 
     def test_level_name_beginner_at_level_1(self):
         result = calculate_level_from_xp(0)
-        assert result["level_name"] == "Beginner"
+        assert result["level_name"] == "Początkujący"
 
     def test_level_name_grand_master_at_level_50(self):
         result = calculate_level_from_xp(48020)
-        assert result["level_name"] == "Grand Master"
+        assert result["level_name"] == "Wielki Mistrz"
 
     def test_level_names_progress(self):
         names_seen = set()

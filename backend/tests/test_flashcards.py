@@ -61,7 +61,7 @@ def test_add_flashcard_duplicate_prevented(client, sample_user):
     assert r2.status_code == 200
     data = r2.json()
     assert data["success"] is False
-    assert "already exists" in data["message"]
+    assert "już istnieje" in data["message"]
 
 
 def test_add_flashcard_user_not_found(client):

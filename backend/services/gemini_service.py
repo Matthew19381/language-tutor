@@ -16,7 +16,7 @@ _model_override: contextvars.ContextVar[str] = contextvars.ContextVar('model_ove
 
 def set_model_override(model: str):
     """Set the model for the current async context."""
-    _model_override.set(model)
+    return _model_override.set(model)
 
 
 def reset_model_override(token):

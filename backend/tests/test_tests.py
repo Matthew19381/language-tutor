@@ -2,6 +2,7 @@
 import json
 from datetime import datetime
 from unittest.mock import AsyncMock, patch, MagicMock
+import backend.services.achievement_service
 
 
 MOCK_TEST_DATA = {
@@ -140,14 +141,26 @@ def test_get_daily_test(client, sample_user, db):
 
 def test_submit_test(client, sample_user):
     uid = sample_user["user_id"]
-    with patch("backend.routers.tests.submit_test",
-               new=AsyncMock(return_value=MOCK_SUBMIT_RESULT)):
+    import backend.routers.tests as router_module
+    original_submit = router_module.submit_test
+    original_award = backend.services.achievement_service.check_and_award_achievements
+    mock_submit = AsyncMock(return_value=MOCK_SUBMIT_RESULT)
+    mock_award = MagicMock(return_value=[])
+    try:
+        router_module.submit_test = mock_submit
+        backend.services.achievement_service.check_and_award_achievements = mock_award
         r = client.post("/api/tests/submit", json={
             "user_id": uid,
             "test_type": "daily",
             "questions": [],
-            "answers": {},
+            "answers": [],
         })
+        print(f"DEBUG: submit called: {mock_submit.called}, award called: {mock_award.called}")
+    finally:
+        router_module.submit_test = original_submit
+        backend.services.achievement_service.check_and_award_achievements = original_award
+    if r.status_code != 200:
+        print(f"DEBUG: status={r.status_code}, body={r.text[:500]}")
     assert r.status_code == 200
     data = r.json()
     assert data["success"] is True

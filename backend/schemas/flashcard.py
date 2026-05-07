@@ -8,11 +8,15 @@ class ReviewFlashcardRequest(BaseModel):
 
 
 class AddFlashcardRequest(BaseModel):
-    front: str
-    back: str
-    language: Optional[str] = None
+    word: str
+    translation: str
+    example_sentence: Optional[str] = None
 
 
 class AddFlashcardAIRequest(BaseModel):
     word: str
-    language: Optional[str] = None
+
+
+class ConceptFlashcardRequest(BaseModel):
+    lesson_id: int
+    concepts: list
