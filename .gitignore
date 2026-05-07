@@ -56,5 +56,13 @@ test_language_tutor.db
 language_tutor.db
 language_tutor_TODO.md
 
+# Google Drive
+backend/gdrive_credentials.json
+
+# Temp files
+frontend/temp_*/
+frontend-simple/
+tests/
+
 # Docker
 .dockerignore
