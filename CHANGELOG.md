@@ -1,0 +1,66 @@
+# CHANGELOG — LinguaAI
+
+Format: newest first. Każdy wpis: wersja (jeśli dotyczy) + data + opis.
+
+---
+
+## 2026-04-06
+
+### Fix: Deployment & Unicode Resolution
+- **npm Unicode bug** — Frontend `node_modules` moved to `C:\LinguaAI` (Windows blocks non-ASCII paths during npm install)
+- **Backend** — Running from original `G:\...` path (Python handles Unicode correctly) on port **8001** (port 8000 occupied by ForgeBody)
+- **Dockerfile.backend** — Fixed: removed `--no-deps`, all dependencies install correctly now (including `click` for uvicorn)
+- **vite.config.js** — Updated proxy to use `VITE_API_URL` environment variable (supports Docker/backend port changes)
+- **docker-compose.yml** — Added frontend service, changed backend host port to 8001, Ollama port to 11436 (avoid conflicts)
+- **Workflow** — App runs locally: Backend (8001) + Frontend (5173) + Ollama (11434)
+
+### Known Issues
+- Frontend cannot run from paths with non-ASCII characters on Windows (npm/Node bug) — requires ASCII path or WSL2
+- Docker frontend container pending (volume mount Unicode issue)
+- Backend API URL hardcoded to localhost:8001 in frontend when running from C:\
+
+---
+
+## 2026-04-05
+
+### Feature: Phase 3 — Video content balance + Model evaluation
+- **VIDEOS-1** — Toggle "Tylko język docelowy" vs "Język docelowy + polskie wyjaśnienia" w zakładce Filmy
+- **backend/routers/youtube.py** — `_suggest_queries()` accepts `include_polish` flag, generates 2 additional Polish queries when enabled
+- **frontend/src/pages/Videos.jsx** — Added toggle button, passes `include_polish` to API
+- **FEEDBACK.md** — AI model evaluation complete: app uses **Ollama** (qwen2.5:7b, llama3.1, deepseek-coder) with task-based routing — optimal free/local stack
+- **.gitignore** — Added logs and temp plugin caches
+
+### Feature: Phase 2 — Learning enhancements
+- **READ-1** — Added "Dodaj całe zdanie do fiszek" button in DailyLesson reading section (comprehensible input)
+- **NEWS-1** — Daily localStorage cache for news articles (language + user specific keys) to reduce API calls
+- **PRONUN-1** — Session summary already present: shows phrases practiced, avg/best scores, problem words, reset button
+- **LANG-SWITCH** — Language switching already implemented in Stats.jsx with backend PATCH `/placement/{id}/language`
+
+### Feature: Phase 1 — Core UX improvements
+- **VOICE-1** — Speech recognition (Web Speech API) in Conversation: microphone button, transcript appends to input, language auto-detection
+- **VOICE-2** — TTS (edge-tts) on AI messages in Conversation: play button on each assistant bubble
+- **UI-POLISH** — Fixed English strings: PlacementTest (language display), Videos (placeholder), ErrorReview (lang fallback)
+- **TIPS-4** — Daily tips already cached via localStorage (tips_date, tips_data)
+- **VOICE-1** — Voice Chat prompt export already exists in Conversation page (generate + editable + copy)
+
+---
+
+## 2026-03-26
+
+### Fix: Audio, UI, Logika zakładek
+- **audio_service.py** — retry 3x z backoff dla błędów edge-tts 403
+- **achievement_service.py** — wszystkie osiągnięcia przetłumaczone na polski
+- **lesson_generator.py** — tipy generowane w native_language (wzmocniony prompt)
+- **routers/lessons.py** — concept-flashcards: czytelny błąd gdy AI zwraca 0 konceptów
+- **DailyLesson.jsx** — renderMarkdown: obsługa `#`, `##`, `###`, `**bold**`, list
+- **DailyLesson.jsx** — dialog: układ lewa/prawa na podstawie pola `speaker`
+- **placement.py** — needs_placement: True tylko dla nowych języków (`was_new`)
+- **Stats.jsx** — zmiana języka: natychmiastowy reload, czyszczenie lesson cache
+- **Stats.jsx** — TodayCompletion: reaktywny useState, odświeżanie na focus
+- **DailyTest.jsx** — cache pytań testu w localStorage (nie regeneruje się przy re-wejściu)
+
+---
+
+## Wcześniej (przed 2026-03-26)
+
+Historia commitów w git: `git log --oneline`
