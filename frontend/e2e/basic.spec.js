@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/tests';
+import { test, expect } from '@playwright/test';
 
 test.describe('LinguaAI Basic E2E', () => {
     test('homepage loads and shows title', async ({ page }) => {

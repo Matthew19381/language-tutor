@@ -9,6 +9,30 @@ vi.mock('../../api/client', () => ({
   getStats: vi.fn(() => Promise.resolve(null)),
 }))
 
+// Mock useLanguage hook — return English labels so tests can find them
+vi.mock('../../hooks/useLanguage', () => ({
+  useLanguage: () => ({
+    t: (key) => {
+      const map = {
+        'nav.home': 'Home',
+        'nav.lesson': 'Lesson',
+        'nav.pronounce': 'Pronounce',
+        'nav.speak': 'Speak',
+        'nav.flashcards': 'Flashcards',
+        'nav.test': 'Test',
+        'nav.news': 'News',
+        'nav.videos': 'Videos',
+        'nav.quickmode': '15 min',
+        'nav.stats': 'Stats',
+        'nav.getStarted': 'Get Started',
+      }
+      return map[key] || key
+    },
+    lang: 'en',
+    targetLanguage: 'German',
+  }),
+}))
+
 function renderNavBar(initialPath = '/') {
   return render(
     <MemoryRouter initialEntries={[initialPath]}>
