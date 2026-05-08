@@ -21,7 +21,7 @@ if (-not $envRoot -and -not $envBackend) {
 $rootDir = $PWD.Path
 
 Write-Host "Starting LinguaAI Backend..." -ForegroundColor Green
-$backendCmd = "Set-Location '$rootDir'; Write-Host 'Starting backend on http://localhost:8000' -ForegroundColor Green; py -3.11 -m pip install -r backend\requirements.txt; py -3.11 -m uvicorn backend.main:app --reload --port 8000"
+$backendCmd = "Set-Location '$rootDir'; Write-Host 'Starting backend on http://localhost:8001' -ForegroundColor Green; py -3.11 -m pip install -r backend\requirements.txt; py -3.11 -m uvicorn backend.main:app --reload --port 8001"
 Start-Process powershell -ArgumentList "-NoExit", "-Command", $backendCmd
 
 Start-Sleep -Seconds 2
