@@ -4,11 +4,14 @@ echo   LinguaAI - AI-Powered Learning App
 echo ============================================
 echo.
 
-REM Check if .env exists
-if not exist "backend\.env" (
-    echo [WARNING] backend\.env not found!
-    echo Please create backend\.env from backend\.env.example
-    echo and add your GEMINI_API_KEY before starting.
+REM Check if .env exists (root or backend/)
+if exist ".env" (
+    echo Found .env at project root.
+) else if exist "backend\.env" (
+    echo Found .env in backend/.
+) else (
+    echo [WARNING] .env not found!
+    echo Please copy .env.example to .env and add your API keys.
     echo.
     pause
 )

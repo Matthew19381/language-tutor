@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     YOUTUBE_API_KEY: str = ""
 
     class Config:
-        env_file = "backend/.env"
+        env_file = ".env"
         extra = "ignore"
 
 

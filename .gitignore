@@ -1,5 +1,6 @@
 # Environment & secrets
 backend/.env
+/.env
 # backend/.env.example is NOT ignored (template file)
 
 # Databases

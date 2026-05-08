@@ -4,13 +4,18 @@ Write-Host "  LinguaAI - AI-Powered Learning App" -ForegroundColor Cyan
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Check if .env exists
-if (-not (Test-Path "backend\.env")) {
-    Write-Host "[WARNING] backend\.env not found!" -ForegroundColor Yellow
-    Write-Host "Please create backend\.env from backend\.env.example"
-    Write-Host "and add your GEMINI_API_KEY before starting."
+# Check if .env exists (root or backend/)
+$envRoot = Test-Path ".env"
+$envBackend = Test-Path "backend\.env"
+if (-not $envRoot -and -not $envBackend) {
+    Write-Host "[WARNING] .env not found!" -ForegroundColor Yellow
+    Write-Host "Please copy .env.example to .env and add your API keys."
     Write-Host ""
     Read-Host "Press Enter to continue anyway..."
+} elseif ($envRoot) {
+    Write-Host "Found .env at project root." -ForegroundColor Green
+} else {
+    Write-Host "Found .env in backend/." -ForegroundColor Green
 }
 
 $rootDir = $PWD.Path
