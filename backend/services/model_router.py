@@ -1,21 +1,40 @@
 """
-Model Router — wybiera odpowiedni model OpenRouter w zależności od typu zadania.
+Model Router — wybiera odpowiedni model w zależności od typu zadania i dostawcy.
 
-Uwaga: Modele muszą być dostępne w Twoim koncie OpenRouter.
-Darmowe modele oznaczone :free suffixem.
+Uwaga: Modele muszą być dostępne w Twoim koncie OpenRouter (dla openrouter)
+lub Google AI Studio (dla gemini).
+
+Darmowe modele oznaczone :free suffixem (tylko OpenRouter).
 """
 
-def get_model_for_task(task: str, fallback: str = "google/gemini-2.0-flash-exp:free") -> str:
+from backend.config import settings
+
+
+def get_model_for_task(task: str, fallback: str = None) -> str:
     """
-    Zwróć nazwę modelu OpenRouter dla danego typu zadania.
+    Zwróć nazwę modelu dla danego typu zadania i aktywnego dostawcy.
 
     Args:
         task: Typ zadania — 'placement', 'lesson', 'conversation', 'news', 'pronunciation'
-        fallback: Model używany jeśli task nieznany
+        fallback: Model używany jeśli task nieznany (domyślnie zależy od providera)
 
     Returns:
-        Nazwa modelu OpenRouter (np. 'google/gemini-2.0-flash-exp:free')
+        Nazwa modelu (np. 'google/gemini-2.0-flash-exp:free' dla openrouter
+        lub 'gemini-2.0-flash' dla gemini direct)
     """
+    provider = settings.AI_PROVIDER.lower()
+
+    if provider == "gemini":
+        return _get_gemini_model(task, fallback)
+    else:
+        return _get_openrouter_model(task, fallback)
+
+
+def _get_openrouter_model(task: str, fallback: str = None) -> str:
+    """Zwróć model OpenRouter dla danego zadania."""
+    if fallback is None:
+        fallback = "google/gemini-2.0-flash-exp:free"
+
     mapping = {
         # Szybkie, lekkie modele (darmowe :free)
         "placement": "qwen/qwen2.5-7b-instruct:free",      # test poziomujący — szybki, tani
@@ -33,14 +52,45 @@ def get_model_for_task(task: str, fallback: str = "google/gemini-2.0-flash-exp:f
     return mapping.get(task, fallback)
 
 
-def get_available_models() -> list:
+def _get_gemini_model(task: str, fallback: str = None) -> str:
+    """Zwróć model Gemini Direct API dla danego zadania."""
+    if fallback is None:
+        fallback = "gemini-2.0-flash"
+
+    mapping = {
+        # Modele Gemini dla różnych zadań
+        "placement": "gemini-2.0-flash",
+        "lesson": "gemini-2.0-flash",
+        "conversation": "gemini-2.0-flash",
+        "news": "gemini-2.0-flash",
+        "pronunciation": "gemini-2.0-flash",
+        "code": "gemini-2.0-pro",
+    }
+
+    return mapping.get(task, fallback)
+
+
+def get_available_models(provider: str = None) -> list:
     """
-    Zwróć listę dostępnych modeli (do UI/help).
+    Zwróć listę dostępnych modeli dla danego providera.
+
+    Args:
+        provider: 'gemini', 'openrouter', lub None (zwraca dla aktywnego)
     """
-    return [
-        "google/gemini-2.0-flash-exp:free",
-        "qwen/qwen2.5-7b-instruct:free",
-        "meta-llama/llama-3.1-8b-instruct:free",
-        "openai/gpt-4o-mini",
-        "openai/gpt-4o",
-    ]
+    if provider is None:
+        provider = settings.AI_PROVIDER.lower()
+
+    if provider == "gemini":
+        return [
+            "gemini-2.0-flash",
+            "gemini-2.0-flash-lite",
+            "gemini-2.0-pro",
+        ]
+    else:
+        return [
+            "google/gemini-2.0-flash-exp:free",
+            "qwen/qwen2.5-7b-instruct:free",
+            "meta-llama/llama-3.1-8b-instruct:free",
+            "openai/gpt-4o-mini",
+            "openai/gpt-4o",
+        ]

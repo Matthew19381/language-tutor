@@ -4,7 +4,10 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     OPENROUTER_API_KEY: str = ""
     OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
-    DATABASE_URL: str = "sqlite:///./LinguaAI.db"
+    GEMINI_API_KEY: str = ""
+    AI_PROVIDER: str = "openrouter"  # "gemini" for direct API, "openrouter" for OpenRouter
+    GEMINI_BASE_URL: str = "https://generativelanguage.googleapis.com/v1beta"
+    DATABASE_URL: str = "sqlite:///./lingua_ai.db"
     SECRET_KEY: str = ""  # Must be set in .env file
     TARGET_LANGUAGE: str = "German"
     NATIVE_LANGUAGE: str = "Polish"
