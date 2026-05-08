@@ -6,6 +6,7 @@ import logging
 import base64
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import cast, Text
 from backend.database import get_db
 from backend.models.user import User
 from backend.models.lesson import Lesson
@@ -38,7 +39,7 @@ def generate_voice_chat_prompt(user_id: int, db: Session = Depends(get_db)):
         Lesson.user_id == user_id,
         Lesson.is_completed == True,
         Lesson.completed_at != None,
-        Lesson.completed_at.cast(db.Text).like(f"{today}%")
+        Lesson.completed_at.cast(Text).like(f"{today}%")
     ).first()
 
     lesson_info = ""
