@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    ports:
+      - "8001:8001"
+    environment:
+      - OLLAMA_BASE_URL=http://host.docker.internal:11436/v1
+      - OLLAMA_MODEL=qwen2.5:7b
+      - DATABASE_URL=sqlite:///./LinguaAI.db
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+    volumes:
+      - ./backend/audio:/app/backend/audio
+      - ./backend/exports:/app/backend/exports
+      - ./LinguaAI.db:/app/backend/LinguaAI.db
+    restart: unless-stopped
+    command: >
+      sh -c "
+        echo 'Waiting for global Ollama (host.docker.internal:11435)...' &&
+        while ! curl -s http://host.docker.internal:11435/api/tags > /dev/null; do
+          sleep 2
+        done &&
+        echo 'Ollama ready. Starting backend...' &&
+        uvicorn backend.main:app --host 0.0.0.0 --port 8001
+      "
+
+  frontend:
+    image: node:18-alpine
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://backend:8001
+      - CHOKIDAR_USE_POLLING=true
+    depends_on:
+      - backend
+    command: npm run dev
+

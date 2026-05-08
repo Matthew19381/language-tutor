@@ -1,0 +1,67 @@
+# Environment & secrets
+backend/.env
+backend/.env.example
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Audio & exports
+backend/audio/
+backend/exports/
+backend/__pycache__/
+
+# Frontend build
+frontend/dist/
+frontend/node_modules/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+*.egg-info/
+dist/
+build/
+
+# Logs
+*.log
+backend.log
+frontend_dev.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Project-specific
+decisions/
+logs/
+tasklist
+symbols.json
+pytest.ini
+netstat
+py
+test_language_tutor.db
+language_tutor.db
+language_tutor_TODO.md
+
+# Google Drive
+backend/gdrive_credentials.json
+
+# Temp files
+frontend/temp_*/
+frontend-simple/
+
+# Docker
+.dockerignore
