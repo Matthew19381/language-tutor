@@ -32,6 +32,12 @@ from backend.schemas.placement import (
     CreateUserRequest,
     UpdateLanguageRequest,
 )
+from backend.schemas.voice_chat import (
+    VoiceChatMessageRequest,
+    VoiceChatPromptResponse,
+    VoiceChatTextResponse,
+    VoiceChatVoiceResponse,
+)
 
 __all__ = [
     "StartConversationRequest",
@@ -55,4 +61,8 @@ __all__ = [
     "SubmitPlacementRequest",
     "CreateUserRequest",
     "UpdateLanguageRequest",
+    "VoiceChatMessageRequest",
+    "VoiceChatPromptResponse",
+    "VoiceChatTextResponse",
+    "VoiceChatVoiceResponse",
 ]

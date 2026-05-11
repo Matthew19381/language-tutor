@@ -12,6 +12,7 @@ from backend.models.user import User
 from backend.models.lesson import Lesson
 from backend.models.flashcard import Flashcard
 from backend.models.test_result import TestResult
+from backend.schemas.voice_chat import VoiceChatMessageRequest
 from backend.services.gemini_service import generate_text
 from backend.services import audio_service
 from datetime import datetime, date
@@ -141,15 +142,15 @@ Dziękuję za pomoc!
 
 
 @router.post("/api/v1/voice-chat/conversation/voice")
-async def voice_chat_voice_conversation(request: dict):
+async def voice_chat_voice_conversation(request: VoiceChatMessageRequest):
     """
     Endpoint głosowej rozmowy przez OpenRouter.
     Oczekuje: { "user_id": int, "message": str, "language": str }
     Zwraca: { "success": bool, "text": str, "audio_base64": str }
     """
-    user_id = request.get("user_id")
-    message = request.get("message", "")
-    language = request.get("language", "German")
+    user_id = request.user_id
+    message = request.message
+    language = request.language
 
     if not user_id or not message:
         return {"success": False, "error": "Missing user_id or message"}
@@ -181,13 +182,13 @@ async def voice_chat_voice_conversation(request: dict):
 
 
 @router.post("/api/v1/voice-chat/conversation/text")
-async def voice_chat_text_conversation(request: dict):
+async def voice_chat_text_conversation(request: VoiceChatMessageRequest):
     """
     Rozmowa tekstowa przez OpenRouter (bez audio).
     """
-    user_id = request.get("user_id")
-    message = request.get("message", "")
-    language = request.get("language", "German")
+    user_id = request.user_id
+    message = request.message
+    language = request.language
 
     if not user_id or not message:
         return {"success": False, "error": "Missing user_id or message"}

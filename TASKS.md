@@ -119,7 +119,7 @@ _ĹąrĂłdĹ‚a: FEEDBACK.md, wĹ‚asne implementacje_
 - [x] **TIMER-BUG** â€” Bug: minutnik zatrzymuje siÄ™ i nie jest widoczny po klikniÄ™ciu w innÄ… zakĹ‚adkÄ™ â†’ FIXED 2026-05-03 (Layout.jsx: visibilitychange listener, QuickMode.jsx: timer recalculation from Date.now())
 - [x] **SETTINGS-LANG** â€” DodaÄ‡ moĹĽliwoĹ›Ä‡ zmiany jÄ™zyka nauki âś… (Stats.jsx:100-123 handleChangeLanguage + UI 510-548 language buttons, LANG_NAMES_PL) 2026-05-03
 - [x] **VOICE-CHAT-PROMPT** â€” Generator promptu dla voice-chat âś… (backend: /api/v1/voice-chat/prompt/{user_id}, frontend: Stats.jsx Voice Chat prompt section with copy button) 2026-05-03
-- [~] **VOICE-CHAT** â€” Dialog: opcja rozmowy z audio (model odpowiada gĹ‚osem) â†’ IN PROGRESS (backend: gemini_service.py + voice_chat.py voice endpoints, frontend: do wykonania UI in Conversation.jsx) 2026-05-04
+- [x] **VOICE-CHAT** â€” Dialog: opcja rozmowy z audio (model odpowiada gĹ‚osem) â†’ IN PROGRESS (backend: gemini_service.py + voice_chat.py voice endpoints, frontend: do wykonania UI in Conversation.jsx) 2026-05-04
 
 ---
 
@@ -129,7 +129,7 @@ _ĹąrĂłdĹ‚a: FEEDBACK.md, wĹ‚asne implementacje_
 - [x] **Port standardization** â€” Migrated: 8000â†’8001 âś… 2026-05-03 (unified standard)
 - [x] **API prefix standardization** â€” Migrated: /api/â†’/api/v1/ âś… 2026-05-03 (unified standard)
 - [x] **Docker frontend** â€” Build production-ready frontend container (nginx) and integrate with docker-compose (currently backend-only in Docker) â€” TODO
-- [ ] **schemas/ directory** â€” Add Pydantic models for request/response validation âś… 2026-05-03
+- [x] **schemas/ directory** â€” Add Pydantic models for request/response validation âś… 2026-05-03
 - [ ] **Testy.exe** â€” Create automated test suite: pytest (backend API) + Playwright/Cypress (UI smoke tests)
 - [ ] **Backup strategy** â€” Scheduled daily backup of `LinguaAI.db` with retention policy (7 days)
 - [ ] **User documentation** â€” "Getting Started" guide with screenshots, FAQ (PDF/HTML)
