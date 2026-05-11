@@ -64,5 +64,8 @@ backend/gdrive_credentials.json
 frontend/temp_*/
 frontend-simple/
 
+# Backups
+backups/
+
 # Docker
 .dockerignore

@@ -97,6 +97,25 @@ async def health_check():
         "version": "1.0.0"
     }
 
+
+@app.post("/api/admin/backup")
+async def trigger_backup():
+    """Trigger a database backup. Requires admin access in production."""
+    from backend.services.backup_service import create_backup
+    try:
+        backup_path = create_backup()
+        return {"success": True, "backup": str(backup_path)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Backup failed: {e}")
+
+
+@app.get("/api/admin/backups")
+async def list_backups():
+    """List all available backups."""
+    from backend.services.backup_service import list_backups
+    backups = list_backups()
+    return {"backups": backups}
+
 # Serve simple frontend (no Vite, just static files)
 # Use relative path to avoid Unicode issues in absolute paths
 frontend_simple_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend-simple"))
