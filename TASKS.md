@@ -131,7 +131,7 @@ _ĹąrĂłdĹ‚a: FEEDBACK.md, wĹ‚asne implementacje_
 - [x] **Docker frontend** â€” Build production-ready frontend container (nginx) and integrate with docker-compose (currently backend-only in Docker) â€” TODO
 - [x] **schemas/ directory** â€” Add Pydantic models for request/response validation âś… 2026-05-03
 - [ ] **Testy.exe** â€” Create automated test suite: pytest (backend API) + Playwright/Cypress (UI smoke tests)
-- [ ] **Backup strategy** â€” Scheduled daily backup of `LinguaAI.db` with retention policy (7 days)
+- [x] **Backup strategy** â€” Scheduled daily backup of `LinguaAI.db` with retention policy (7 days)
 - [ ] **User documentation** â€” "Getting Started" guide with screenshots, FAQ (PDF/HTML)
 
 ---

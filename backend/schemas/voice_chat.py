@@ -4,8 +4,8 @@ from typing import Optional
 
 
 class VoiceChatMessageRequest(BaseModel):
-    user_id: int
-    message: str
+    user_id: Optional[int] = None
+    message: Optional[str] = None
     language: str = "German"
 
 
