@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: '/api/v1',
+  baseURL: '/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -234,3 +234,23 @@ export const exportObsidian = (lessonId, dayOffset = 0, upload = false) =>
 
 export const getStudyPlan = (userId) =>
   api.get(`/lessons/study-plan/${userId}`)
+
+// ===== Topics =====
+
+export const getTopics = (userId, params = {}) =>
+  api.get(`/topics/${userId}`, { params })
+
+export const getTopicTree = (userId, language) =>
+  api.get(`/topics/${userId}/tree`, language ? { params: { language } } : {})
+
+export const getDueTopics = (userId, language, limit = 20) =>
+  api.get(`/topics/${userId}/due`, { params: { language, limit } })
+
+export const getTopicStats = (userId, language) =>
+  api.get(`/topics/${userId}/stats`, language ? { params: { language } } : {})
+
+export const getTopicDetail = (topicId) =>
+  api.get(`/topics/detail/${topicId}`)
+
+export const reviewTopic = (topicId, quality) =>
+  api.post(`/topics/${topicId}/review`, { quality })

@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import {
   BookOpen, FlaskConical, MessageSquare, LayoutGrid,
   BarChart3, Flame, Star, Brain, Timer, Newspaper, Mic,
-  BookmarkPlus, X, Loader2, Video, AlertTriangle
+  BookmarkPlus, X, Loader2, Video, AlertTriangle, Layers
 } from 'lucide-react'
 import { getUserId, getStats, addFlashcardAI } from '../api/client'
 import { useLanguage } from '../hooks/useLanguage'
@@ -75,6 +75,7 @@ export default function NavBar({ dailyTabs: dailyTabsProp }) {
     { to: '/quickmode', label: t('nav.quickmode'), icon: Timer },
     { to: '/stats', label: t('nav.stats'), icon: BarChart3 },
     { to: '/errors', label: 'Błędy', icon: AlertTriangle },
+    { to: '/topics', label: 'Tematy', icon: Layers },
   ]
 
   useEffect(() => {

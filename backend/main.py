@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 
 from backend.database import engine, Base
 from backend.routers import placement, lessons, tests, flashcards, conversation, stats, voice_chat
-from backend.routers import quickmode, news, pronunciation, settings, audio, youtube
+from backend.routers import quickmode, news, pronunciation, settings, audio, youtube, topics
 
 logging.basicConfig(
     level=logging.INFO,
@@ -22,7 +22,7 @@ async def lifespan(app: FastAPI):
     # Startup: create database tables and required directories
     logger.info("Creating database tables...")
     # Import all models so SQLAlchemy registers them before create_all
-    from backend.models import achievement, user, lesson, test_result, study_plan, flashcard  # noqa
+    from backend.models import achievement, user, lesson, test_result, study_plan, flashcard, topic  # noqa
     Base.metadata.create_all(bind=engine)
 
     _sa = __import__('sqlalchemy')
@@ -83,6 +83,7 @@ app.include_router(settings.router, tags=["Settings"])
 app.include_router(audio.router, tags=["Audio"])
 app.include_router(youtube.router, tags=["YouTube"])
 app.include_router(voice_chat.router, tags=["Voice-Chat"])
+app.include_router(topics.router, prefix="/api/topics", tags=["Topics"])
 
 # Serve audio files
 audio_dir = os.path.join(os.path.dirname(__file__), "audio")

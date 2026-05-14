@@ -3,7 +3,7 @@ import logging
 import os
 import httpx
 from datetime import datetime, date, timedelta
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from fastapi.responses import FileResponse
 from typing import Optional
 from sqlalchemy.orm import Session
@@ -26,6 +26,7 @@ from backend.services.audio_service import generate_vocabulary_audio, generate_f
 from backend.services.pdf_service import generate_lesson_pdf, EXPORTS_DIR
 from backend.services.obsidian_service import save_obsidian_md
 from backend.services.gemini_service import generate_json as ai_generate_json
+from backend.services.topic_service import process_lesson_topics_bg
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -67,7 +68,7 @@ def get_recent_errors(user_id: int, db: Session, limit: int = 10) -> list:
 
 
 @router.get("/api/lessons/today/{user_id}")
-async def get_today_lesson(user_id: int, db: Session = Depends(get_db)):
+async def get_today_lesson(user_id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -183,6 +184,18 @@ async def get_today_lesson(user_id: int, db: Session = Depends(get_db)):
     import asyncio
     asyncio.create_task(
         generate_full_lesson_audio(lesson_content, user.target_language, lesson.id)
+    )
+
+    # Extract topics and assign lesson to them (background, non-blocking)
+    background_tasks.add_task(
+        process_lesson_topics_bg,
+        user_id=lesson.user_id,
+        language=lesson.language,
+        cefr_level=lesson.cefr_level,
+        lesson_id=lesson.id,
+        day_number=lesson.day_number,
+        lesson_title=lesson.title,
+        content=lesson_content,
     )
 
     return {
@@ -547,7 +560,7 @@ async def get_lesson_history(user_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/api/lessons/next/{user_id}")
-async def generate_next_lesson(user_id: int, db: Session = Depends(get_db)):
+async def generate_next_lesson(user_id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     """Generate the NEXT lesson (max day_number + 1) without deleting the current one."""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
@@ -640,6 +653,18 @@ async def generate_next_lesson(user_id: int, db: Session = Depends(get_db)):
                 )
                 db.add(flashcard)
     db.commit()
+
+    # Extract topics (background, non-blocking)
+    background_tasks.add_task(
+        process_lesson_topics_bg,
+        user_id=lesson.user_id,
+        language=lesson.language,
+        cefr_level=lesson.cefr_level,
+        lesson_id=lesson.id,
+        day_number=lesson.day_number,
+        lesson_title=lesson.title,
+        content=lesson_content,
+    )
 
     return {
         "lesson_id": lesson.id,
