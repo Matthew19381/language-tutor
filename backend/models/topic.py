@@ -61,6 +61,24 @@ class Topic(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # Ensure SM-2 defaults for in-memory objects (Column default only applies on commit)
+        if self.easiness_factor is None:
+            self.easiness_factor = 2.5
+        if self.interval is None:
+            self.interval = 0
+        if self.repetitions is None:
+            self.repetitions = 0
+        if self.memory_strength is None:
+            self.memory_strength = 0.0
+        if self.total_items is None:
+            self.total_items = 0
+        if self.total_reviews is None:
+            self.total_reviews = 0
+        if self.avg_score is None:
+            self.avg_score = 0.0
+
     # ── Relationships ──
     user = relationship("User", back_populates="topics")
     items = relationship("TopicItem", back_populates="topic", cascade="all, delete-orphan")

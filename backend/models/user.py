@@ -23,3 +23,4 @@ class User(Base):
     flashcards = relationship("Flashcard", back_populates="user")
     study_plans = relationship("StudyPlan", back_populates="user")
     achievements = relationship("Achievement", back_populates="user")
+    topics = relationship("Topic", back_populates="user")
