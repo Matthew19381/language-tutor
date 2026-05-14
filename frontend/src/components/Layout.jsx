@@ -87,7 +87,7 @@ export default function Layout() {
 
   useEffect(() => {
     checkNewAchievements()
-  }, [])
+  }, [checkNewAchievements, location.pathname])
 
   // Track daily tab visits
   useEffect(() => {
@@ -193,7 +193,13 @@ function TranslatorWidget({ userId, targetLanguage }) {
   const handleAddFlash = async () => {
     if (!result || !text.trim() || !userId) return
     try {
-      await addFlashcard(userId, { word: text.trim(), translation: result.trim() })
+      // to_native: text=target lang, result=Polish → word=text, translation=result
+      // to_target: text=Polish, result=target lang → word=result, translation=text
+      const isToNative = dir === 'to_native'
+      await addFlashcard(userId, {
+        word: isToNative ? text.trim() : result.trim(),
+        translation: isToNative ? result.trim() : text.trim()
+      })
       setFlashAdded(true)
     } catch {}
   }

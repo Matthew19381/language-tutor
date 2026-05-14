@@ -56,7 +56,10 @@ def fetch_articles(language: str, limit: int = 10) -> list:
             feed = feedparser.parse(feed_url)
             for entry in feed.entries[:limit]:
                 title = entry.get("title", "")
-                summary = entry.get("summary", entry.get("description", ""))
+                summary = entry.get("summary", entry.get("description", entry.get("content", "")))
+                # content may be a list of dicts
+                if isinstance(summary, list) and summary:
+                    summary = summary[0].get("value", "")
                 link = entry.get("link", "")
                 if title and summary:
                     articles.append({

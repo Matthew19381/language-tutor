@@ -237,7 +237,7 @@ class TestBackupAPIEndpoints:
 
     def test_trigger_backup(self, client):
         """POST /api/admin/backup creates a backup."""
-        r = client.post("/api/admin/backup")
+        r = client.post("/api/admin/backup", headers={"X-Admin-Key": "test-key"})
         assert r.status_code == 200
         data = r.json()
         assert data["success"] is True
@@ -245,8 +245,13 @@ class TestBackupAPIEndpoints:
 
     def test_list_backups(self, client):
         """GET /api/admin/backups returns list of backups."""
-        r = client.get("/api/admin/backups")
+        r = client.get("/api/admin/backups", headers={"X-Admin-Key": "test-key"})
         assert r.status_code == 200
         data = r.json()
         assert "backups" in data
         assert isinstance(data["backups"], list)
+
+    def test_backup_requires_auth(self, client):
+        """POST /api/admin/backup without key returns 403."""
+        r = client.post("/api/admin/backup")
+        assert r.status_code == 403

@@ -545,9 +545,22 @@ async def analyze_test_errors(
     total_points = 0
     earned_points = 0
 
+    def _normalize_answer(ans: str, q_type: str) -> str:
+        """Normalize answer for comparison — strip punctuation/whitespace for non-MC."""
+        s = str(ans).strip()
+        if q_type in ("multiple_choice", "mc"):
+            return s.upper()
+        # For fill-in-blank/translation: strip trailing punctuation, normalize whitespace
+        import re
+        s = s.lower()
+        s = re.sub(r'[.!?;:]+$', '', s)  # trailing punctuation
+        s = re.sub(r'\s+', ' ', s)        # normalize whitespace
+        return s.strip()
+
     for q in questions:
         user_ans = answers.get(str(q["id"]), answers.get(q["id"], ""))
-        is_correct = str(user_ans).upper().strip() == str(q["correct"]).upper().strip()
+        q_type = q.get("type", "unknown")
+        is_correct = _normalize_answer(user_ans, q_type) == _normalize_answer(q["correct"], q_type)
         points = q.get("points", 10)
         total_points += points
         if is_correct:

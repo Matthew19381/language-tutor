@@ -1,6 +1,6 @@
 import os
 import logging
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -99,9 +99,18 @@ async def health_check():
     }
 
 
+def _verify_admin_key(x_admin_key: str = Header(None, alias="X-Admin-Key")):
+    """Verify admin API key from X-Admin-Key request header."""
+    admin_key = os.environ.get("ADMIN_API_KEY", "")
+    if not admin_key:
+        raise HTTPException(status_code=503, detail="Admin API key not configured on server")
+    if x_admin_key != admin_key:
+        raise HTTPException(status_code=403, detail="Invalid admin API key")
+
+
 @app.post("/api/admin/backup")
-async def trigger_backup():
-    """Trigger a database backup. Requires admin access in production."""
+async def trigger_backup(_: None = Depends(_verify_admin_key)):
+    """Trigger a database backup. Requires X-Admin-Key header."""
     from backend.services.backup_service import create_backup
     try:
         backup_path = create_backup()
@@ -111,8 +120,8 @@ async def trigger_backup():
 
 
 @app.get("/api/admin/backups")
-async def list_backups():
-    """List all available backups."""
+async def list_backups(_: None = Depends(_verify_admin_key)):
+    """List all available backups. Requires X-Admin-Key header."""
     from backend.services.backup_service import list_backups
     backups = list_backups()
     return {"backups": backups}

@@ -103,7 +103,7 @@ Nowoczesna platforma do nauki języków obcych wspierana przez AI (Google Gemini
 ┌────────────────────────────▼───────────────────────────────────┐
 │                      Backend (FastAPI)                       │
 │   FastAPI + SQLAlchemy + SQLite + Google Gemini 2.0 Flash  │
-│                     :8000 (API server)                     │
+│                     :8001 (API server)                     │
 └────────────────────────────┬───────────────────────────────────┘
                              │
         ┌────────────────────┼─────────────────┐
@@ -182,8 +182,8 @@ Przykład:
 ### 1. Klonowanie repozytorium
 
 ```bash
-git clone https://github.com/Matthew19381/language-tutor.git
-cd language-tutor
+git clone https://github.com/Matthew19381/LanguaAI.git
+cd LanguaAI
 ```
 
 ### 2. Konfiguracja backendu
@@ -233,7 +233,7 @@ start.bat
 **Opcja B — Ręcznie:**
 ```bash
 # Terminal 1 - Backend (z katalogu głównego!)
-uvicorn backend.main:app --reload --port 8000
+uvicorn backend.main:app --reload --port 8001
 
 # Terminal 2 - Frontend
 cd frontend
@@ -243,11 +243,11 @@ npm run dev
 ### 6. Dostęp
 
 - **Frontend:** http://localhost:5173
-- **Backend API:** http://localhost:8000
-- **API Docs (Swagger):** http://localhost:8000/docs
-- **API Docs (ReDoc):** http://localhost:8000/redoc
+- **Backend API:** http://localhost:8001
+- **API Docs (Swagger):** http://localhost:8001/docs
+- **API Docs (ReDoc):** http://localhost:8001/redoc
 
-> **Ważne:** Frontend dev server na `:5173` proxyzuje `/api` i `/audio` do `http://localhost:8000` (skonfigurowane w `frontend/vite.config.js`).
+> **Ważne:** Frontend dev server na `:5173` proxyzuje `/api` i `/audio` do `http://localhost:8001` (skonfigurowane w `frontend/vite.config.js`).
 
 ---
 
@@ -266,7 +266,7 @@ Dostępne endpointy:
 - `GET /api/news/{user_id}` — Artykuły newsowe
 - `POST /api/pronunciation/analyze` — Analiza wymowy
 
-Interaktywna dokumentacja Swagger dostępna pod adresem: http://localhost:8000/docs
+Interaktywna dokumentacja Swagger dostępna pod adresem: http://localhost:8001/docs
 
 ---
 
@@ -523,6 +523,6 @@ MIT License — możesz używać, modyfikować i rozprowadzać kod.
 
 ## Linki
 
-- Repozytorium GitHub: https://github.com/Matthew19381/language-tutor
-- API Docs (lokalnie): http://localhost:8000/docs
-- Issue Tracker: https://github.com/Matthew19381/language-tutor/issues
+- Repozytorium GitHub: https://github.com/Matthew19381/LanguaAI
+- API Docs (lokalnie): http://localhost:8001/docs
+- Issue Tracker: https://github.com/Matthew19381/LanguaAI/issues

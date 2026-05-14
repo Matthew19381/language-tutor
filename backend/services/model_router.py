@@ -161,17 +161,17 @@ def _get_gemini_model(task: str, fallback: str = None, tier: str = "cheap") -> s
 
     MAPPINGS = {
         "free": {
-            # Gemini Direct API nie ma darmowych modeli poza free tier API
-            # — używamy najtańszych dostępnych
+            # Gemini Direct API — używamy najtańszych dostępnych modeli
+            # (Gemini nie ma :free suffix jak OpenRouter)
             "placement":     "gemini-2.0-flash-lite",
             "pronunciation": "gemini-2.0-flash-lite",
-            "lesson":        "gemini-2.0-flash",
-            "conversation":  "gemini-2.0-flash",
-            "news":          "gemini-2.0-flash",
-            "test":          "gemini-2.0-flash",
-            "code":          "gemini-2.0-pro",
-            "reasoning":     "gemini-2.0-pro",
-            "multimodal":    "gemini-2.0-flash",
+            "lesson":        "gemini-2.0-flash-lite",
+            "conversation":  "gemini-2.0-flash-lite",
+            "news":          "gemini-2.0-flash-lite",
+            "test":          "gemini-2.0-flash-lite",
+            "code":          "gemini-2.0-flash",
+            "reasoning":     "gemini-2.0-flash",
+            "multimodal":    "gemini-2.0-flash-lite",
         },
         "cheap": {
             "placement":     "gemini-2.0-flash-lite",
@@ -204,7 +204,7 @@ def _get_gemini_model(task: str, fallback: str = None, tier: str = "cheap") -> s
 def _tier_default_openrouter(tier: str) -> str:
     """Domyślny fallback model dla danego tieru OpenRouter."""
     return {
-        "free":  "openrouter/free",
+        "free":  "meta-llama/llama-3.2-3b-instruct:free",
         "cheap": "deepseek/deepseek-v3.2-non-thinking",
         "best":  "anthropic/claude-sonnet-4-6",
     }.get(tier, "deepseek/deepseek-v3.2-non-thinking")

@@ -87,7 +87,7 @@ def check_and_award_achievements(user, db: Session) -> list:
     from backend.models.lesson import Lesson
     from backend.models.test_result import TestResult
 
-    # Fetch data needed for checks
+    # Fetch data needed for checks (global across all languages — intentional)
     completed_lessons = db.query(Lesson).filter(
         Lesson.user_id == user.id,
         Lesson.is_completed == True

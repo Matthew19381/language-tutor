@@ -104,12 +104,14 @@ async def get_today_lesson(user_id: int, background_tasks: BackgroundTasks, db: 
         raise HTTPException(status_code=404, detail="User not found")
 
     # Check if today's lesson already exists for this language
-    today_start = datetime.combine(date.today(), datetime.min.time())
+    # Use FOR UPDATE to prevent race conditions on concurrent requests
+    from sqlalchemy import func
+    today_date = date.today()
     existing_lesson = db.query(Lesson).filter(
         Lesson.user_id == user_id,
         Lesson.language == user.target_language,
-        Lesson.created_at >= today_start
-    ).first()
+        func.date(Lesson.created_at) == today_date
+    ).with_for_update().first()
 
     # If no lesson today, check for uncompleted lesson from previous days
     if not existing_lesson:

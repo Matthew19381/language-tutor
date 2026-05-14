@@ -21,11 +21,13 @@ async def get_quickmode_plan(user_id: int, db: Session = Depends(get_db)):
 
     activities = []
 
-    # Check today's lesson
-    today_start = datetime.combine(date.today(), datetime.min.time())
+    # Check today's lesson (per language)
+    from sqlalchemy import func
+    today_date = date.today()
     today_lesson = db.query(Lesson).filter(
         Lesson.user_id == user_id,
-        Lesson.created_at >= today_start
+        Lesson.language == user.target_language,
+        func.date(Lesson.created_at) == today_date
     ).first()
 
     if today_lesson and not today_lesson.is_completed:
@@ -43,7 +45,7 @@ async def get_quickmode_plan(user_id: int, db: Session = Depends(get_db)):
         # Check if test done today
         today_test = db.query(TestResult).filter(
             TestResult.user_id == user_id,
-            TestResult.created_at >= today_start
+            func.date(TestResult.created_at) == today_date
         ).first()
         if not today_test:
             activities.append({

@@ -113,7 +113,7 @@ export const reviewFlashcard = (flashcardId, rating) =>
   api.post(`/flashcards/${flashcardId}/review`, { rating })
 
 export const exportAnki = (userId) =>
-  axios.post(`/api/flashcards/${userId}/export-anki`, {}, { responseType: 'blob' })
+  api.post(`/flashcards/${userId}/export-anki`, {}, { responseType: 'blob' })
 
 export const addFlashcard = (userId, data) =>
   api.post(`/flashcards/${userId}/add`, data)
@@ -204,7 +204,9 @@ export const getAchievements = (userId) =>
 
 export const getUserId = () => {
   const id = localStorage.getItem('userId')
-  return id ? parseInt(id) : null
+  if (!id) return null
+  const parsed = parseInt(id, 10)
+  return (parsed > 0 && !isNaN(parsed)) ? parsed : null
 }
 
 export const setUserId = (id) => {

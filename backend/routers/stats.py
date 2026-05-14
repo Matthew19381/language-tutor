@@ -217,14 +217,17 @@ async def get_leaderboard_position(user_id: int, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Get all users sorted by XP
-    all_users = db.query(User).order_by(User.total_xp.desc()).all()
-    position = next((i + 1 for i, u in enumerate(all_users) if u.id == user_id), 1)
+    # Get top 5 users by XP (efficient — only loads 5 rows)
+    top_users = db.query(User).order_by(User.total_xp.desc()).limit(5).all()
+    total_users = db.query(User).count()
+
+    # Calculate user position efficiently via count of users with higher XP
+    position = db.query(User).filter(User.total_xp > user.total_xp).count() + 1
 
     return {
         "user_id": user_id,
         "position": position,
-        "total_users": len(all_users),
+        "total_users": total_users,
         "xp": user.total_xp,
         "top_users": [
             {
@@ -232,7 +235,7 @@ async def get_leaderboard_position(user_id: int, db: Session = Depends(get_db)):
                 "xp": u.total_xp,
                 "cefr_level": u.cefr_level
             }
-            for u in all_users[:5]
+            for u in top_users
         ]
     }
 
@@ -259,21 +262,28 @@ async def export_progress_csv(user_id: int, db: Session = Depends(get_db)):
     writer = csv.writer(output)
     writer.writerow(["date", "day_number", "lesson_title", "lesson_completed", "test_scores", "xp_total", "streak", "flashcard_count"])
 
-    # Calculate cumulative XP per lesson completion
+    # Calculate cumulative XP and consecutive streak per lesson
     xp = 0
     streak = 0
     lesson_dates = sorted(set(l.completed_at.date() for l in lessons if l.completed_at))
+
+    def _consecutive_streak_at(check_date, all_dates):
+        """Count consecutive days ending at check_date."""
+        if check_date not in all_dates:
+            return 0
+        count = 1
+        prev = check_date - timedelta(days=1)
+        while prev in all_dates:
+            count += 1
+            prev -= timedelta(days=1)
+        return count
 
     for lesson in lessons:
         d = lesson.created_at.strftime("%Y-%m-%d")
         if lesson.is_completed:
             xp += 25
-            # Approximate streak at time of completion
             if lesson.completed_at:
-                streak = sum(
-                    1 for ld in lesson_dates
-                    if ld <= lesson.completed_at.date()
-                )
+                streak = _consecutive_streak_at(lesson.completed_at.date(), lesson_dates)
         scores = tests_by_date.get(d, [])
         scores_str = ";".join(str(s) for s in scores) if scores else ""
         writer.writerow([

@@ -2,11 +2,13 @@ import logging
 import os
 import tempfile
 import difflib
+import threading
 
 logger = logging.getLogger(__name__)
 
 # Model is downloaded once on first use (~75MB for "tiny")
 _whisper_model = None
+_whisper_lock = threading.Lock()
 WHISPER_MODEL_SIZE = "tiny"
 
 LANGUAGE_CODES = {
@@ -27,7 +29,12 @@ LANGUAGE_CODES = {
 
 def _get_model():
     global _whisper_model
-    if _whisper_model is None:
+    if _whisper_model is not None:
+        return _whisper_model
+    with _whisper_lock:
+        # Double-check after acquiring lock
+        if _whisper_model is not None:
+            return _whisper_model
         try:
             from faster_whisper import WhisperModel
             logger.info(f"Loading Whisper model '{WHISPER_MODEL_SIZE}'...")
@@ -43,21 +50,20 @@ def transcribe_audio(audio_bytes: bytes, audio_format: str = "webm", language: s
     """Transcribe audio bytes using faster-whisper. Returns transcribed text."""
     model = _get_model()
 
-    # Write to temp file
+    # Write to temp file (delete=True auto-removes on close, but we need the path for Whisper)
     suffix = f".{audio_format}"
-    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
-        tmp.write(audio_bytes)
-        tmp_path = tmp.name
-
+    tmp = tempfile.NamedTemporaryFile(suffix=suffix, delete=False)
     try:
-        segments, info = model.transcribe(tmp_path, beam_size=5, language=language)
+        tmp.write(audio_bytes)
+        tmp.close()
+        segments, info = model.transcribe(tmp.name, beam_size=5, language=language)
         text = " ".join(seg.text.strip() for seg in segments)
         logger.info(f"Transcribed ({info.language}): {text!r}")
         return text.strip()
     finally:
         try:
-            os.unlink(tmp_path)
-        except Exception:
+            os.unlink(tmp.name)
+        except OSError:
             pass
 
 

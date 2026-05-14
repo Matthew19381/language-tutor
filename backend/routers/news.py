@@ -1,6 +1,7 @@
 import logging
 import time
 import httpx
+from collections import OrderedDict
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from backend.database import get_db
@@ -10,9 +11,20 @@ from backend.services.news_service import get_news_for_user
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# In-memory cache: key = (user_id, language) -> {"timestamp": float, "data": list}
-_news_cache: dict = {}
+# LRU cache: key = (user_id, language) -> {"timestamp": float, "data": list}
+_news_cache: OrderedDict = OrderedDict()
+_CACHE_MAX_SIZE = 100  # max cached entries
 CACHE_TTL_SECONDS = 6 * 3600  # 6 hours
+
+
+def _cache_prune():
+    """Remove expired entries and enforce max size."""
+    now = time.time()
+    expired = [k for k, v in _news_cache.items() if now - v["timestamp"] > CACHE_TTL_SECONDS]
+    for k in expired:
+        del _news_cache[k]
+    while len(_news_cache) > _CACHE_MAX_SIZE:
+        _news_cache.popitem(last=False)
 
 
 @router.get("/api/news/{user_id}")
@@ -22,6 +34,7 @@ async def get_news(user_id: int, limit: int = 5, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
+    _cache_prune()
     cache_key = (user_id, user.target_language)
     now = time.time()
     cached = _news_cache.get(cache_key)

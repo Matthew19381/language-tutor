@@ -193,16 +193,17 @@ async def gdrive_auth():
 
 @router.get("/api/settings/gdrive/callback")
 async def gdrive_callback(code: str):
-    """Handle Google Drive OAuth2 callback and save token."""
+    """Handle Google Drive OAuth2 callback, save token, and redirect to frontend."""
+    from fastapi.responses import RedirectResponse
     try:
         from backend.services.google_drive_service import save_token_from_code
         success = save_token_from_code(code)
         if success:
-            return {"success": True, "message": "Google Drive authorized successfully! You can now upload Obsidian exports."}
-        return {"success": False, "message": "Failed to save authorization token"}
+            return RedirectResponse(url="/?gdrive=success", status_code=302)
+        return RedirectResponse(url="/?gdrive=error", status_code=302)
     except Exception as e:
         logger.exception("GDrive callback error")
-        return {"success": False, "message": "Failed to authorize Google Drive"}
+        return RedirectResponse(url="/?gdrive=error", status_code=302)
 
 
 @router.get("/api/settings/gdrive/status")

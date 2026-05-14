@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     GEMINI_BASE_URL: str = "https://generativelanguage.googleapis.com/v1beta"
     DATABASE_URL: str = "sqlite:///./lingua_ai.db"
     SECRET_KEY: str = ""  # Must be set in .env file
+    ADMIN_API_KEY: str = ""  # API key for admin endpoints (backup, etc.)
     TARGET_LANGUAGE: str = "German"
     NATIVE_LANGUAGE: str = "Polish"
     DISCORD_WEBHOOK_URL: str = ""

@@ -45,9 +45,6 @@ LANGUAGE_MAP = {
     "Italian": "Italian",
 }
 
-SUPPORTED_LANGUAGES = ["German", "English", "Spanish", "Russian", "Chinese"]
-
-
 @router.post("/api/placement/start")
 async def start_placement(
     request: StartPlacementRequest,
