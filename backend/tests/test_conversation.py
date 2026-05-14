@@ -62,7 +62,8 @@ def test_send_message(client, sample_user):
         # Send a message
         r2 = client.post("/api/conversation/message", json={
             "session_id": session_id,
-            "user_message": "Ich lerne Deutsch."
+            "user_message": "Ich lerne Deutsch.",
+            "user_id": uid
         })
         assert r2.status_code == 200
         data = r2.json()
@@ -74,7 +75,8 @@ def test_send_message_invalid_session(client):
     """Send message returns 404 for invalid session."""
     r = client.post("/api/conversation/message", json={
         "session_id": "invalid-session-id",
-        "user_message": "Hello"
+        "user_message": "Hello",
+        "user_id": 99999
     })
     assert r.status_code == 404
 

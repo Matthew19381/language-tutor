@@ -253,15 +253,13 @@ def get_due_topics(db: Session, user_id: int, language: str = None, limit: int =
     query = db.query(Topic).filter(
         Topic.user_id == user_id,
         Topic.total_items > 0,
+        (Topic.next_review_date <= datetime.utcnow()) | (Topic.next_review_date == None),
     )
     if language:
         query = query.filter(Topic.language == language)
 
-    topics = query.all()
-    due = [t for t in topics if t.is_due()]
-    due.sort(key=lambda t: t.next_review_date or datetime.min)
-
-    return due[:limit]
+    due = query.order_by(Topic.next_review_date.asc()).limit(limit).all()
+    return due
 
 
 def get_topic_stats(db: Session, user_id: int, language: str = None) -> dict:

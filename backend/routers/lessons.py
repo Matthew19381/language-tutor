@@ -32,6 +32,36 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+def _calculate_streak(db: Session, user_id: int) -> int:
+    """Calculate consecutive days with at least one completed lesson, ending today or yesterday."""
+    from sqlalchemy import func
+    # Get distinct dates with completed lessons, most recent first
+    dates = db.query(func.date(Lesson.completed_at)).filter(
+        Lesson.user_id == user_id,
+        Lesson.is_completed == True,
+        Lesson.completed_at != None
+    ).distinct().order_by(func.date(Lesson.completed_at).desc()).all()
+
+    if not dates:
+        return 0
+
+    date_list = [d[0] for d in dates]
+    today = date.today()
+
+    # If most recent completion is more than 1 day ago, streak is broken
+    if (today - date_list[0]).days > 1:
+        return 0
+
+    # Count consecutive days backwards from most recent
+    streak = 1
+    for i in range(1, len(date_list)):
+        if (date_list[i - 1] - date_list[i]).days == 1:
+            streak += 1
+        else:
+            break
+    return streak
+
+
 def get_day_number(user: User, db: Session = None, language: str = None) -> int:
     """Calculate which day number the user is on for a specific language.
     Uses per-language lesson count so each language starts at day 1."""
@@ -159,10 +189,11 @@ async def get_today_lesson(user_id: int, background_tasks: BackgroundTasks, db: 
         word = vocab_item.get("word", "")
         translation = vocab_item.get("translation", "")
         if word and translation:
-            # Check if flashcard already exists
+            # Check if flashcard already exists (per language)
             existing = db.query(Flashcard).filter(
                 Flashcard.user_id == user_id,
-                Flashcard.word == word
+                Flashcard.word == word,
+                Flashcard.language == user.target_language
             ).first()
             if not existing:
                 flashcard = Flashcard(
@@ -181,9 +212,8 @@ async def get_today_lesson(user_id: int, background_tasks: BackgroundTasks, db: 
     db.commit()
 
     # Generate audio for lesson sections (background, non-blocking)
-    import asyncio
-    asyncio.create_task(
-        generate_full_lesson_audio(lesson_content, user.target_language, lesson.id)
+    background_tasks.add_task(
+        generate_full_lesson_audio, lesson_content, user.target_language, lesson.id
     )
 
     # Extract topics and assign lesson to them (background, non-blocking)
@@ -251,10 +281,8 @@ async def complete_lesson(
             user = db.query(User).filter(User.id == request.user_id).first()
             if user:
                 user.total_xp += 25  # 25 XP for completing a lesson
-                # Update streak
-                if user.created_at:
-                    days_since_start = (date.today() - user.created_at.date()).days
-                    user.streak_days = days_since_start + 1
+                # Update streak — consecutive days with at least one completed lesson
+                user.streak_days = _calculate_streak(db, user.id)
 
         db.commit()
 

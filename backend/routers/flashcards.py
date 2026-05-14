@@ -216,10 +216,11 @@ async def add_flashcard(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Check for duplicate
+    # Check for duplicate (per language)
     existing = db.query(Flashcard).filter(
         Flashcard.user_id == user_id,
-        Flashcard.word == request.word
+        Flashcard.word == request.word,
+        Flashcard.language == user.target_language
     ).first()
 
     if existing:
@@ -250,10 +251,11 @@ async def add_flashcard_ai(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Check for duplicate
+    # Check for duplicate (per language)
     existing = db.query(Flashcard).filter(
         Flashcard.user_id == user_id,
-        Flashcard.word == request.word
+        Flashcard.word == request.word,
+        Flashcard.language == user.target_language
     ).first()
 
     if existing:

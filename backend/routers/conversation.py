@@ -113,6 +113,10 @@ async def send_message(request: MessageRequest):
         raise HTTPException(status_code=404, detail="Conversation session not found")
 
     session = conversation_sessions[session_id]
+
+    # Validate session ownership
+    if session.get("user_id") != request.user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to access this session")
     language = session["language"]
     native_language = session["native_language"]
     cefr_level = session["cefr_level"]
@@ -219,11 +223,10 @@ async def analyze_session(
                 xp = min(30, int(analysis.get("score", 0) * 0.3))
                 user.total_xp += xp
                 db.commit()
-
                 analysis["xp_earned"] = xp
 
-        # Clear session after analysis
-        del conversation_sessions[session_id]
+        # Clear session only after all DB operations succeeded
+        conversation_sessions.pop(session_id, None)
 
         return {
             "success": True,

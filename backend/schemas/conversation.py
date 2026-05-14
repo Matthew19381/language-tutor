@@ -10,6 +10,7 @@ class StartConversationRequest(BaseModel):
 class MessageRequest(BaseModel):
     session_id: str
     user_message: str
+    user_id: int
 
 
 class AnalyzeRequest(BaseModel):

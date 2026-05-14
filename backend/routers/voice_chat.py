@@ -36,11 +36,12 @@ def generate_voice_chat_prompt(user_id: int, db: Session = Depends(get_db)):
     language = user.target_language or "German"
 
     # 1. Dzisiejsza lekcja
+    from sqlalchemy import func
     today_lesson = db.query(Lesson).filter(
         Lesson.user_id == user_id,
         Lesson.is_completed == True,
         Lesson.completed_at != None,
-        Lesson.completed_at.cast(Text).like(f"{today}%")
+        func.date(Lesson.completed_at) == today
     ).first()
 
     lesson_info = ""
@@ -163,7 +164,7 @@ async def voice_chat_voice_conversation(request: VoiceChatMessageRequest):
         # Generuj audio z tekstu (edge-tts)
         audio_bytes = None
         try:
-            audio_bytes = audio_service.generate_audio(ai_text, language)
+            audio_bytes = await audio_service.generate_audio(ai_text, language)
         except Exception as e:
             logger.warning(f"Audio generation failed: {e}")
 
