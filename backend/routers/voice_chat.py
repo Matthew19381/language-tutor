@@ -88,7 +88,7 @@ def generate_voice_chat_prompt(user_id: int, db: Session = Depends(get_db)):
     if due_flashcards:
         flashcard_info = "\n## Fiszki do powtórki dzisiaj (" + str(len(due_flashcards)) + "):\n"
         for f in due_flashcards[:10]:
-            flashcard_info += f"- {f.front} = {f.back}\n"
+            flashcard_info += f"- {f.word} = {f.translation}\n"
 
     # 4. Statystyki błędów
     all_errors = db.query(TestResult).filter(
