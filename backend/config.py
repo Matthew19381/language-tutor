@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
     GEMINI_API_KEY: str = ""
     AI_PROVIDER: str = "openrouter"  # "gemini" for direct API, "openrouter" for OpenRouter
+    AI_MODEL_TIER: str = "cheap"     # "free", "cheap", "best" — model quality/cost tier
     GEMINI_BASE_URL: str = "https://generativelanguage.googleapis.com/v1beta"
     DATABASE_URL: str = "sqlite:///./lingua_ai.db"
     SECRET_KEY: str = ""  # Must be set in .env file
