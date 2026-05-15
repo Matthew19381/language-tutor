@@ -32,7 +32,7 @@ export default function Stats() {
     if (!userId) { navigate('/placement'); return }
     getStats(userId)
       .then(setStats)
-      .catch(() => {})
+      .catch(() => setStats(null))
       .finally(() => setLoading(false))
     getLanguageProfiles(userId)
       .then(setLanguageProfiles)

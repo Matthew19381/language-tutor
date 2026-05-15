@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from fastapi.responses import FileResponse
 from typing import Optional
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from backend.database import get_db
 from backend.models.user import User
 from backend.models.lesson import Lesson
@@ -104,14 +105,13 @@ async def get_today_lesson(user_id: int, background_tasks: BackgroundTasks, db: 
         raise HTTPException(status_code=404, detail="User not found")
 
     # Check if today's lesson already exists for this language
-    # Use FOR UPDATE to prevent race conditions on concurrent requests
     from sqlalchemy import func
     today_date = date.today()
     existing_lesson = db.query(Lesson).filter(
         Lesson.user_id == user_id,
         Lesson.language == user.target_language,
         func.date(Lesson.created_at) == today_date
-    ).with_for_update().first()
+    ).first()
 
     # If no lesson today, check for uncompleted lesson from previous days
     if not existing_lesson:
@@ -170,7 +170,7 @@ async def get_today_lesson(user_id: int, background_tasks: BackgroundTasks, db: 
         recent_topics=recent_topics
     )
 
-    # Save lesson to DB
+    # Save lesson to DB (handle race condition via unique constraint)
     lesson = Lesson(
         user_id=user_id,
         day_number=day_number,
@@ -182,8 +182,32 @@ async def get_today_lesson(user_id: int, background_tasks: BackgroundTasks, db: 
         is_completed=False
     )
     db.add(lesson)
-    db.commit()
-    db.refresh(lesson)
+    try:
+        db.commit()
+        db.refresh(lesson)
+    except IntegrityError:
+        # Another concurrent request already created this lesson — rollback and use existing
+        db.rollback()
+        from sqlalchemy import func as _func
+        existing_lesson = db.query(Lesson).filter(
+            Lesson.user_id == user_id,
+            Lesson.language == user.target_language,
+            _func.date(Lesson.created_at) == date.today()
+        ).first()
+        if existing_lesson:
+            content = json.loads(existing_lesson.content)
+            return {
+                "lesson_id": existing_lesson.id,
+                "day_number": existing_lesson.day_number,
+                "title": existing_lesson.title,
+                "topic": existing_lesson.topic,
+                "content": content,
+                "is_completed": existing_lesson.is_completed,
+                "language": existing_lesson.language,
+                "cefr_level": existing_lesson.cefr_level,
+                "created_at": existing_lesson.created_at.isoformat()
+            }
+        raise
 
     # Extract vocabulary and create flashcards
     vocabulary = lesson_content.get("vocabulary", [])
@@ -272,6 +296,10 @@ async def complete_lesson(
     lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
     if not lesson:
         raise HTTPException(status_code=404, detail="Lesson not found")
+
+    # Verify ownership
+    if request.user_id and lesson.user_id != request.user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to complete this lesson")
 
     newly_awarded = []
     if not lesson.is_completed:
@@ -711,9 +739,13 @@ async def record_exercise_error(
 @router.delete("/api/lessons/reset-today/{user_id}")
 async def reset_today_lesson(user_id: int, db: Session = Depends(get_db)):
     """Delete today's lesson so it gets regenerated on next visit."""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
     today_start = datetime.combine(date.today(), datetime.min.time())
     deleted = db.query(Lesson).filter(
         Lesson.user_id == user_id,
+        Lesson.language == user.target_language,
         Lesson.created_at >= today_start
     ).delete()
     db.commit()

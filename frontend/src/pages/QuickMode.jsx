@@ -69,7 +69,7 @@ export default function QuickMode() {
   useEffect(() => {
     if (!userId) { navigate('/placement'); return }
     axios.get(`/api/quickmode/${userId}`)
-      .then(r => setPlan(r.data))
+      .then(r => setPlan(r?.data ?? null))
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [userId])

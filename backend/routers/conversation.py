@@ -190,6 +190,10 @@ async def analyze_session(
     if not conv_session:
         raise HTTPException(status_code=404, detail="Conversation session not found")
 
+    # Verify ownership
+    if request.user_id and conv_session.user_id != request.user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to access this session")
+
     try:
         history = json.loads(conv_session.history)
 

@@ -71,7 +71,7 @@ export default function DailyTest() {
       })
       .catch(e => {
         setError(e.message)
-        setStep(STEPS.TESTING)
+        setStep(STEPS.RESULTS)
       })
   }, [userId])
 

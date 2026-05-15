@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Text, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, Text, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from backend.database import Base
@@ -6,6 +6,9 @@ from backend.database import Base
 
 class TestResult(Base):
     __tablename__ = "test_results"
+    __table_args__ = (
+        UniqueConstraint('user_id', 'test_type', 'language', 'created_at', name='uq_user_test_type_lang_date'),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)

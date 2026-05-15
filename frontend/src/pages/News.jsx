@@ -39,7 +39,7 @@ export default function News() {
 
     axios.get(`/api/news/${userId}`)
       .then(r => {
-        const arts = r.data.articles || []
+        const arts = r?.data?.articles || []
         setArticles(arts)
         localStorage.setItem(cacheDateKey, today)
         localStorage.setItem(cacheDataKey, JSON.stringify(arts))

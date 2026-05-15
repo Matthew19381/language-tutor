@@ -24,6 +24,7 @@ router = APIRouter()
 
 class ReviewRequest(BaseModel):
     quality: int  # 0-5 SM-2 quality rating
+    user_id: int
 
 
 class ReviewResponse(BaseModel):
@@ -137,12 +138,17 @@ async def topic_stats(
 @router.get("/detail/{topic_id}")
 async def topic_detail(
     topic_id: int,
+    user_id: int,
     db: Session = Depends(get_db),
 ):
     """Get single topic with all its items (lessons, tests, exercises)."""
     topic = db.query(Topic).get(topic_id)
     if not topic:
         raise HTTPException(status_code=404, detail="Topic not found")
+
+    # Verify ownership
+    if topic.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to access this topic")
 
     topic.memory_strength = topic.calculate_memory_strength()
 
@@ -200,6 +206,13 @@ async def review_topic(
     """
     if review.quality < 0 or review.quality > 5:
         raise HTTPException(status_code=400, detail="Quality must be 0-5")
+
+    # Verify ownership
+    topic_check = db.query(Topic).get(topic_id)
+    if not topic_check:
+        raise HTTPException(status_code=404, detail="Topic not found")
+    if review.user_id and topic_check.user_id != review.user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to review this topic")
 
     try:
         topic = topic_service.review_topic(db, topic_id, review.quality)

@@ -217,10 +217,14 @@ async def get_history(
 
 
 @router.get("/api/tests/result/{result_id}")
-async def get_test_result(result_id: int, db: Session = Depends(get_db)):
+async def get_test_result(result_id: int, user_id: int, db: Session = Depends(get_db)):
     result = db.query(TestResult).filter(TestResult.id == result_id).first()
     if not result:
         raise HTTPException(status_code=404, detail="Test result not found")
+
+    # Verify ownership
+    if result.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to access this test result")
 
     errors = json.loads(result.errors) if result.errors else []
     answers = json.loads(result.answers) if result.answers else {}

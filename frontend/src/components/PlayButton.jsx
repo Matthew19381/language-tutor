@@ -18,6 +18,7 @@ export default function PlayButton({ text, language, className = '' }) {
       })
       if (!res.ok) throw new Error('TTS failed')
       const data = await res.json()
+      if (!data?.url) throw new Error('No audio URL in response')
       const audio = new Audio(data.url)
       audio.play()
     } catch (err) {

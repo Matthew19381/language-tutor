@@ -162,7 +162,16 @@ def check_and_award_achievements(user, db: Session) -> list:
         })
 
     if newly_awarded:
-        db.commit()
+        try:
+            db.commit()
+        except Exception:
+            db.rollback()
+            # Another concurrent request may have awarded the same achievements
+            # Re-query to return only truly new ones
+            re_existing = {a.achievement_type for a in db.query(Achievement).filter(
+                Achievement.user_id == user.id
+            ).all()}
+            return [a for a in newly_awarded if a["type"] not in re_existing]
 
     return newly_awarded
 

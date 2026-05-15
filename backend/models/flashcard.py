@@ -15,7 +15,7 @@ class Flashcard(Base):
     audio_path = Column(String, nullable=True)
     language = Column(String, nullable=False)
     cefr_level = Column(String, nullable=False)
-    lesson_id = Column(Integer, nullable=True)
+    lesson_id = Column(Integer, ForeignKey("lessons.id"), nullable=True)
     lesson_day = Column(Integer, nullable=True)
     lesson_topic = Column(String, nullable=True)
     ease_factor = Column(Float, default=2.5)

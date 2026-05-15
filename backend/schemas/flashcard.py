@@ -1,10 +1,10 @@
 """Pydantic schemas for flashcard router."""
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 
 
 class ReviewFlashcardRequest(BaseModel):
-    rating: int  # 1-4 button rating
+    rating: int = Field(ge=1, le=4, description="1=Again, 2=Hard, 3=Good, 4=Easy")
 
 
 class AddFlashcardRequest(BaseModel):

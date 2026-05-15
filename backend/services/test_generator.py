@@ -1,6 +1,7 @@
 import json
 import logging
 from datetime import date
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from backend.models.test_result import TestResult
 from backend.models.user import User
@@ -97,6 +98,8 @@ async def submit_test(
     )
 
     score = analysis.get("score", 0)
+    # Validate score range
+    score = max(0.0, min(100.0, float(score)))
     errors = analysis.get("errors", [])
 
     # Save test result to DB
@@ -111,11 +114,32 @@ async def submit_test(
     )
     db.add(test_result)
 
-    # Award XP based on score
-    xp_earned = int(score * 0.5)  # Max 50 XP per test
+    # Award XP based on score (max 50 XP per test)
+    xp_earned = min(50, int(score * 0.5))
     user.total_xp += xp_earned
 
-    db.commit()
+    try:
+        db.commit()
+    except Exception:
+        # Handle race condition: unique constraint violation means another request
+        # already submitted — rollback and return the existing result
+        db.rollback()
+        existing = db.query(TestResult).filter(
+            TestResult.user_id == user_id,
+            TestResult.test_type == test_type,
+            TestResult.language == user.target_language,
+            func.date(TestResult.created_at) == today_date
+        ).first()
+        if existing:
+            return {
+                "test_result_id": existing.id,
+                "score": existing.score,
+                "errors": json.loads(existing.errors) if existing.errors else [],
+                "performance_summary": "",
+                "xp_earned": 0,
+                "already_submitted": True
+            }
+        raise
     db.refresh(test_result)
 
     return {

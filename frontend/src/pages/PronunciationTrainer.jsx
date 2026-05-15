@@ -31,7 +31,7 @@ export default function PronunciationTrainer() {
   useEffect(() => {
     if (!userId) { navigate('/placement'); return }
     axios.get(`/api/pronunciation/phrases/${userId}`)
-      .then(r => setPhrases(r.data.phrases || []))
+      .then(r => setPhrases(r?.data?.phrases || []))
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [userId])

@@ -3,7 +3,7 @@ import io
 import json
 import logging
 import httpx
-from datetime import datetime, date, timezone
+from datetime import datetime, date, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -153,34 +153,6 @@ async def get_stats(user_id: int, db: Session = Depends(get_db)):
         "new_achievements": unnotified,
     }
 
-
-class AddXPRequest(BaseModel):
-    amount: int
-    reason: Optional[str] = "activity"
-
-
-@router.post("/api/stats/{user_id}/xp")
-async def add_xp(
-    user_id: int,
-    request: AddXPRequest,
-    db: Session = Depends(get_db)
-):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    user.total_xp += request.amount
-    db.commit()
-
-    level_info = calculate_level(user.total_xp)
-
-    return {
-        "success": True,
-        "xp_added": request.amount,
-        "total_xp": user.total_xp,
-        "level_info": level_info,
-        "reason": request.reason
-    }
 
 
 @router.get("/api/tips/{user_id}")

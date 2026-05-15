@@ -74,6 +74,7 @@ async def get_due_flashcards(user_id: int, db: Session = Depends(get_db)):
     now = datetime.now(timezone.utc)
     due_cards = db.query(Flashcard).filter(
         Flashcard.user_id == user_id,
+        Flashcard.language == user.target_language,
         Flashcard.is_active == True,
         Flashcard.next_review_date <= now
     ).order_by(Flashcard.next_review_date.asc()).all()
@@ -140,6 +141,7 @@ async def export_anki(user_id: int, db: Session = Depends(get_db)):
 
     flashcards = db.query(Flashcard).filter(
         Flashcard.user_id == user_id,
+        Flashcard.language == user.target_language,
         Flashcard.is_active == True
     ).all()
 

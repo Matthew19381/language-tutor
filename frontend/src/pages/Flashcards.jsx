@@ -37,6 +37,7 @@ export default function Flashcards() {
   const [aiLoading, setAiLoading] = useState(false)
   const [aiPreview, setAiPreview] = useState(null)
   const [reversed, setReversed] = useState(false) // PL→target instead of target→PL
+  const [exportError, setExportError] = useState('')
 
   useEffect(() => {
     if (!userId) { navigate('/placement'); return }
@@ -131,7 +132,8 @@ export default function Flashcards() {
       link.remove()
       window.URL.revokeObjectURL(url)
     } catch (e) {
-      alert('Export failed: ' + e.message)
+      setExportError('Export failed: ' + e.message)
+      setTimeout(() => setExportError(''), 4000)
     } finally {
       setExporting(false)
     }
@@ -182,6 +184,11 @@ export default function Flashcards() {
           <Download className="w-4 h-4" />
           {exporting ? t('flash.exporting') : t('flash.exportAnki')}
         </button>
+        {exportError && (
+          <span className="text-red-400 text-sm flex items-center gap-1">
+            <AlertCircle className="w-4 h-4" /> {exportError}
+          </span>
+        )}
       </div>
 
       {/* Tabs */}

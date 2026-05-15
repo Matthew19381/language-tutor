@@ -111,6 +111,7 @@ export default function PlacementTest() {
   }
 
   const handleSubmit = async () => {
+    if (!userId) { setError('User ID not set'); return }
     setStep(STEPS.SUBMITTING)
     try {
       const res = await submitPlacementTest({

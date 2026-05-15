@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from backend.database import Base
@@ -6,6 +6,9 @@ from backend.database import Base
 
 class Achievement(Base):
     __tablename__ = "achievements"
+    __table_args__ = (
+        UniqueConstraint('user_id', 'achievement_type', name='uq_user_achievement_type'),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
