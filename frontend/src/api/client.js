@@ -55,7 +55,7 @@ export const completeLesson = (lessonId, userId) =>
   api.post(`/lessons/${lessonId}/complete`, { user_id: userId })
 
 export const evaluateProduction = (lessonId, data) =>
-  api.post(`/lessons/${lessonId}/evaluate-production`, data)
+  api.post(`/lessons/${lessonId}/evaluate-production`, { ...data, user_id: data.userId })
 
 export const generateTTS = (text, language) =>
   api.post(`/audio/tts`, { text, language })
@@ -72,8 +72,8 @@ export const getLessonHistory = (userId) =>
 export const generateNextLesson = (userId) =>
   api.post(`/lessons/next/${userId}`)
 
-export const generateConceptFlashcards = (lessonId) =>
-  api.post(`/lessons/${lessonId}/concept-flashcards`)
+export const generateConceptFlashcards = (lessonId, userId) =>
+  api.post(`/lessons/${lessonId}/concept-flashcards`, null, { params: { user_id: userId } })
 
 export const getLessonConcepts = (userId) =>
   api.get(`/lessons/latest/${userId}/concepts`)

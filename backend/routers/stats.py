@@ -84,7 +84,7 @@ async def get_stats(user_id: int, db: Session = Depends(get_db)):
                         }
                         if example["question"] and example not in error_examples[error_type]:
                             error_examples[error_type].append(example)
-            except Exception:
+            except (json.JSONDecodeError, TypeError):
                 pass
 
     # Test history for chart
@@ -314,7 +314,7 @@ async def get_all_errors(user_id: int, db: Session = Depends(get_db)):
                         "test_id": test.id,
                         "source": test.test_type or "test",
                     })
-        except Exception:
+        except (json.JSONDecodeError, TypeError, KeyError):
             pass
 
     # Group by type

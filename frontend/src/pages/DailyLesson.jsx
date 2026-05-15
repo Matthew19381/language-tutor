@@ -219,7 +219,7 @@ export default function DailyLesson() {
     setConceptsLoading(true)
     setConceptsMsg('')
     try {
-      const res = await generateConceptFlashcards(lesson.lesson_id)
+      const res = await generateConceptFlashcards(lesson.lesson_id, userId)
       if (!res.success) {
         setConceptsMsg(res.message || 'Brak gramatyki w tej lekcji.')
       } else if (res.created > 0 && res.skipped > 0) {
@@ -329,10 +329,11 @@ export default function DailyLesson() {
     setProductionResult(null)
     try {
       const result = await evaluateProduction(lesson.lesson_id, {
+        userId,
         user_answer: productionAnswer,
         instruction: content.production_task?.instruction || '',
-        language: lesson.content?.language || 'German',
-        cefr_level: lesson.content?.cefr_level || 'B1',
+        language: lesson.language || 'German',
+        cefr_level: lesson.cefr_level || 'B1',
       })
       setProductionResult(result)
     } catch (e) {

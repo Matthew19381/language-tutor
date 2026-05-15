@@ -165,8 +165,8 @@ async def export_anki(user_id: int, db: Session = Depends(get_db)):
             filename=os.path.basename(deck_path),
             media_type="application/octet-stream"
         )
-    except Exception:
-        logger.exception("Unexpected error exporting Anki deck")
+    except (IOError, OSError, ValueError) as e:
+        logger.exception("Error exporting Anki deck: %s", e)
         raise HTTPException(status_code=500, detail="Failed to generate Anki deck")
 
 
@@ -269,7 +269,7 @@ Return ONLY valid JSON:
             if correction:
                 msg = f'Niepoprawna pisownia. Czy chodziło Ci o: "{correction}"?'
             return {"success": False, "message": msg}
-    except Exception:
+    except (ValueError, KeyError, TypeError):
         pass  # If validation fails, proceed anyway
 
     # Use AI to generate translation and example

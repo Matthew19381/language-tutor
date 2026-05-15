@@ -64,7 +64,7 @@ async def start_conversation(
             try:
                 errors = json.loads(test.errors)
                 user_errors.extend(errors[:2])
-            except Exception:
+            except (json.JSONDecodeError, TypeError):
                 pass
 
     topic = request.topic or "everyday conversation"

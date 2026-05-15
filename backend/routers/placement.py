@@ -112,7 +112,7 @@ async def submit_placement(
                 user.cefr_level = cefr_level
                 try:
                     profiles = _json.loads(user.language_profiles or "{}")
-                except Exception:
+                except (json.JSONDecodeError, TypeError):
                     profiles = {}
                 profiles[language] = cefr_level
                 user.language_profiles = _json.dumps(profiles)
@@ -255,7 +255,7 @@ async def update_user_language(
     # Load existing language profiles
     try:
         profiles = _json.loads(user.language_profiles or "{}")
-    except Exception:
+    except (ValueError, TypeError):
         profiles = {}
 
     # Track before any modifications whether this is a genuinely new language
@@ -301,7 +301,7 @@ async def get_language_profiles(user_id: int, db: Session = Depends(get_db)):
 
     try:
         profiles = _json.loads(user.language_profiles or "{}")
-    except Exception:
+    except (ValueError, TypeError):
         profiles = {}
 
     # Enrich with lesson/test counts per language

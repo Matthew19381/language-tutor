@@ -131,7 +131,7 @@ async def get_errors_test(user_id: int, db: Session = Depends(get_db)):
                         "user_answer": err.get("user_answer", ""),
                         "correct_answer": err.get("correct_answer", err.get("correction", "")),
                     })
-        except Exception:
+        except (json.JSONDecodeError, TypeError):
             pass
 
     try:

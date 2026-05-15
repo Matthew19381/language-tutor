@@ -23,6 +23,7 @@ class ExerciseErrorRequest(BaseModel):
 
 
 class EvaluateProductionRequest(BaseModel):
+    user_id: int
     user_answer: str
     instruction: str
     language: str = "German"

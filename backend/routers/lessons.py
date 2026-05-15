@@ -535,6 +535,10 @@ async def download_lesson_audio_package(lesson_id: int, user_id: int, db: Sessio
 
 @router.get("/api/lessons/list/{user_id}")
 async def list_lessons(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
     lessons = db.query(Lesson).filter(
         Lesson.user_id == user_id
     ).order_by(Lesson.day_number.asc()).all()
@@ -648,7 +652,7 @@ async def generate_next_lesson(user_id: int, background_tasks: BackgroundTasks, 
         try:
             latest_content = json.loads(latest_lesson.content)
             exercise_errors = latest_content.get("user_exercise_errors", [])
-        except Exception:
+        except (json.JSONDecodeError, TypeError):
             pass
 
     # Generate lesson
@@ -738,9 +742,13 @@ async def record_exercise_error(
     if not lesson:
         raise HTTPException(status_code=404, detail="Lesson not found")
 
+    # Verify ownership
+    if request.user_id and lesson.user_id != request.user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to modify this lesson")
+
     try:
         content = json.loads(lesson.content)
-    except Exception:
+    except (json.JSONDecodeError, TypeError):
         content = {}
 
     errors = content.get("user_exercise_errors", [])
@@ -774,13 +782,20 @@ async def reset_today_lesson(user_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/api/lessons/{lesson_id}/concept-flashcards")
-async def generate_concept_flashcards(lesson_id: int, db: Session = Depends(get_db)):
+async def generate_concept_flashcards(lesson_id: int, user_id: int, db: Session = Depends(get_db)):
     """Extract grammar concepts from lesson and create concept flashcards."""
     lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
     if not lesson:
         raise HTTPException(status_code=404, detail="Lesson not found")
 
-    content = json.loads(lesson.content)
+    # Verify ownership
+    if lesson.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to access this lesson")
+
+    try:
+        content = json.loads(lesson.content)
+    except (json.JSONDecodeError, TypeError):
+        content = {}
     # lesson content stores grammar as "explanation" (frontend uses content.explanation)
     grammar_explanation = content.get("grammar_explanation") or content.get("explanation", "")
     topic = lesson.topic
@@ -811,7 +826,7 @@ Return JSON:
     try:
         result = await ai_generate_json(prompt)
         concepts = result.get("concepts", [])
-    except Exception:
+    except (httpx.RequestError, ValueError, KeyError):
         return {"success": False, "message": "AI generation failed", "created": 0}
 
     created = 0
@@ -886,7 +901,7 @@ Return JSON:
     try:
         result = await ai_generate_json(prompt)
         concepts = result.get("concepts", [])
-    except Exception:
+    except (httpx.RequestError, ValueError, KeyError):
         concepts = []
 
     return {
@@ -914,7 +929,7 @@ async def get_study_plan(user_id: int, db: Session = Depends(get_db)):
     import json as _json
     try:
         plan_data = _json.loads(active_plan.plan_data)
-    except Exception:
+    except (json.JSONDecodeError, TypeError):
         plan_data = {}
 
     # Also get current lesson number
@@ -939,6 +954,14 @@ async def evaluate_production_task(
 ):
     if not request.user_answer or not request.user_answer.strip():
         raise HTTPException(status_code=400, detail="Answer cannot be empty")
+
+    lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+
+    # Verify ownership
+    if request.user_id and lesson.user_id != request.user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to access this lesson")
 
     prompt = f"""You are a {request.language} language teacher. Evaluate this student's answer.
 

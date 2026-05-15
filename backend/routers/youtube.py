@@ -39,7 +39,7 @@ def _extract_lesson_context(lesson: Lesson) -> dict:
         content = json.loads(lesson.content)
         vocab = content.get("vocabulary", [])
         vocab_words = [v.get("word", "") for v in vocab[:8] if v.get("word")]
-    except Exception:
+    except (json.JSONDecodeError, TypeError):
         pass
     return {"topic": topic, "title": title, "vocab": vocab_words}
 
@@ -84,7 +84,7 @@ Return JSON: {{"queries": [...], "topic_queries": []}}"""
     try:
         result = await generate_json(prompt)
         return result.get("queries", []), result.get("topic_queries", [])
-    except Exception:
+    except (httpx.RequestError, ValueError, KeyError):
         # Fallback queries if AI fails
         base = {
             "A1": [f"{language} for beginners slow", f"easy {language} A1", f"learn {language} basics"],
@@ -154,6 +154,9 @@ async def search_videos(
     cefr_level = user.cefr_level
     native_language = user.native_language
     lang_code = LANG_TO_RELEVANCE.get(language, "en")
+
+    if not settings.YOUTUBE_API_KEY:
+        raise HTTPException(status_code=503, detail="Brak klucza YouTube API")
 
     try:
         if query.strip():

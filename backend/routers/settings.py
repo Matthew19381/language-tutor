@@ -212,6 +212,6 @@ async def gdrive_status():
     try:
         from backend.services.google_drive_service import is_authorized
         return {"authorized": is_authorized()}
-    except Exception:
+    except (ImportError, OSError):
         return {"authorized": False}
 

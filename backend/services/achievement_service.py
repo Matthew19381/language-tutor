@@ -164,7 +164,7 @@ def check_and_award_achievements(user, db: Session) -> list:
     if newly_awarded:
         try:
             db.commit()
-        except Exception:
+        except Exception:  # noqa: BLE-001 — intentional: any DB error during concurrent achievement award
             db.rollback()
             # Another concurrent request may have awarded the same achievements
             # Re-query to return only truly new ones

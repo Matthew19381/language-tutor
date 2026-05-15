@@ -57,7 +57,7 @@ def generate_voice_chat_prompt(user_id: int, db: Session = Depends(get_db)):
             vocab = content.get('vocabulary', [])
             if vocab:
                 lesson_info += "- Słownictwo (" + str(len(vocab)) + " słów): " + ", ".join([v.get('word', '') for v in vocab[:10]]) + "\n"
-        except Exception:
+        except (json.JSONDecodeError, TypeError, KeyError):
             lesson_info = "- Brak danych lekcji\n"
 
     # 2. Błędy z testów (ostatnie 5)
@@ -74,7 +74,7 @@ def generate_voice_chat_prompt(user_id: int, db: Session = Depends(get_db)):
                     errs = json.loads(r.errors) if isinstance(r.errors, str) else r.errors
                     for e in errs[:3]:
                         errors_info += f"- {e.get('type', 'błąd')}: {e.get('explanation', '')}\n"
-                except Exception:
+                except (json.JSONDecodeError, TypeError):
                     pass
 
     # 3. Fiszki do powtórki (due today)
@@ -105,7 +105,7 @@ def generate_voice_chat_prompt(user_id: int, db: Session = Depends(get_db)):
                 for e in errs:
                     t = e.get('type', 'unknown')
                     error_categories[t] = error_categories.get(t, 0) + 1
-            except Exception:
+            except (json.JSONDecodeError, TypeError):
                 pass
 
     error_summary = ""

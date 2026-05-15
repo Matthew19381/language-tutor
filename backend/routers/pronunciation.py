@@ -7,7 +7,7 @@ from backend.models.user import User
 try:
     from backend.services.pronunciation_service import transcribe_audio, score_pronunciation
     PRONUNCIATION_AVAILABLE = True
-except Exception:
+except (ImportError, OSError):
     PRONUNCIATION_AVAILABLE = False
     transcribe_audio = None
     score_pronunciation = None
@@ -64,8 +64,8 @@ async def analyze_pronunciation(
             status_code=503,
             detail="Pronunciation service unavailable. Please run: pip install faster-whisper==1.0.3"
         )
-    except Exception:
-        logger.exception("Unexpected error in pronunciation analysis")
+    except (httpx.RequestError, ValueError, OSError) as e:
+        logger.exception("Error in pronunciation analysis: %s", e)
         raise HTTPException(status_code=500, detail="Failed to analyze pronunciation")
 
 
@@ -105,7 +105,7 @@ async def get_practice_phrases(user_id: int, db: Session = Depends(get_db)):
                 text = line.get("text", "")
                 if text:
                     phrases.append({"text": text, "source": f"Dialogue (Speaker {line.get('speaker', '?')})"})
-        except Exception:
+        except (json.JSONDecodeError, TypeError, KeyError):
             pass
 
     if not phrases:
