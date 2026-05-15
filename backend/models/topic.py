@@ -58,8 +58,8 @@ class Topic(Base):
     total_reviews = Column(Integer, default=0)          # total times reviewed
     avg_score = Column(Float, default=0.0)              # average score across reviews
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -172,6 +172,6 @@ class TopicItem(Base):
     title = Column(String, nullable=True)               # snapshot title
     day_number = Column(Integer, nullable=True)         # lesson day if applicable
     score = Column(Float, nullable=True)                # test/exercise score if applicable
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     topic = relationship("Topic", back_populates="items")

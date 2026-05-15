@@ -1,6 +1,6 @@
 """Tests for /api/tests/* endpoints."""
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock, patch, MagicMock
 import backend.services.achievement_service
 
@@ -44,7 +44,7 @@ def _create_test_result(db, user_id, score=80.0, test_type="daily"):
         errors=json.dumps([]),
         cefr_level="A1",
         language="German",
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
     )
     db.add(result)
     db.commit()
@@ -75,10 +75,10 @@ def test_test_history_with_results(client, sample_user, db):
 
     mock_list = [
         {"id": 1, "test_type": "daily", "score": 75.0,
-         "cefr_level": "A1", "created_at": datetime.utcnow().isoformat(),
+         "cefr_level": "A1", "created_at": datetime.now(timezone.utc).isoformat(),
          "errors_count": 0},
         {"id": 2, "test_type": "weekly", "score": 90.0,
-         "cefr_level": "A1", "created_at": datetime.utcnow().isoformat(),
+         "cefr_level": "A1", "created_at": datetime.now(timezone.utc).isoformat(),
          "errors_count": 0},
     ]
     with patch("backend.routers.tests.get_test_history",

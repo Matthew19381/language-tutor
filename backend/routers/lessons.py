@@ -268,10 +268,14 @@ async def get_today_lesson(user_id: int, background_tasks: BackgroundTasks, db: 
 
 
 @router.get("/api/lessons/{lesson_id}")
-async def get_lesson(lesson_id: int, db: Session = Depends(get_db)):
+async def get_lesson(lesson_id: int, user_id: int, db: Session = Depends(get_db)):
     lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
     if not lesson:
         raise HTTPException(status_code=404, detail="Lesson not found")
+
+    # Verify ownership
+    if lesson.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to access this lesson")
 
     content = json.loads(lesson.content)
     return {
@@ -334,10 +338,14 @@ async def complete_lesson(
 
 
 @router.get("/api/lessons/audio/{lesson_id}")
-async def get_lesson_audio(lesson_id: int, db: Session = Depends(get_db)):
+async def get_lesson_audio(lesson_id: int, user_id: int, db: Session = Depends(get_db)):
     lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
     if not lesson:
         raise HTTPException(status_code=404, detail="Lesson not found")
+
+    # Verify ownership
+    if lesson.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to access this lesson")
 
     content = json.loads(lesson.content)
     vocabulary = content.get("vocabulary", [])
@@ -361,10 +369,14 @@ async def get_lesson_audio(lesson_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/api/lessons/{lesson_id}/export-pdf")
-async def export_lesson_pdf(lesson_id: int, db: Session = Depends(get_db)):
+async def export_lesson_pdf(lesson_id: int, user_id: int, db: Session = Depends(get_db)):
     lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
     if not lesson:
         raise HTTPException(status_code=404, detail="Lesson not found")
+
+    # Verify ownership
+    if lesson.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to access this lesson")
 
     content = json.loads(lesson.content)
     lesson_data = {
@@ -392,6 +404,7 @@ async def export_lesson_pdf(lesson_id: int, db: Session = Depends(get_db)):
 @router.get("/api/lessons/{lesson_id}/export-obsidian")
 async def export_lesson_obsidian(
     lesson_id: int,
+    user_id: int,
     day_offset: int = Query(0, description="-1=yesterday, 0=today, 1=tomorrow, 2=day after"),
     upload: bool = Query(False, description="Upload to Google Drive instead of downloading"),
     db: Session = Depends(get_db)
@@ -399,6 +412,10 @@ async def export_lesson_obsidian(
     lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
     if not lesson:
         raise HTTPException(status_code=404, detail="Lesson not found")
+
+    # Verify ownership
+    if lesson.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to access this lesson")
 
     content = json.loads(lesson.content)
     lesson_data = {

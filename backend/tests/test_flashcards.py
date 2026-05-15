@@ -1,5 +1,5 @@
 """Tests for /api/flashcards/* endpoints (no AI calls needed)."""
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 
 # ---------------------------------------------------------------------------
@@ -158,4 +158,6 @@ def test_review_returns_next_review_date(client, sample_user):
     assert "next_review" in data
     # next_review should be in the future
     next_review = datetime.fromisoformat(data["next_review"])
-    assert next_review > datetime.utcnow()
+    # next_review may be naive (SQLite doesn't store tz info); compare accordingly
+    now = datetime.now(timezone.utc if next_review.tzinfo else None)
+    assert next_review > now

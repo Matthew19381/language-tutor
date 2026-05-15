@@ -36,6 +36,7 @@ async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
 
     _sa = __import__('sqlalchemy')
+    from sqlalchemy.exc import OperationalError, ProgrammingError
     # SQLite migrations — add missing columns safely
     _migrations = [
         ("users", "ALTER TABLE users ADD COLUMN language_profiles TEXT DEFAULT '{}'"),
@@ -43,30 +44,30 @@ async def lifespan(app: FastAPI):
         ("flashcards", "ALTER TABLE flashcards ADD COLUMN lesson_day INTEGER"),
         ("flashcards", "ALTER TABLE flashcards ADD COLUMN lesson_topic TEXT"),
     ]
-    # Create conversation_sessions table if it doesn't exist (no ALTER TABLE needed for new tables)
-    try:
-        conn.execute(_sa.text(
-            "CREATE TABLE IF NOT EXISTS conversation_sessions ("
-            "id VARCHAR PRIMARY KEY, "
-            "user_id INTEGER NOT NULL REFERENCES users(id), "
-            "language VARCHAR NOT NULL, "
-            "native_language VARCHAR NOT NULL, "
-            "cefr_level VARCHAR NOT NULL, "
-            "scenario TEXT NOT NULL, "
-            "system_prompt TEXT NOT NULL, "
-            "history TEXT NOT NULL, "
-            "created_at TIMESTAMP, "
-            "updated_at TIMESTAMP)"
-        ))
-        conn.commit()
-    except Exception:
-        pass
     with engine.connect() as conn:
+        # Create conversation_sessions table if it doesn't exist
+        try:
+            conn.execute(_sa.text(
+                "CREATE TABLE IF NOT EXISTS conversation_sessions ("
+                "id VARCHAR PRIMARY KEY, "
+                "user_id INTEGER NOT NULL REFERENCES users(id), "
+                "language VARCHAR NOT NULL, "
+                "native_language VARCHAR NOT NULL, "
+                "cefr_level VARCHAR NOT NULL, "
+                "scenario TEXT NOT NULL, "
+                "system_prompt TEXT NOT NULL, "
+                "history TEXT NOT NULL, "
+                "created_at TIMESTAMP, "
+                "updated_at TIMESTAMP)"
+            ))
+            conn.commit()
+        except (OperationalError, ProgrammingError) as e:
+            logger.warning(f"Could not create conversation_sessions table: {e}")
         for table, sql in _migrations:
             try:
                 conn.execute(_sa.text(sql))
                 conn.commit()
-            except Exception:
+            except (OperationalError, ProgrammingError):
                 pass  # Column already exists
 
     # Ensure audio and exports directories exist
@@ -89,9 +90,12 @@ app = FastAPI(
 )
 
 # CORS — restrict to trusted origins with explicit methods/headers
+# Configure via ALLOWED_ORIGINS env var (comma-separated); defaults to localhost for development
+_allowed_origins = os.environ.get("ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
+_cors_origins = [o.strip() for o in _allowed_origins.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],  # Development frontend
+    allow_origins=_cors_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization", "X-Admin-Key", "Accept", "Origin"],

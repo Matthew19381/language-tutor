@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Float, DateTime, Text
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 from backend.database import Base
 
 
@@ -14,7 +14,7 @@ class User(Base):
     cefr_level = Column(String, default="A1")
     streak_days = Column(Integer, default=0)
     total_xp = Column(Integer, default=0)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     # JSON: {"German": "B1", "Spanish": "A2", ...} — CEFR per language
     language_profiles = Column(Text, default="{}")
 

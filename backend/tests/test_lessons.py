@@ -75,7 +75,7 @@ def test_list_lessons_with_data(client, sample_user, db):
 # ---------------------------------------------------------------------------
 
 def test_get_lesson_not_found(client):
-    r = client.get("/api/lessons/99999")
+    r = client.get("/api/lessons/99999?user_id=1")
     assert r.status_code == 404
 
 
@@ -83,7 +83,7 @@ def test_get_lesson_found(client, sample_user, db):
     uid = sample_user["user_id"]
     lesson = _create_lesson(db, uid)
 
-    r = client.get(f"/api/lessons/{lesson.id}")
+    r = client.get(f"/api/lessons/{lesson.id}?user_id={uid}")
     assert r.status_code == 200
     data = r.json()
     assert data["lesson_id"] == lesson.id

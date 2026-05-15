@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Float, Text, DateTime, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from backend.database import Base
 
 
@@ -21,8 +21,8 @@ class Flashcard(Base):
     ease_factor = Column(Float, default=2.5)
     interval_days = Column(Integer, default=1)
     repetitions = Column(Integer, default=0)
-    next_review_date = Column(DateTime, default=datetime.utcnow)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    next_review_date = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     is_active = Column(Boolean, default=True)
 
     user = relationship("User", back_populates="flashcards")

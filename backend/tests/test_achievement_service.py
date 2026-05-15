@@ -1,4 +1,5 @@
 """Pure unit tests for achievement_service — no HTTP client needed."""
+from datetime import datetime, timezone
 import pytest
 from backend.services.achievement_service import (
     calculate_level_from_xp,
@@ -86,7 +87,7 @@ class TestCheckAndAwardAchievements:
             cefr_level="A1",
             total_xp=xp,
             streak_days=streak,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
         db.add(user)
         db.commit()
@@ -105,7 +106,7 @@ class TestCheckAndAwardAchievements:
         lesson = Lesson(
             user_id=user.id, day_number=1, title="T", topic="T",
             content="{}", cefr_level="A1", language="German",
-            is_completed=True, completed_at=datetime.utcnow(),
+            is_completed=True, completed_at=datetime.now(timezone.utc),
         )
         db.add(lesson)
         db.commit()
@@ -162,7 +163,7 @@ class TestGetAllAchievements:
         user = User(
             name="T", native_language="Polish", target_language="German",
             cefr_level="A1", total_xp=0, streak_days=0,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
         db.add(user)
         db.commit()
@@ -207,7 +208,7 @@ class TestGetUnnotifiedAchievements:
         user = User(
             name="T", native_language="Polish", target_language="German",
             cefr_level="A1", total_xp=xp, streak_days=0,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
         db.add(user)
         db.commit()
