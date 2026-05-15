@@ -139,7 +139,8 @@ class TestSubmitTest:
         mock_user.total_xp = 0
 
         mock_db = MagicMock()
-        mock_db.query.return_value.filter.return_value.first.return_value = mock_user
+        # First .first() returns user, second (idempotency check) returns None
+        mock_db.query.return_value.filter.return_value.first.side_effect = [mock_user, None]
 
         mock_analysis = {
             "score": 80.0,
@@ -186,7 +187,8 @@ class TestSubmitTest:
         mock_user.total_xp = 100
 
         mock_db = MagicMock()
-        mock_db.query.return_value.filter.return_value.first.return_value = mock_user
+        # First .first() returns user, second (idempotency check) returns None
+        mock_db.query.return_value.filter.return_value.first.side_effect = [mock_user, None]
 
         mock_analysis = {
             "score": 100.0,

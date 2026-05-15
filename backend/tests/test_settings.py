@@ -81,24 +81,22 @@ def test_gdrive_auth_already_authorized(client):
 
 
 def test_gdrive_callback_success(client):
-    """Google Drive callback succeeds with valid code."""
+    """Google Drive callback redirects on success."""
     with patch(
         "backend.services.google_drive_service.save_token_from_code",
         return_value=True,
     ):
-        r = client.get("/api/settings/gdrive/callback?code=test_code")
-        assert r.status_code == 200
-        data = r.json()
-        assert data["success"] is True
+        r = client.get("/api/settings/gdrive/callback?code=test_code", follow_redirects=False)
+        assert r.status_code == 302
+        assert "/?gdrive=success" in r.headers["location"]
 
 
 def test_gdrive_callback_failure(client):
-    """Google Drive callback fails with invalid code."""
+    """Google Drive callback redirects on failure."""
     with patch(
         "backend.services.google_drive_service.save_token_from_code",
         return_value=False,
     ):
-        r = client.get("/api/settings/gdrive/callback?code=invalid_code")
-        assert r.status_code == 200
-        data = r.json()
-        assert data["success"] is False
+        r = client.get("/api/settings/gdrive/callback?code=invalid_code", follow_redirects=False)
+        assert r.status_code == 302
+        assert "/?gdrive=error" in r.headers["location"]
