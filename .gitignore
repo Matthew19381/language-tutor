@@ -69,3 +69,8 @@ backups/
 
 # Docker
 .dockerignore
+
+# Playwright artifacts
+frontend/{,
+frontend/{,-
+frontend/e2e/error-context.md
