@@ -4,7 +4,7 @@ and thematic organization of learning materials.
 """
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -253,7 +253,7 @@ def get_due_topics(db: Session, user_id: int, language: str = None, limit: int =
     query = db.query(Topic).filter(
         Topic.user_id == user_id,
         Topic.total_items > 0,
-        (Topic.next_review_date <= datetime.utcnow()) | (Topic.next_review_date == None),
+        (Topic.next_review_date <= datetime.now(timezone.utc)) | (Topic.next_review_date == None),
     )
     if language:
         query = query.filter(Topic.language == language)

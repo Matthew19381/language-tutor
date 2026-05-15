@@ -7,7 +7,7 @@ TopicItem = a lesson, test, or exercise linked to a topic
 """
 from sqlalchemy import Column, Integer, String, Text, DateTime, Float, ForeignKey, Enum
 from sqlalchemy.orm import relationship
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import enum
 from backend.database import Base
 
@@ -102,7 +102,7 @@ class Topic(Base):
 
         # Decay: reduce strength based on time elapsed since last review
         if self.last_review_date and self.interval > 0:
-            days_since = (datetime.utcnow() - self.last_review_date).days
+            days_since = (datetime.now(timezone.utc) - self.last_review_date).days
             decay = max(0.0, 1.0 - (days_since / max(self.interval * 1.5, 1)))
         else:
             decay = 0.5  # neutral if no review yet
@@ -120,13 +120,13 @@ class Topic(Base):
         """Check if topic is due for review."""
         if self.next_review_date is None:
             return True  # never reviewed = due
-        return datetime.utcnow() >= self.next_review_date
+        return datetime.now(timezone.utc) >= self.next_review_date
 
     def days_until_review(self) -> int:
         """Days until next review (negative = overdue)."""
         if self.next_review_date is None:
             return 0
-        delta = (self.next_review_date - datetime.utcnow()).days
+        delta = (self.next_review_date - datetime.now(timezone.utc)).days
         return delta
 
     def apply_sm2(self, quality: int) -> None:
@@ -161,11 +161,11 @@ class Topic(Base):
             else:
                 self.interval = int(self.interval * self.easiness_factor)
 
-        self.last_review_date = datetime.utcnow()
-        self.next_review_date = datetime.utcnow() + timedelta(days=self.interval)
+        self.last_review_date = datetime.now(timezone.utc)
+        self.next_review_date = datetime.now(timezone.utc) + timedelta(days=self.interval)
         self.memory_strength = self.calculate_memory_strength()
         self.total_reviews += 1
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(timezone.utc)
 
 
 class TopicItem(Base):

@@ -10,7 +10,7 @@ import json
 import logging
 import os
 import sys
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from pathlib import Path
 
 # Ensure LinguaAI/ is in the path so backend.* imports work
@@ -164,7 +164,7 @@ def run():
 
             if is_evening and not user_state.get(evening_key):
                 # Check due flashcards
-                now = datetime.utcnow()
+                now = datetime.now(timezone.utc)
                 due_cards = db.query(Flashcard).filter(
                     Flashcard.user_id == user.id,
                     Flashcard.is_active == True,

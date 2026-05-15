@@ -1,9 +1,12 @@
 import os
 import logging
-from fastapi import FastAPI, HTTPException, Header, Depends
+import time
+from collections import defaultdict
+from threading import Lock
+from fastapi import FastAPI, HTTPException, Header, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from contextlib import asynccontextmanager
 
 from backend.database import engine, Base
@@ -19,6 +22,13 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Startup: validate critical configuration
+    from backend.config import settings
+    if not settings.SECRET_KEY:
+        logger.warning("SECRET_KEY is not set — using insecure default. Set SECRET_KEY in .env for production!")
+    if settings.ADMIN_API_KEY and len(settings.ADMIN_API_KEY) < 16:
+        logger.warning("ADMIN_API_KEY is too short — should be at least 16 characters")
+
     # Startup: create database tables and required directories
     logger.info("Creating database tables...")
     # Import all models so SQLAlchemy registers them before create_all
@@ -60,14 +70,45 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS - restrict to trusted origins
+# CORS — restrict to trusted origins with explicit methods/headers
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],  # Development frontend
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-Admin-Key", "Accept", "Origin"],
 )
+
+# Rate limiting middleware — max 30 requests per 60s per IP for AI endpoints
+_ai_rate_limits: dict[str, list[float]] = defaultdict(list)
+_ai_rate_lock = Lock()
+AI_RATE_LIMIT = 30  # requests
+AI_RATE_WINDOW = 60  # seconds
+AI_ENDPOINT_PREFIXES = ("/api/placement", "/api/lessons", "/api/tests", "/api/conversation",
+                        "/api/quickmode", "/api/news", "/api/pronunciation", "/api/youtube",
+                        "/api/voice-chat", "/api/flashcards", "/api/settings/gdrive/auth")
+
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    # Skip rate limiting during tests
+    if os.environ.get("TESTING") == "1":
+        return await call_next(request)
+    if request.method == "OPTIONS":
+        return await call_next(request)
+    path = request.url.path
+    if any(path.startswith(p) for p in AI_ENDPOINT_PREFIXES):
+        client_ip = request.client.host if request.client else "unknown"
+        now = time.time()
+        with _ai_rate_lock:
+            timestamps = _ai_rate_limits[client_ip]
+            # Remove old entries outside the window
+            cutoff = now - AI_RATE_WINDOW
+            _ai_rate_limits[client_ip] = [t for t in timestamps if t > cutoff]
+            if len(_ai_rate_limits[client_ip]) >= AI_RATE_LIMIT:
+                logger.warning(f"Rate limit exceeded for {client_ip} on {path}")
+                return JSONResponse(status_code=429, content={"detail": "Too many requests. Please slow down."})
+            _ai_rate_limits[client_ip].append(now)
+    return await call_next(request)
 
 # Include all routers (paths are already defined with /api/... prefix)
 app.include_router(placement.router, tags=["Placement"])

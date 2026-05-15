@@ -70,14 +70,14 @@ async def get_practice_phrases(user_id: int, db: Session = Depends(get_db)):
     """Return practice phrases from the user's recent lessons."""
     from backend.models.lesson import Lesson
     import json
-    from datetime import datetime, date, timedelta
+    from datetime import datetime, date, timedelta, timezone
 
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
     # Get phrases from last 7 days of lessons
-    week_ago = datetime.utcnow() - timedelta(days=7)
+    week_ago = datetime.now(timezone.utc) - timedelta(days=7)
     recent_lessons = db.query(Lesson).filter(
         Lesson.user_id == user_id,
         Lesson.created_at >= week_ago

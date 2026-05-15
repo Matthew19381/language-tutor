@@ -1,7 +1,7 @@
 import logging
 import os
 import httpx
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
 from typing import Optional
@@ -71,7 +71,7 @@ async def get_due_flashcards(user_id: int, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     due_cards = db.query(Flashcard).filter(
         Flashcard.user_id == user_id,
         Flashcard.is_active == True,
@@ -136,7 +136,7 @@ async def review_flashcard(
     flashcard.ease_factor = round(ef, 2)
     flashcard.interval_days = interval
     flashcard.next_review_date = datetime.fromtimestamp(
-        datetime.utcnow().timestamp() + (interval * 86400)
+        datetime.now(timezone.utc).timestamp() + (interval * 86400)
     )
 
     db.commit()

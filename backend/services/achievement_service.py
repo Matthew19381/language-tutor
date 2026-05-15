@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from backend.models.achievement import Achievement
 
@@ -149,7 +149,7 @@ def check_and_award_achievements(user, db: Session) -> list:
         ach = Achievement(
             user_id=user.id,
             achievement_type=ach_type,
-            unlocked_at=datetime.utcnow(),
+            unlocked_at=datetime.now(timezone.utc),
             notified=False
         )
         db.add(ach)

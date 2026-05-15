@@ -15,7 +15,7 @@ from backend.models.test_result import TestResult
 from backend.schemas.voice_chat import VoiceChatMessageRequest
 from backend.services.gemini_service import generate_text
 from backend.services import audio_service
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 import json
 
 logger = logging.getLogger(__name__)
@@ -82,7 +82,7 @@ def generate_voice_chat_prompt(user_id: int, db: Session = Depends(get_db)):
         Flashcard.user_id == user_id,
         Flashcard.is_active == True,
         Flashcard.next_review_date != None,
-        Flashcard.next_review_date <= datetime.utcnow()
+        Flashcard.next_review_date <= datetime.now(timezone.utc)
     ).limit(10).all()
 
     flashcard_info = ""

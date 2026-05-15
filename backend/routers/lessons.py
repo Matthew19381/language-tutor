@@ -2,7 +2,7 @@ import json
 import logging
 import os
 import httpx
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from fastapi.responses import FileResponse
 from typing import Optional
@@ -276,7 +276,7 @@ async def complete_lesson(
     newly_awarded = []
     if not lesson.is_completed:
         lesson.is_completed = True
-        lesson.completed_at = datetime.utcnow()
+        lesson.completed_at = datetime.now(timezone.utc)
 
         # Award XP for completing lesson
         if request.user_id:

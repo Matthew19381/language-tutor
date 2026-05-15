@@ -11,6 +11,7 @@ import os
 os.environ.setdefault("OPENROUTER_API_KEY", "test-dummy-key")
 os.environ.setdefault("GEMINI_API_KEY", "test-dummy-key")
 os.environ.setdefault("ADMIN_API_KEY", "test-key")
+os.environ["TESTING"] = "1"
 
 import pytest
 

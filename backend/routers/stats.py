@@ -3,7 +3,7 @@ import io
 import json
 import logging
 import httpx
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -50,7 +50,7 @@ async def get_stats(user_id: int, db: Session = Depends(get_db)):
         Flashcard.is_active == True
     ).all()
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     due_flashcards = [f for f in flashcards if f.next_review_date and f.next_review_date <= now]
 
     # Calculate streaks
