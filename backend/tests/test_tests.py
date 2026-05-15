@@ -97,7 +97,7 @@ def test_get_test_result_found(client, sample_user, db):
     uid = sample_user["user_id"]
     result = _create_test_result(db, uid, score=85.0)
 
-    r = client.get(f"/api/tests/result/{result.id}")
+    r = client.get(f"/api/tests/result/{result.id}?user_id={uid}")
     assert r.status_code == 200
     data = r.json()
     assert data["score"] == 85.0
@@ -106,8 +106,18 @@ def test_get_test_result_found(client, sample_user, db):
 
 
 def test_get_test_result_not_found(client):
-    r = client.get("/api/tests/result/99999")
+    r = client.get("/api/tests/result/99999?user_id=1")
     assert r.status_code == 404
+
+
+def test_get_test_result_wrong_user(client, sample_user, db):
+    """Accessing another user's test result must return 403."""
+    uid = sample_user["user_id"]
+    result = _create_test_result(db, uid, score=85.0)
+
+    # Try to access with a different user_id
+    r = client.get(f"/api/tests/result/{result.id}?user_id={uid + 1}")
+    assert r.status_code == 403
 
 
 # ---------------------------------------------------------------------------

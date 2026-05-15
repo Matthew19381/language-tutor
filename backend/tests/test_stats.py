@@ -50,42 +50,24 @@ def test_get_stats_achievements_shape(client, sample_user):
 
 
 # ---------------------------------------------------------------------------
-# POST /api/stats/{user_id}/xp
+# POST /api/stats/{user_id}/xp  — REMOVED (XP injection vulnerability)
+# XP is now only awarded through legitimate actions:
+#   - Lesson completion (+25 XP)  → POST /api/lessons/{id}/complete
+#   - Test submission (score × 0.5, max 50) → POST /api/tests/submit
 # ---------------------------------------------------------------------------
 
-def test_add_xp_success(client, sample_user):
+def test_add_xp_endpoint_removed(client, sample_user):
+    """The add_xp endpoint must not exist — it was an XP injection backdoor."""
     uid = sample_user["user_id"]
     r = client.post(f"/api/stats/{uid}/xp", json={"amount": 50, "reason": "test"})
-    assert r.status_code == 200
-    data = r.json()
-    assert data["success"] is True
-    assert data["xp_added"] == 50
-    assert data["total_xp"] == 50
-    assert data["reason"] == "test"
-    assert data["level_info"]["xp"] == 50
+    assert r.status_code in (404, 405)
 
 
-def test_add_xp_level_up(client, sample_user):
+def test_xp_only_via_legitimate_paths(client, sample_user):
+    """Verify XP is 0 without completing lessons or tests."""
     uid = sample_user["user_id"]
-    # Level 2 requires 20 XP
-    client.post(f"/api/stats/{uid}/xp", json={"amount": 20})
-    r = client.post(f"/api/stats/{uid}/xp", json={"amount": 0})
-    # Verify via stats
     stats = client.get(f"/api/stats/{uid}").json()
-    assert stats["level_info"]["level"] >= 2
-
-
-def test_add_xp_user_not_found(client):
-    r = client.post("/api/stats/99999/xp", json={"amount": 10})
-    assert r.status_code == 404
-
-
-def test_add_xp_accumulates(client, sample_user):
-    uid = sample_user["user_id"]
-    client.post(f"/api/stats/{uid}/xp", json={"amount": 25})
-    client.post(f"/api/stats/{uid}/xp", json={"amount": 25})
-    r = client.post(f"/api/stats/{uid}/xp", json={"amount": 25})
-    assert r.json()["total_xp"] == 75
+    assert stats["user"]["total_xp"] == 0
 
 
 # ---------------------------------------------------------------------------
@@ -103,17 +85,20 @@ def test_leaderboard_single_user(client, sample_user):
     assert len(data["top_users"]) == 1
 
 
-def test_leaderboard_ranking(client):
+def test_leaderboard_ranking(client, db):
     """User with more XP should rank higher."""
-    u1 = client.post("/api/placement/create-user", json={"name": "Alice"}).json()
-    u2 = client.post("/api/placement/create-user", json={"name": "Bob"}).json()
+    from backend.models.user import User
 
-    # Give Alice more XP
-    client.post(f"/api/stats/{u1['user_id']}/xp", json={"amount": 100})
-    client.post(f"/api/stats/{u2['user_id']}/xp", json={"amount": 10})
+    # Create users directly with different XP
+    u1 = User(name="Alice", target_language="German", native_language="Polish",
+              cefr_level="A1", total_xp=100)
+    u2 = User(name="Bob", target_language="German", native_language="Polish",
+              cefr_level="A1", total_xp=10)
+    db.add_all([u1, u2])
+    db.commit()
 
-    r1 = client.get(f"/api/stats/{u1['user_id']}/leaderboard").json()
-    r2 = client.get(f"/api/stats/{u2['user_id']}/leaderboard").json()
+    r1 = client.get(f"/api/stats/{u1.id}/leaderboard").json()
+    r2 = client.get(f"/api/stats/{u2.id}/leaderboard").json()
 
     assert r1["position"] < r2["position"]  # Alice ranks higher
 
