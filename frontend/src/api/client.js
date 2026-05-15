@@ -48,8 +48,8 @@ export const getLanguageProfiles = (userId) =>
 export const getTodayLesson = (userId) =>
   api.get(`/lessons/today/${userId}`)
 
-export const getLesson = (lessonId) =>
-  api.get(`/lessons/${lessonId}`)
+export const getLesson = (lessonId, userId) =>
+  api.get(`/lessons/${lessonId}`, { params: { user_id: userId } })
 
 export const completeLesson = (lessonId, userId) =>
   api.post(`/lessons/${lessonId}/complete`, { user_id: userId })
@@ -60,8 +60,8 @@ export const evaluateProduction = (lessonId, data) =>
 export const generateTTS = (text, language) =>
   api.post(`/audio/tts`, { text, language })
 
-export const getLessonAudio = (lessonId) =>
-  api.get(`/lessons/audio/${lessonId}`)
+export const getLessonAudio = (lessonId, userId) =>
+  api.get(`/lessons/audio/${lessonId}`, { params: { user_id: userId } })
 
 export const listLessons = (userId) =>
   api.get(`/lessons/list/${userId}`)
@@ -166,8 +166,8 @@ export const getAllErrors = (userId) =>
 
 // ===== PDF Export =====
 
-export const exportLessonPDF = (lessonId) =>
-  axios.get(`/api/lessons/${lessonId}/export-pdf`, { responseType: 'blob' })
+export const exportLessonPDF = (lessonId, userId) =>
+  axios.get(`/api/lessons/${lessonId}/export-pdf`, { params: { user_id: userId }, responseType: 'blob' })
 
 // ===== Quick Mode =====
 
@@ -226,9 +226,9 @@ export const exportProgressCSV = (userId) =>
 
 // ===== Obsidian Export =====
 
-export const exportObsidian = (lessonId, dayOffset = 0, upload = false) =>
+export const exportObsidian = (lessonId, userId, dayOffset = 0, upload = false) =>
   axios.get(`/api/lessons/${lessonId}/export-obsidian`, {
-    params: { day_offset: dayOffset, upload },
+    params: { user_id: userId, day_offset: dayOffset, upload },
     responseType: upload ? 'json' : 'blob',
   })
 

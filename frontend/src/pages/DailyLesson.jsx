@@ -136,7 +136,7 @@ export default function DailyLesson() {
 
     setLoading(true)
     const fetch = lessonId
-      ? getLesson(parseInt(lessonId))
+      ? getLesson(parseInt(lessonId), userId)
       : getTodayLesson(userId)
     fetch
       .then(data => {
