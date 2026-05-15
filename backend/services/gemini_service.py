@@ -101,7 +101,7 @@ def _get_openrouter_headers() -> dict:
     return {
         "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
         "Content-Type": "application/json",
-        "HTTP-Referer": "http://localhost:5173",
+        "HTTP-Referer": settings.FRONTEND_URL,
         "X-Title": "LinguaAI",
     }
 

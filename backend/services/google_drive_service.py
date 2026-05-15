@@ -1,6 +1,8 @@
 import logging
 import os
 
+from backend.config import settings
+
 logger = logging.getLogger(__name__)
 
 TOKEN_FILE = os.path.join(os.path.dirname(__file__), "..", "gdrive_token.json")
@@ -18,7 +20,7 @@ def get_auth_url() -> str:
         flow = Flow.from_client_secrets_file(
             CREDENTIALS_FILE,
             scopes=SCOPES,
-            redirect_uri="http://localhost:8000/api/settings/gdrive/callback"
+            redirect_uri=f"{settings.BACKEND_URL}/api/settings/gdrive/callback"
         )
         auth_url, _ = flow.authorization_url(prompt="consent", access_type="offline")
         return auth_url
@@ -34,7 +36,7 @@ def save_token_from_code(code: str) -> bool:
         flow = Flow.from_client_secrets_file(
             CREDENTIALS_FILE,
             scopes=SCOPES,
-            redirect_uri="http://localhost:8000/api/settings/gdrive/callback"
+            redirect_uri=f"{settings.BACKEND_URL}/api/settings/gdrive/callback"
         )
         flow.fetch_token(code=code)
         creds = flow.credentials

@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     GDRIVE_FOLDER_ID: str = ""
     GDRIVE_CLIENT_SECRETS_FILE: str = "backend/gdrive_credentials.json"
     YOUTUBE_API_KEY: str = ""
+    FRONTEND_URL: str = "http://localhost:5173"
+    BACKEND_URL: str = "http://localhost:8001"
 
     class Config:
         env_file = ".env"

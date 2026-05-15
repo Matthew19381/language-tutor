@@ -154,7 +154,7 @@ async def voice_chat_voice_conversation(request: VoiceChatMessageRequest):
     language = request.language
 
     if not user_id or not message:
-        return {"success": False, "error": "Missing user_id or message"}
+        raise HTTPException(status_code=400, detail="Missing user_id or message")
 
     try:
         # Generuj odpowiedź przez OpenRouter
@@ -177,9 +177,11 @@ async def voice_chat_voice_conversation(request: VoiceChatMessageRequest):
             "message": "OpenRouter voice response generated"
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"OpenRouter voice conversation error: {e}")
-        return {"success": False, "error": str(e)}
+        raise HTTPException(status_code=500, detail="Voice conversation failed")
 
 
 @router.post("/api/v1/voice-chat/conversation/text")
@@ -192,7 +194,7 @@ async def voice_chat_text_conversation(request: VoiceChatMessageRequest):
     language = request.language
 
     if not user_id or not message:
-        return {"success": False, "error": "Missing user_id or message"}
+        raise HTTPException(status_code=400, detail="Missing user_id or message")
 
     try:
         prompt = f"Odpowiedz w języku {language}. {message}"
@@ -201,6 +203,8 @@ async def voice_chat_text_conversation(request: VoiceChatMessageRequest):
             "success": True,
             "text": ai_text,
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"OpenRouter text conversation error: {e}")
-        return {"success": False, "error": str(e)}
+        raise HTTPException(status_code=500, detail="Text conversation failed")

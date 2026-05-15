@@ -91,9 +91,6 @@ def test_voice_chat_text_conversation(client):
 
 
 def test_voice_chat_missing_fields(client):
-    """Voice chat returns error for missing fields."""
+    """Voice chat returns 400 for missing fields."""
     r = client.post("/api/v1/voice-chat/conversation/voice", json={})
-    assert r.status_code == 200  # Returns success=False, not HTTP error
-    data = r.json()
-    assert data["success"] is False
-    assert "error" in data
+    assert r.status_code == 400
