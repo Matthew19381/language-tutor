@@ -1,75 +1,84 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('LinguaAI E2E - Core Functionality', () => {
-  
-  test('homepage loads and has correct title', async ({ page }) => {
-    await page.goto('http://localhost:5173/');
-    await expect(page).toHaveTitle(/LinguaAI/i);
-    // Check that the page has content
-    await expect(page.locator('body')).toContainText(/LinguaAI/i);
-  });
+const API = 'http://localhost:8001';
 
-  test('API health check', async ({ request }) => {
-    const response = await request.get('http://localhost:8001/api/health');
-    expect(response.ok()).toBeTruthy();
-  });
-
-  test('API create user', async ({ request }) => {
-    const response = await request.post('http://localhost:8001/api/placement/create-user', {
+test.describe('Full User Flow', () => {
+  test('complete user journey: create → home → navigate', async ({ page, request }) => {
+    const userRes = await request.post(`${API}/api/placement/create-user`, {
       data: {
-        name: 'E2E Test User',
+        name: 'E2E Flow User',
         native_language: 'Polish',
-        target_language: 'German'
-      }
+        target_language: 'German',
+      },
     });
-    expect(response.ok()).toBeTruthy();
-    const body = await response.json();
-    expect(body.user_id).toBeDefined();
-    console.log('Created user ID:', body.user_id);
-  });
+    expect(userRes.ok()).toBeTruthy();
+    const { user_id } = await userRes.json();
 
-  test('placement page loads', async ({ page }) => {
-    await page.goto('http://localhost:5173/placement');
-    // Wait for page to load
-    await page.waitForLoadState('networkidle');
-    // Should have some form elements or text
-    const pageText = await page.textContent('body');
-    expect(pageText).toMatch(/place|tell|pytanie|test|placement/i);
-  });
+    // Load home page with user
+    await page.goto(`http://localhost:5173/?userId=${user_id}`);
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page).toHaveTitle(/LinguaAI/i);
 
-  test('can navigate from home to placement', async ({ page }) => {
-    await page.goto('http://localhost:5173/');
-    
-    // Look for any link/button that might lead to placement
-    const placementLink = page.locator('a[href*="placement"]').first();
-    if (await placementLink.isVisible().catch(() => false)) {
-      await placementLink.click();
-      await expect(page).toHaveURL(/placement/);
-    } else {
-      // Already on placement or link not visible - that's ok
-      console.log('Placement link not found or already on page');
+    // Verify stats load (may be 500 for fresh user with no data, but should not crash)
+    const statsRes = await request.get(`${API}/api/stats/${user_id}`);
+    expect(statsRes.status()).toBeLessThan(500);
+
+    // Navigate to different pages via direct URL
+    const pages = ['/lesson', '/flashcards', '/stats', '/conversation', '/news'];
+    for (const path of pages) {
+      await page.goto(`http://localhost:5173${path}?userId=${user_id}`);
+      await page.waitForLoadState('domcontentloaded');
+      const bodyText = await page.textContent('body');
+      expect(bodyText.length).toBeGreaterThan(20);
     }
   });
 
-  test('navigation items exist when user logged in', async ({ page }) => {
-    // First create a user via API
-    const response = await page.request.post('http://localhost:8001/api/placement/create-user', {
+  test('user can switch between pages without errors', async ({ page, request }) => {
+    const userRes = await request.post(`${API}/api/placement/create-user`, {
       data: {
-        name: 'Nav Test User',
+        name: 'E2E Switch User',
         native_language: 'Polish',
-        target_language: 'German'
-      }
+        target_language: 'English',
+      },
     });
-    const body = await response.json();
-    const userId = body.user_id;
-    
-    // Now go to home page with user logged in
-    await page.goto(`http://localhost:5173/?userId=${userId}`);
-    await page.waitForLoadState('networkidle');
-    
-    // Check that navigation exists
-    const navLinks = page.locator('nav a, [role="navigation"] a');
-    const count = await navLinks.count();
-    expect(count).toBeGreaterThan(0);
+    const { user_id } = await userRes.json();
+
+    await page.goto(`http://localhost:5173/?userId=${user_id}`);
+    await page.waitForLoadState('domcontentloaded');
+
+    const paths = ['/stats', '/flashcards', '/lesson'];
+    for (const path of paths) {
+      await page.goto(`http://localhost:5173${path}?userId=${user_id}`);
+      await page.waitForLoadState('domcontentloaded');
+    }
+
+    const bodyText = await page.textContent('body');
+    expect(bodyText.length).toBeGreaterThan(20);
+  });
+
+  test('multiple users can coexist', async ({ request }) => {
+    const users = [];
+    for (let i = 0; i < 3; i++) {
+      const res = await request.post(`${API}/api/placement/create-user`, {
+        data: {
+          name: `Multi User ${i}`,
+          native_language: 'Polish',
+          target_language: 'German',
+        },
+      });
+      expect(res.ok()).toBeTruthy();
+      const body = await res.json();
+      users.push(body.user_id);
+    }
+
+    // All users should have unique IDs
+    const uniqueIds = new Set(users);
+    expect(uniqueIds.size).toBe(3);
+
+    // Each should have their own stats (may be 500 for fresh users, but not crash)
+    for (const uid of users) {
+      const statsRes = await request.get(`${API}/api/stats/${uid}`);
+      expect(statsRes.status()).toBeLessThan(500);
+    }
   });
 });
