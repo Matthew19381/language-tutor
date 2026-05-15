@@ -32,7 +32,7 @@ async def lifespan(app: FastAPI):
     # Startup: create database tables and required directories
     logger.info("Creating database tables...")
     # Import all models so SQLAlchemy registers them before create_all
-    from backend.models import achievement, user, lesson, test_result, study_plan, flashcard, topic  # noqa
+    from backend.models import achievement, user, lesson, test_result, study_plan, flashcard, topic, conversation_session  # noqa
     Base.metadata.create_all(bind=engine)
 
     _sa = __import__('sqlalchemy')
@@ -43,6 +43,24 @@ async def lifespan(app: FastAPI):
         ("flashcards", "ALTER TABLE flashcards ADD COLUMN lesson_day INTEGER"),
         ("flashcards", "ALTER TABLE flashcards ADD COLUMN lesson_topic TEXT"),
     ]
+    # Create conversation_sessions table if it doesn't exist (no ALTER TABLE needed for new tables)
+    try:
+        conn.execute(_sa.text(
+            "CREATE TABLE IF NOT EXISTS conversation_sessions ("
+            "id VARCHAR PRIMARY KEY, "
+            "user_id INTEGER NOT NULL REFERENCES users(id), "
+            "language VARCHAR NOT NULL, "
+            "native_language VARCHAR NOT NULL, "
+            "cefr_level VARCHAR NOT NULL, "
+            "scenario TEXT NOT NULL, "
+            "system_prompt TEXT NOT NULL, "
+            "history TEXT NOT NULL, "
+            "created_at TIMESTAMP, "
+            "updated_at TIMESTAMP)"
+        ))
+        conn.commit()
+    except Exception:
+        pass
     with engine.connect() as conn:
         for table, sql in _migrations:
             try:

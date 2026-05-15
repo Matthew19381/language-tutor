@@ -105,47 +105,29 @@ async def review_flashcard(
     if not flashcard:
         raise HTTPException(status_code=404, detail="Flashcard not found")
 
-    # SM-2 algorithm implementation
-    rating = request.rating  # 1-4 scale
-    ef = flashcard.ease_factor
-    interval = flashcard.interval_days
+    # SM-2 algorithm (unified service, 1-4 rating scale)
+    from backend.services.sm2_service import apply_sm2
 
-    if rating == 1:  # Again
-        interval = 1
-        ef = max(1.3, ef - 0.2)
-    elif rating == 2:  # Hard
-        interval = max(1, int(interval * 1.2))
-        ef = max(1.3, ef - 0.15)
-    elif rating == 3:  # Good
-        if interval == 1:
-            interval = 3
-        elif interval <= 3:
-            interval = 7
-        else:
-            interval = int(interval * ef)
-    elif rating == 4:  # Easy
-        if interval == 1:
-            interval = 4
-        elif interval <= 4:
-            interval = 10
-        else:
-            interval = int(interval * ef * 1.3)
-        ef = min(2.5, ef + 0.15)
-
-    # Update flashcard
-    flashcard.ease_factor = round(ef, 2)
-    flashcard.interval_days = interval
-    flashcard.next_review_date = datetime.fromtimestamp(
-        datetime.now(timezone.utc).timestamp() + (interval * 86400)
+    result = apply_sm2(
+        quality=request.rating,
+        scale=4,
+        current_ef=flashcard.ease_factor,
+        current_interval=flashcard.interval_days,
+        current_repetitions=flashcard.repetitions,
     )
+
+    flashcard.ease_factor = result.easiness_factor
+    flashcard.interval_days = result.interval
+    flashcard.repetitions = result.repetitions
+    flashcard.next_review_date = result.next_review_date
 
     db.commit()
 
     return {
         "success": True,
         "flashcard_id": flashcard_id,
-        "new_interval": interval,
-        "new_ease_factor": round(ef, 2),
+        "new_interval": result.interval,
+        "new_ease_factor": result.easiness_factor,
         "next_review": flashcard.next_review_date.isoformat()
     }
 

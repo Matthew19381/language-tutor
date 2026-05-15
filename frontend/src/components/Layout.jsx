@@ -70,7 +70,7 @@ export default function Layout() {
     }
   }, [])
 
-  // Poll for new achievements every time the layout mounts (route changes)
+  // Poll for new achievements — on route change AND on a retry interval
   const checkNewAchievements = useCallback(async () => {
     if (!userId) return
     try {
@@ -85,9 +85,17 @@ export default function Layout() {
     } catch (_) {}
   }, [userId])
 
+  // Check on route change
   useEffect(() => {
     checkNewAchievements()
   }, [checkNewAchievements, location.pathname])
+
+  // Retry polling every 30 seconds to catch achievements missed by route changes
+  useEffect(() => {
+    if (!userId) return
+    const interval = setInterval(checkNewAchievements, 30000)
+    return () => clearInterval(interval)
+  }, [checkNewAchievements, userId])
 
   // Track daily tab visits
   useEffect(() => {

@@ -142,27 +142,21 @@ class Topic(Base):
               4 = correct with some hesitation
               5 = perfect response
         """
-        quality = max(0, min(5, quality))
+        from backend.services.sm2_service import apply_sm2
 
-        old_ef = self.easiness_factor
-        new_ef = old_ef + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02))
-        self.easiness_factor = max(1.3, new_ef)
+        result = apply_sm2(
+            quality=quality,
+            scale=5,
+            current_ef=self.easiness_factor,
+            current_interval=self.interval,
+            current_repetitions=self.repetitions,
+        )
 
-        if quality < 3:
-            # Failed review — reset repetitions but keep interval at minimum
-            self.repetitions = 0
-            self.interval = 1
-        else:
-            self.repetitions += 1
-            if self.repetitions == 1:
-                self.interval = 1
-            elif self.repetitions == 2:
-                self.interval = 6
-            else:
-                self.interval = int(self.interval * self.easiness_factor)
-
+        self.easiness_factor = result.easiness_factor
+        self.interval = result.interval
+        self.repetitions = result.repetitions
+        self.next_review_date = result.next_review_date
         self.last_review_date = datetime.now(timezone.utc)
-        self.next_review_date = datetime.now(timezone.utc) + timedelta(days=self.interval)
         self.memory_strength = self.calculate_memory_strength()
         self.total_reviews += 1
         self.updated_at = datetime.now(timezone.utc)

@@ -122,10 +122,17 @@ def test_review_rating_good(client, sample_user):
     add_r = add_card(client, uid, "Stuhl", "chair")
     card_id = add_r.json()["id"]
 
+    # First review (standard SM-2): Good → interval=1, repetitions=1
     r = client.post(f"/api/flashcards/{card_id}/review", json={"rating": 3})
     assert r.status_code == 200
     data = r.json()
-    assert data["new_interval"] >= 3          # Good from interval=1 → 3
+    assert data["new_interval"] == 1           # First successful review → interval=1
+
+    # Second review: Good → interval=6, repetitions=2
+    r2 = client.post(f"/api/flashcards/{card_id}/review", json={"rating": 3})
+    assert r2.status_code == 200
+    data2 = r2.json()
+    assert data2["new_interval"] == 6          # Second successful review → interval=6
 
 
 def test_review_rating_easy_increases_ease_factor(client, sample_user):
@@ -133,11 +140,12 @@ def test_review_rating_easy_increases_ease_factor(client, sample_user):
     add_r = add_card(client, uid, "Fenster", "window")
     card_id = add_r.json()["id"]
 
+    # First review: Easy → interval=1, EF increases
     r = client.post(f"/api/flashcards/{card_id}/review", json={"rating": 4})
     assert r.status_code == 200
     data = r.json()
-    assert data["new_interval"] >= 4
-    assert data["new_ease_factor"] >= 2.5     # Easy raises ease factor
+    assert data["new_interval"] == 1           # First successful review → interval=1
+    assert data["new_ease_factor"] > 2.5       # Easy raises ease factor above default
 
 
 def test_review_returns_next_review_date(client, sample_user):

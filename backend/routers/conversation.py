@@ -1,13 +1,16 @@
-﻿import json
+import json
 import logging
+import uuid
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from typing import Optional, List
 from sqlalchemy.orm import Session
+from datetime import datetime, timezone
 from backend.database import get_db
 from backend.models.user import User
 from backend.models.test_result import TestResult
 from backend.models.lesson import Lesson
+from backend.models.conversation_session import ConversationSession
 from backend.schemas.conversation import (
     StartConversationRequest,
     MessageRequest,
@@ -28,9 +31,16 @@ from backend.config import settings
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# In-memory conversation sessions (for simplicity)
-# In production, use Redis or DB
-conversation_sessions = {}
+
+def _get_session(db: Session, session_id: str) -> Optional[ConversationSession]:
+    """Retrieve a conversation session from the database."""
+    return db.query(ConversationSession).filter(ConversationSession.id == session_id).first()
+
+
+def _save_session(db: Session, session: ConversationSession) -> None:
+    """Persist conversation session changes."""
+    session.updated_at = datetime.now(timezone.utc)
+    db.commit()
 
 
 @router.post("/api/conversation/start/{user_id}")
@@ -68,25 +78,25 @@ async def start_conversation(
             native_language=user.native_language
         )
 
-        # Create session
-        import uuid
+        # Create persistent session
         session_id = str(uuid.uuid4())
-        conversation_sessions[session_id] = {
-            "user_id": user_id,
-            "scenario": scenario,
-            "history": [],
-            "language": user.target_language,
-            "native_language": user.native_language,
-            "cefr_level": user.cefr_level,
-            "system_prompt": scenario.get("system_prompt", "")
-        }
-
-        # Add opening line to history
         opening_line = scenario.get("opening_line", "Hello! Let's start our conversation.")
-        conversation_sessions[session_id]["history"].append({
-            "role": "assistant",
-            "content": opening_line
-        })
+
+        conv_session = ConversationSession(
+            id=session_id,
+            user_id=user_id,
+            language=user.target_language,
+            native_language=user.native_language,
+            cefr_level=user.cefr_level,
+            scenario=json.dumps(scenario),
+            system_prompt=scenario.get("system_prompt", ""),
+            history=json.dumps([{
+                "role": "assistant",
+                "content": opening_line
+            }]),
+        )
+        db.add(conv_session)
+        db.commit()
 
         return {
             "success": True,
@@ -106,24 +116,24 @@ async def start_conversation(
 
 
 @router.post("/api/conversation/message")
-async def send_message(request: MessageRequest):
-    session_id = request.session_id
-
-    if session_id not in conversation_sessions:
+async def send_message(request: MessageRequest, db: Session = Depends(get_db)):
+    conv_session = _get_session(db, request.session_id)
+    if not conv_session:
         raise HTTPException(status_code=404, detail="Conversation session not found")
 
-    session = conversation_sessions[session_id]
-
     # Validate session ownership
-    if session.get("user_id") != request.user_id:
+    if conv_session.user_id != request.user_id:
         raise HTTPException(status_code=403, detail="Not authorized to access this session")
-    language = session["language"]
-    native_language = session["native_language"]
-    cefr_level = session["cefr_level"]
-    system_prompt = session["system_prompt"]
 
-    # Add user message to history
-    session["history"].append({
+    language = conv_session.language
+    native_language = conv_session.native_language
+    cefr_level = conv_session.cefr_level
+    system_prompt = conv_session.system_prompt
+    scenario = json.loads(conv_session.scenario)
+
+    # Load history, append user message
+    history = json.loads(conv_session.history)
+    history.append({
         "role": "user",
         "content": request.user_message
     })
@@ -131,7 +141,7 @@ async def send_message(request: MessageRequest):
     # Build prompt with history
     history_text = "\n".join([
         f"{'You' if msg['role'] == 'assistant' else 'Student'}: {msg['content']}"
-        for msg in session["history"][-10:]  # Last 10 messages for context
+        for msg in history[-10:]  # Last 10 messages for context
     ])
 
     prompt = f"""{system_prompt}
@@ -139,7 +149,7 @@ async def send_message(request: MessageRequest):
 Conversation so far:
 {history_text}
 
-Continue the conversation. Respond as the {session['scenario'].get('ai_role', 'conversation partner')}.
+Continue the conversation. Respond as the {scenario.get('ai_role', 'conversation partner')}.
 Keep the response appropriate for CEFR {cefr_level} level.
 If the student makes a grammatical error, naturally incorporate the correct form in your response without explicitly correcting them harshly.
 Response should be 1-3 sentences in {language}."""
@@ -149,15 +159,19 @@ Response should be 1-3 sentences in {language}."""
         ai_response = ai_response.strip()
 
         # Add AI response to history
-        session["history"].append({
+        history.append({
             "role": "assistant",
             "content": ai_response
         })
 
+        # Persist updated history
+        conv_session.history = json.dumps(history)
+        _save_session(db, conv_session)
+
         return {
             "success": True,
             "response": ai_response,
-            "message_count": len(session["history"])
+            "message_count": len(history)
         }
     except httpx.RequestError as e:
         logger.error(f"AI service error in conversation: {e}")
@@ -172,19 +186,15 @@ async def analyze_session(
     request: AnalyzeRequest,
     db: Session = Depends(get_db)
 ):
-    session_id = request.session_id
-
-    if session_id not in conversation_sessions:
+    conv_session = _get_session(db, request.session_id)
+    if not conv_session:
         raise HTTPException(status_code=404, detail="Conversation session not found")
 
-    session = conversation_sessions[session_id]
-
     try:
+        history = json.loads(conv_session.history)
+
         # Filter to only user messages for analysis
-        user_messages = [
-            msg for msg in session["history"]
-            if msg["role"] == "user"
-        ]
+        user_messages = [msg for msg in history if msg["role"] == "user"]
 
         if not user_messages:
             return {
@@ -197,10 +207,10 @@ async def analyze_session(
             }
 
         analysis = await analyze_conversation(
-            conversation_history=session["history"],
-            cefr_level=session["cefr_level"],
-            language=session["language"],
-            native_language=session["native_language"]
+            conversation_history=history,
+            cefr_level=conv_session.cefr_level,
+            language=conv_session.language,
+            native_language=conv_session.native_language
         )
 
         # Save errors to DB if user_id provided
@@ -214,8 +224,8 @@ async def analyze_session(
                     score=analysis.get("score", 0),
                     answers=json.dumps({"messages": len(user_messages)}),
                     errors=json.dumps(errors),
-                    cefr_level=session["cefr_level"],
-                    language=session["language"]
+                    cefr_level=conv_session.cefr_level,
+                    language=conv_session.language
                 )
                 db.add(test_result)
 
@@ -225,8 +235,9 @@ async def analyze_session(
                 db.commit()
                 analysis["xp_earned"] = xp
 
-        # Clear session only after all DB operations succeeded
-        conversation_sessions.pop(session_id, None)
+        # Delete session after all DB operations succeeded
+        db.delete(conv_session)
+        db.commit()
 
         return {
             "success": True,
@@ -339,4 +350,3 @@ async def analyze_pasted_text(
     except Exception as e:
         logger.error(f"Error analyzing pasted text: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-

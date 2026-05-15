@@ -20,6 +20,7 @@ class Flashcard(Base):
     lesson_topic = Column(String, nullable=True)
     ease_factor = Column(Float, default=2.5)
     interval_days = Column(Integer, default=1)
+    repetitions = Column(Integer, default=0)
     next_review_date = Column(DateTime, default=datetime.utcnow)
     created_at = Column(DateTime, default=datetime.utcnow)
     is_active = Column(Boolean, default=True)
