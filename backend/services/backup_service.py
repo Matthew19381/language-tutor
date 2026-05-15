@@ -46,7 +46,6 @@ def create_backup(db_path: Path = None, backup_dir: Path = None) -> Path:
 
     shutil.copy2(db_path, backup_path)
     logger.info(f"Backup created: {backup_path}")
-    print(f"[OK] Backup created: {backup_path}")
 
     # Clean up old backups
     cleanup_old_backups(backup_dir)
@@ -75,14 +74,14 @@ def cleanup_old_backups(backup_dir: Path = None, retention_days: int = RETENTION
             continue
 
     if removed:
-        print(f"[OK] Removed {removed} backup(s) older than {retention_days} days")
+        logger.info(f"Removed {removed} backup(s) older than {retention_days} days")
 
 
 def list_backups(backup_dir: Path = None) -> list:
     """List all available backups with metadata."""
     backup_dir = backup_dir or BACKUP_DIR
     if not backup_dir.exists():
-        print("No backups directory found.")
+        logger.info("No backups directory found.")
         return []
 
     backups = []
@@ -96,13 +95,11 @@ def list_backups(backup_dir: Path = None) -> list:
         })
 
     if not backups:
-        print("No backups found.")
+        logger.info("No backups found.")
     else:
-        print(f"\nBackups ({len(backups)} total):")
-        print(f"{'Created':<22} {'Size':>10}  {'Filename'}")
-        print("-" * 60)
+        logger.info(f"Backups ({len(backups)} total):")
         for b in backups:
-            print(f"{b['created']:<22} {b['size_mb']:>8.2f}MB  {b['name']}")
+            logger.info(f"  {b['created']}  {b['size_mb']:>8.2f}MB  {b['name']}")
 
     return backups
 
@@ -119,10 +116,9 @@ def restore_backup(backup_path: str, db_path: Path = None):
     if db_path.exists():
         safety_path = db_path.with_suffix(".db.pre-restore")
         shutil.copy2(db_path, safety_path)
-        print(f"[WARN] Current DB saved to: {safety_path}")
+        logger.warning(f"Current DB saved to: {safety_path}")
 
     shutil.copy2(backup, db_path)
-    print(f"[OK] Database restored from: {backup}")
     logger.info(f"Database restored from: {backup}")
 
 

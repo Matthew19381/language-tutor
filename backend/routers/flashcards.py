@@ -100,11 +100,16 @@ async def get_due_flashcards(user_id: int, db: Session = Depends(get_db)):
 async def review_flashcard(
     flashcard_id: int,
     request: ReviewFlashcardRequest,
+    user_id: int,
     db: Session = Depends(get_db)
 ):
     flashcard = db.query(Flashcard).filter(Flashcard.id == flashcard_id).first()
     if not flashcard:
         raise HTTPException(status_code=404, detail="Flashcard not found")
+
+    # Verify ownership
+    if flashcard.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to review this flashcard")
 
     # SM-2 algorithm (unified service, 1-4 rating scale)
     from backend.services.sm2_service import apply_sm2
@@ -166,10 +171,14 @@ async def export_anki(user_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/api/flashcards/{flashcard_id}/audio")
-async def generate_audio(flashcard_id: int, db: Session = Depends(get_db)):
+async def generate_audio(flashcard_id: int, user_id: int, db: Session = Depends(get_db)):
     flashcard = db.query(Flashcard).filter(Flashcard.id == flashcard_id).first()
     if not flashcard:
         raise HTTPException(status_code=404, detail="Flashcard not found")
+
+    # Verify ownership
+    if flashcard.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to access this flashcard")
 
     try:
         audio_path = await generate_flashcard_audio(

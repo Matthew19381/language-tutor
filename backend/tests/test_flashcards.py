@@ -100,7 +100,7 @@ def test_due_flashcards_user_not_found(client):
 # ---------------------------------------------------------------------------
 
 def test_review_flashcard_not_found(client):
-    r = client.post("/api/flashcards/99999/review", json={"rating": 3})
+    r = client.post("/api/flashcards/99999/review", json={"rating": 3}, params={"user_id": 1})
     assert r.status_code == 404
 
 
@@ -109,7 +109,7 @@ def test_review_rating_again(client, sample_user):
     add_r = add_card(client, uid, "Tisch", "table")
     card_id = add_r.json()["id"]
 
-    r = client.post(f"/api/flashcards/{card_id}/review", json={"rating": 1})
+    r = client.post(f"/api/flashcards/{card_id}/review", json={"rating": 1}, params={"user_id": uid})
     assert r.status_code == 200
     data = r.json()
     assert data["success"] is True
@@ -123,13 +123,13 @@ def test_review_rating_good(client, sample_user):
     card_id = add_r.json()["id"]
 
     # First review (standard SM-2): Good → interval=1, repetitions=1
-    r = client.post(f"/api/flashcards/{card_id}/review", json={"rating": 3})
+    r = client.post(f"/api/flashcards/{card_id}/review", json={"rating": 3}, params={"user_id": uid})
     assert r.status_code == 200
     data = r.json()
     assert data["new_interval"] == 1           # First successful review → interval=1
 
     # Second review: Good → interval=6, repetitions=2
-    r2 = client.post(f"/api/flashcards/{card_id}/review", json={"rating": 3})
+    r2 = client.post(f"/api/flashcards/{card_id}/review", json={"rating": 3}, params={"user_id": uid})
     assert r2.status_code == 200
     data2 = r2.json()
     assert data2["new_interval"] == 6          # Second successful review → interval=6
@@ -141,7 +141,7 @@ def test_review_rating_easy_increases_ease_factor(client, sample_user):
     card_id = add_r.json()["id"]
 
     # First review: Easy → interval=1, EF increases
-    r = client.post(f"/api/flashcards/{card_id}/review", json={"rating": 4})
+    r = client.post(f"/api/flashcards/{card_id}/review", json={"rating": 4}, params={"user_id": uid})
     assert r.status_code == 200
     data = r.json()
     assert data["new_interval"] == 1           # First successful review → interval=1
@@ -153,7 +153,7 @@ def test_review_returns_next_review_date(client, sample_user):
     add_r = add_card(client, uid, "Auto", "car")
     card_id = add_r.json()["id"]
 
-    r = client.post(f"/api/flashcards/{card_id}/review", json={"rating": 3})
+    r = client.post(f"/api/flashcards/{card_id}/review", json={"rating": 3}, params={"user_id": uid})
     data = r.json()
     assert "next_review" in data
     # next_review should be in the future
@@ -161,3 +161,20 @@ def test_review_returns_next_review_date(client, sample_user):
     # next_review may be naive (SQLite doesn't store tz info); compare accordingly
     now = datetime.now(timezone.utc if next_review.tzinfo else None)
     assert next_review > now
+
+
+def test_review_flashcard_wrong_user(client, sample_user, db):
+    """Reviewing another user's flashcard must return 403."""
+    from backend.models.flashcard import Flashcard
+    uid = sample_user["user_id"]
+    # Create a flashcard for sample_user
+    card = Flashcard(user_id=uid, word="Hund", translation="dog",
+                     language="German", cefr_level="A1")
+    db.add(card)
+    db.commit()
+    db.refresh(card)
+
+    # Try to review with a different user_id
+    r = client.post(f"/api/flashcards/{card.id}/review",
+                    json={"rating": 3}, params={"user_id": uid + 1})
+    assert r.status_code == 403

@@ -480,7 +480,7 @@ async def export_lesson_obsidian(
 
 
 @router.get("/api/lessons/{lesson_id}/audio-package")
-async def download_lesson_audio_package(lesson_id: int, db: Session = Depends(get_db)):
+async def download_lesson_audio_package(lesson_id: int, user_id: int, db: Session = Depends(get_db)):
     """Generate and download a ZIP archive with 3 audio files: Gramatyka, Słownictwo, Dialog.
     Also includes a YouTube search URL for a matched video.
     """
@@ -492,6 +492,10 @@ async def download_lesson_audio_package(lesson_id: int, db: Session = Depends(ge
     lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
     if not lesson:
         raise HTTPException(status_code=404, detail="Lesson not found")
+
+    # Verify ownership
+    if lesson.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to access this lesson")
 
     content = json.loads(lesson.content)
     audio_files = await generate_lesson_package_audio(content, lesson.language, lesson_id)

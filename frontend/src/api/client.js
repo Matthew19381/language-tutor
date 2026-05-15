@@ -109,8 +109,8 @@ export const getFlashcards = (userId) =>
 export const getDueFlashcards = (userId) =>
   api.get(`/flashcards/${userId}/due`)
 
-export const reviewFlashcard = (flashcardId, rating) =>
-  api.post(`/flashcards/${flashcardId}/review`, { rating })
+export const reviewFlashcard = (flashcardId, rating, userId) =>
+  api.post(`/flashcards/${flashcardId}/review`, { rating, user_id: userId })
 
 export const exportAnki = (userId) =>
   api.post(`/flashcards/${userId}/export-anki`, {}, { responseType: 'blob' })

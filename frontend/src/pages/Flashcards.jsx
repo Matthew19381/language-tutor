@@ -94,7 +94,7 @@ export default function Flashcards() {
   const handleReview = async (rating) => {
     if (!currentCard) return
     try {
-      await reviewFlashcard(currentCard.id, rating)
+      await reviewFlashcard(currentCard.id, rating, userId)
       setReviewDone(prev => new Set([...prev, currentCard.id]))
       if (currentIndex < displayCards.length - 1) {
         handleNext()
