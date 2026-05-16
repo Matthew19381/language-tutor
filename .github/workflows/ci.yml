@@ -8,7 +8,7 @@ on:
 
 env:
   PYTHON_VERSION: "3.14"
-  NODE_VERSION: "18"
+  NODE_VERSION: "20"
 
 jobs:
   # ── Backend Tests ──────────────────────────────────────────────
@@ -71,7 +71,7 @@ jobs:
 
       - name: Install frontend dependencies
         working-directory: ./frontend
-        run: npm ci
+        run: npm install
 
       - name: Build frontend
         working-directory: ./frontend
@@ -106,7 +106,7 @@ jobs:
 
       - name: Install frontend dependencies
         working-directory: ./frontend
-        run: npm ci
+        run: npm install
 
       - name: Install Playwright browsers
         working-directory: ./frontend
@@ -158,7 +158,5 @@ jobs:
 
       - name: Lint backend code
         run: |
-          # Stop on syntax errors or undefined names
           flake8 backend/ --count --select=E9,F63,F7,F82 --show-source --statistics
-          # Warn on complexity
           flake8 backend/ --count --exit-zero --max-complexity=15 --max-line-length=120 --statistics
