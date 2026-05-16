@@ -140,7 +140,7 @@ def test_ask_question(client, sample_user):
 def test_translate_word(client):
     """Translate word returns translation only."""
     with patch(
-        "backend.services.gemini_service.generate_text",
+        "backend.routers.conversation._ai_translate",
         return_value="Hallo"
     ):
         r = client.post("/api/conversation/translate", json={

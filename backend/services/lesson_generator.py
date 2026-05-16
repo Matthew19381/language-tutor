@@ -446,7 +446,7 @@ If there are errors to address, add them to the error_review array with format:
         }
 
 
-@with_model("lesson")
+@with_model("test")
 async def generate_daily_test(
     lesson_content: dict,
     cefr_level: str,
@@ -535,6 +535,7 @@ Points should total 100. Types: fill_blank, multiple_choice, translation, applic
         }
 
 
+@with_model("test")
 async def analyze_test_errors(
     questions: list,
     answers: dict,
@@ -649,7 +650,7 @@ Return JSON:
         }
 
 
-@with_model("lesson")
+@with_model("test")
 async def generate_weekly_test(
     study_plan_data: dict,
     week_number: int,
@@ -704,6 +705,7 @@ Points should total 100."""
         return await generate_daily_test({}, cefr_level, language, native_language)
 
 
+@with_model("test")
 async def generate_errors_test(
     errors: list,
     cefr_level: str,
@@ -770,6 +772,7 @@ Use at least 5 fill_blank and at most 5 multiple_choice questions. Points total 
         return await generate_daily_test({}, cefr_level, language, native_language)
 
 
+@with_model("conversation")
 async def generate_conversation_scenario(
     topic: str,
     cefr_level: str,
@@ -896,6 +899,7 @@ Note: category_advice should only include categories where errors were found."""
         }
 
 
+@with_model("conversation")
 async def analyze_pasted_conversation(
     pasted_text: str,
     cefr_level: str,
@@ -949,6 +953,7 @@ Return JSON:
         }
 
 
+@with_model("lesson")
 async def answer_language_question(
     question: str,
     cefr_level: str,
@@ -970,6 +975,7 @@ Keep the explanation concise but thorough."""
         return f"I apologize, but I couldn't generate an answer right now. Please try again later."
 
 
+@with_model("lesson")
 async def generate_daily_tips(
     cefr_level: str,
     language: str,

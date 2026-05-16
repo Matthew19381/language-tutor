@@ -26,7 +26,7 @@ from backend.services.lesson_generator import generate_daily_lesson
 from backend.services.audio_service import generate_vocabulary_audio, generate_full_lesson_audio, generate_lesson_package_audio, AUDIO_DIR
 from backend.services.pdf_service import generate_lesson_pdf, EXPORTS_DIR
 from backend.services.obsidian_service import save_obsidian_md
-from backend.services.gemini_service import generate_json as ai_generate_json
+from backend.services.gemini_service import generate_json as ai_generate_json, with_model
 from backend.services.topic_service import process_lesson_topics_bg
 
 logger = logging.getLogger(__name__)
@@ -792,6 +792,11 @@ async def reset_today_lesson(user_id: int, db: Session = Depends(get_db)):
     return {"success": True, "deleted": deleted}
 
 
+@with_model("lesson")
+async def _ai_generate_concepts(prompt: str) -> dict:
+    return await ai_generate_json(prompt)
+
+
 @router.post("/api/lessons/{lesson_id}/concept-flashcards")
 async def generate_concept_flashcards(lesson_id: int, user_id: int, db: Session = Depends(get_db)):
     """Extract grammar concepts from lesson and create concept flashcards."""
@@ -835,7 +840,7 @@ Return JSON:
 }}"""
 
     try:
-        result = await ai_generate_json(prompt)
+        result = await _ai_generate_concepts(prompt)
         concepts = result.get("concepts", [])
     except (httpx.RequestError, ValueError, KeyError):
         return {"success": False, "message": "AI generation failed", "created": 0}
@@ -916,7 +921,7 @@ Return JSON:
 }}"""
 
     try:
-        result = await ai_generate_json(prompt)
+        result = await _ai_generate_concepts(prompt)
         concepts = result.get("concepts", [])
     except (httpx.RequestError, ValueError, KeyError):
         concepts = []
@@ -963,6 +968,11 @@ async def get_study_plan(user_id: int, db: Session = Depends(get_db)):
     }
 
 
+@with_model("lesson")
+async def _ai_evaluate_production(prompt: str) -> dict:
+    return await ai_generate_json(prompt)
+
+
 @router.post("/api/lessons/{lesson_id}/evaluate-production")
 async def evaluate_production_task(
     lesson_id: int,
@@ -999,7 +1009,7 @@ Evaluate the answer and return ONLY valid JSON:
 Score 0-100. Corrections array can be empty if there are no errors. Write feedback in Polish."""
 
     try:
-        result = await ai_generate_json(prompt)
+        result = await _ai_evaluate_production(prompt)
         return {
             "success": True,
             "score": result.get("score", 0),

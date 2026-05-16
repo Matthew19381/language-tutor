@@ -16,7 +16,7 @@ from backend.schemas.flashcard import (
 )
 from backend.services.anki_service import generate_anki_deck
 from backend.services.audio_service import generate_flashcard_audio
-from backend.services.gemini_service import generate_json
+from backend.services.gemini_service import generate_json, with_model
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -234,6 +234,16 @@ async def add_flashcard(
     return {"success": True, "id": flashcard.id, "message": "Flashcard added successfully"}
 
 
+@with_model("lesson")
+async def _ai_validate_spelling(prompt: str) -> dict:
+    return await generate_json(prompt)
+
+
+@with_model("lesson")
+async def _ai_generate_flashcard(prompt: str) -> dict:
+    return await generate_json(prompt)
+
+
 @router.post("/api/flashcards/{user_id}/add-ai")
 async def add_flashcard_ai(
     user_id: int,
@@ -262,7 +272,7 @@ Return ONLY valid JSON:
     "correction": "corrected form if invalid, empty string if valid"
 }}"""
     try:
-        val = await generate_json(validation_prompt)
+        val = await _ai_validate_spelling(validation_prompt)
         if isinstance(val, dict) and val.get("valid") is False:
             correction = val.get("correction", "").strip()
             msg = f"Niepoprawna pisownia."
@@ -288,7 +298,7 @@ Return ONLY valid JSON:
     translation = ""
     example = ""
     try:
-        ai_result = await generate_json(prompt)
+        ai_result = await _ai_generate_flashcard(prompt)
         # Handle both direct dict and nested formats
         if isinstance(ai_result, dict):
             translation = (

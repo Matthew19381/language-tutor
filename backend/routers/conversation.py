@@ -25,7 +25,7 @@ from backend.services.lesson_generator import (
     analyze_pasted_conversation,
     answer_language_question
 )
-from backend.services.gemini_service import generate_text
+from backend.services.gemini_service import generate_text, with_model
 from backend.config import settings
 
 logger = logging.getLogger(__name__)
@@ -115,6 +115,11 @@ async def start_conversation(
         raise HTTPException(status_code=500, detail="Failed to start conversation")
 
 
+@with_model("conversation")
+async def _ai_conversation_reply(prompt: str) -> str:
+    return await generate_text(prompt)
+
+
 @router.post("/api/conversation/message")
 async def send_message(request: MessageRequest, db: Session = Depends(get_db)):
     conv_session = _get_session(db, request.session_id)
@@ -155,7 +160,7 @@ If the student makes a grammatical error, naturally incorporate the correct form
 Response should be 1-3 sentences in {language}."""
 
     try:
-        ai_response = await generate_text(prompt)
+        ai_response = await _ai_conversation_reply(prompt)
         ai_response = ai_response.strip()
 
         # Add AI response to history
@@ -291,16 +296,20 @@ async def ask_question(
         raise HTTPException(status_code=500, detail="Failed to answer question")
 
 
+@with_model("lesson")
+async def _ai_translate(prompt: str) -> str:
+    return await generate_text(prompt)
+
+
 @router.post("/api/conversation/translate")
 async def translate_word(request: TranslateRequest):
     """Translate a word or short phrase. Returns only the translation, no explanation."""
-    from backend.services.gemini_service import generate_text
     prompt = (
         f'Translate from {request.from_lang} to {request.to_lang}: "{request.text}"\n'
         f'Reply with the translation ONLY. No explanations, no alternatives, no context.'
     )
     try:
-        result = await generate_text(prompt)
+        result = await _ai_translate(prompt)
         return {"success": True, "translation": result.strip()}
     except httpx.RequestError as e:
         logger.error(f"AI service error in translation: {e}")
