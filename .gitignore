@@ -74,3 +74,12 @@ backups/
 frontend/{,
 frontend/{,-
 frontend/e2e/error-context.md
+frontend/test-results/
+test-results/
+*.db-shm
+*.db-wal
+
+# Stray files from Playwright trace
+frontend/,
+frontend/r.json()))
+day_start

@@ -1,4 +1,4 @@
-# Backend Dockerfile
+# Backend Dockerfile — Production
 FROM python:3.14-slim
 
 WORKDIR /app
@@ -9,26 +9,27 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements
+# Copy requirements first (layer caching)
 COPY requirements.txt .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application
+# Copy application code
 COPY backend/ ./backend/
-COPY frontend-simple/ ./frontend-simple/
 
-# Create necessary directories
+# Create directories for audio/exports
 RUN mkdir -p backend/audio backend/exports
 
 # Expose port
-EXPOSE 8000
+EXPOSE 8001
 
-# Environment
+# Environment defaults (override via docker-compose or -e flags)
 ENV PYTHONUNBUFFERED=1
-ENV OLLAMA_BASE_URL=http://ollama:11434/v1
-ENV OLLAMA_MODEL=qwen2.5:7b
+ENV DATABASE_URL=sqlite:///./lingua_ai.db
+ENV AI_PROVIDER=openrouter
+ENV BACKEND_URL=http://localhost:8001
+ENV FRONTEND_URL=http://localhost:5173
 
-# Run
-CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run backend on port 8001
+CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8001"]

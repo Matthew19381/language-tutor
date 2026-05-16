@@ -304,19 +304,26 @@ async def get_language_profiles(user_id: int, db: Session = Depends(get_db)):
     except (ValueError, TypeError):
         profiles = {}
 
-    # Enrich with lesson/test counts per language
+    # N+1 fix: single GROUP BY query instead of one query per language
+    from sqlalchemy import func as sa_func
+    lesson_counts = dict(
+        db.query(Lesson.language, sa_func.count(Lesson.id))
+        .filter(
+            Lesson.user_id == user_id,
+            Lesson.language.in_(SUPPORTED_LANGUAGES),
+            Lesson.is_completed == True,
+        )
+        .group_by(Lesson.language)
+        .all()
+    )
+
     result = []
     for lang in SUPPORTED_LANGUAGES:
-        lessons_count = db.query(Lesson).filter(
-            Lesson.user_id == user_id,
-            Lesson.language == lang,
-            Lesson.is_completed == True
-        ).count()
         result.append({
             "language": lang,
             "cefr_level": profiles.get(lang),
             "is_active": user.target_language == lang,
-            "lessons_completed": lessons_count,
+            "lessons_completed": lesson_counts.get(lang, 0),
             "started": lang in profiles or user.target_language == lang,
         })
 

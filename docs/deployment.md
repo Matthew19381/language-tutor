@@ -19,12 +19,12 @@ Kompletny przewodnik wdrażania platformy LinguaAI w środowisku produkcyjnym.
 ## Przegląd
 
 LinguaAI składa się z dwóch głównych komponentów:
-- **Backend**: FastAPI + Uvicorn (port 8000)
+- **Backend**: FastAPI + Uvicorn (port 8001)
 - **Frontend**: React + Vite (build statyczny serwowany przez Nginx)
 
 Architektura wdrożeniowa:
 ```
-Internet → Nginx (443) → Frontend (static) + Proxy /api → Backend (8000)
+Internet → Nginx (443) → Frontend (static) + Proxy /api → Backend (8001)
 ```
 
 ## Wymagania systemowe
@@ -62,7 +62,7 @@ sudo chown linguaai:linguaai /opt/linguaai
 ### 1. Klonowanie repozytorium
 
 ```bash
-sudo -u linguaai git clone https://github.com/Matthew19381/language-tutor.git /opt/linguaai/app
+sudo -u linguaai git clone https://github.com/Matthew19381/LanguaAI.git /opt/linguaai/app
 cd /opt/linguaai/app
 ```
 
@@ -115,7 +115,7 @@ WorkingDirectory=/opt/linguaai/app
 Environment="PATH=/opt/linguaai/app/venv/bin"
 ExecStart=/opt/linguaai/app/venv/bin/uvicorn backend.main:app \
     --host 0.0.0.0 \
-    --port 8000 \
+    --port 8001 \
     --workers 2 \
     --log-level info
 Restart=always
@@ -137,7 +137,7 @@ sudo systemctl status linguaai-backend
 ### 6. Sprawdzenie backendu
 
 ```bash
-curl http://localhost:8000/docs
+curl http://localhost:8001/docs
 ```
 
 ## Wdrożenie Frontendu
@@ -179,7 +179,7 @@ server {
 
     # Backend API proxy
     location /api/ {
-        proxy_pass http://127.0.0.1:8000;
+        proxy_pass http://127.0.0.1:8001;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -188,7 +188,7 @@ server {
 
     # Audio files proxy
     location /audio/ {
-        proxy_pass http://127.0.0.1:8000;
+        proxy_pass http://127.0.0.1:8001;
         proxy_set_header Host $host;
     }
 
@@ -349,14 +349,35 @@ cp /opt/linguaai/backups/lingua_ai_20260508_020000.db /opt/linguaai/app/lingua_a
 sudo systemctl start linguaai-backend
 ```
 
-## Docker (opcjonalnie)
+## Docker
 
-Dla środowisk konteneryzowanych, w repozytorium znajduje się `Dockerfile.backend` oraz `docker-compose.yml`.
+W repozytorium znajdują się:
+- `Dockerfile.backend` — obraz backendu (Python 3.14 + FastAPI)
+- `Dockerfile.frontend` — obraz frontendu (Node 18 build + nginx production)
+- `docker-compose.yml` — produkcjna konfiguracja (backend + frontend)
+- `docker-compose.dev.yml` — deweloperska konfiguracja (hot-reload)
 
 ```bash
-cd /opt/linguaai/app
+# Produkcja
 docker-compose up -d
+
+# Development (hot-reload)
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
 ```
+
+## Backup — Windows Task Scheduler
+
+Na Windows backup można zautomatyzować przez Task Scheduler:
+
+```powershell
+# Rejestracja codziennego backupu o 2:00 AM
+powershell -ExecutionPolicy Bypass -File scripts\register-backup-task.ps1
+
+# Usunięcie zaplanowanego backupu
+powershell -ExecutionPolicy Bypass -File scripts\register-backup-task.ps1 -Remove
+```
+
+Backup jest przechowywany w `backups/` z retencją 7 dni.
 
 ## Rozwiązywanie problemów
 
@@ -366,8 +387,8 @@ docker-compose up -d
 # Sprawdź logi
 sudo journalctl -u linguaai-backend -n 50
 
-# Sprawdź czy port 8000 jest wolny
-sudo lsof -i :8000
+# Sprawdź czy port 8001 jest wolny
+sudo lsof -i :8001
 
 # Sprawdź zmienne środowiskowe
 cat /opt/linguaai/app/backend/.env
@@ -391,7 +412,7 @@ curl http://localhost/api/placement/
 sudo systemctl status linguaai-backend
 
 # Sprawdź czy Nginx może połączyć się z backendem
-curl http://127.0.0.1:8000/docs
+curl http://127.0.0.1:8001/docs
 ```
 
 ### Problemy z Gemini API

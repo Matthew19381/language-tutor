@@ -256,13 +256,69 @@ Zabezpiecz swoje postępy poprzez kopię zapasową na Google Drive.
 
 ---
 
+## Voice Chat (Rozmowa Głosowa)
+
+Prowadź rozmowę głosową z AI bezpośrednio w przeglądarce.
+
+### Jak to działa?
+1. Wejdź w zakładkę **Mów** (Conversation)
+2. Kliknij ikonę mikrofonu aby nagrać wiadomość
+3. AI odpowie tekstem i głosem (TTS)
+4. Możesz edytować prompt systemowy w zakładce **Statystyki** → **Voice Chat Prompt**
+
+### Wymagania:
+- Przeglądarka z obsługą Web Speech API (Chrome, Edge)
+- Dostęp do mikrofonu
+- Backend działa na `http://localhost:8001`
+
+---
+
+## Analiza Błędów (Error Review)
+
+Sekcja **Błędy** w Statystykach zbiera wszystkie Twoje błędy z testów, lekcji i rozmów.
+
+### Funkcje:
+- **Kategorie błędów**: Gramatyka, Rozumienie, Wymowa, Rozmowa — każda rozwijalna z opisem co poprawić
+- **Generuj fiszki z błędów** — automatycznie tworzy fiszki z pytań, w których popełniłeś błędy
+- **Generuj test z błędów** — regeneruje test uwzględniając Twoje słabe punkty
+- **Analiza rozmowy** — wklej podsumowanie rozmowy z Voice Chat → AI oceni wymowę i płynność
+
+---
+
 ## Rozwiązywanie Problemów
 
 | Problem | Rozwiązanie |
 |---------|--------------|
-| Nie mogę odtworzyć audio | Sprawdź, czy przeglądarka wspiera Web Audio API |
-| Transkrypcja wymowy nie działa | Sprawdź dostęp do mikrofonu w przeglądarce |
+| Lekcja nie ładuje się | Sprawdź, czy backend działa na `http://localhost:8001` |
+| Nie mogę odtworzyć audio | Sprawdź, czy przeglądarka wspiera Web Audio API; sprawdź konsolę (F12) pod kątem błędów CORS |
+| Transkrypcja wymowy nie działa | Sprawdź dostęp do mikrofonu w przeglądarce; użyj Chrome/Edge |
 | Test nie chce się wysłać | Odśwież stronę, sprawdź połączenie z internetem |
 | Brak nowych osiągnięć | Sprawdź w zakładce Statystyki / Osiągnięcia |
+| Voice Chat nie odpowiada | Sprawdź czy `GEMINI_API_KEY` jest ustawiony w `backend/.env` |
+| Błąd 429 (Too Many Requests) | Zbyt wiele zapytań — poczekaj chwilę i spróbuj ponownie |
+| Błąd 403 | Próbujesz uzyskać dostęp do zasobów innego użytkownika |
 
-W razie problemów skontaktuj się z supportem lub sprawdź sekcję FAQ na stronie projektu.
+---
+
+## FAQ (Najczęściej Zadawane Pytania)
+
+**P: Czy mogę uczyć się więcej niż jednego języka?**
+O: Tak! Możesz przełączać się między językami w zakładce Statystyki. Postępy są śledzone osobno dla każdego języka.
+
+**P: Jak zmienić poziom CEFR ręcznie?**
+O: Ukończ ponownie test pojemności (placement test) w zakładce Statystyki, lub rozpocznij naukę nowego języka.
+
+**P: Czy moje dane są bezpieczne?**
+O: Wszystkie dane są przechowywane lokalnie w bazie SQLite na Twoim komputerze. Aplikacja nie wysyła danych do zewnętrznych serwerów (poza API Gemini do generowania treści).
+
+**Jak wykonać kopię zapasową?**
+O: Wejdź w zakładkę **Statystyki** → **Ustawienia** → **Backup**. Możesz też połączyć się z Google Drive.
+
+**P: Dlaczego moja lekcja jest taka sama jak wczoraj?**
+O: Lekcje są generowane raz dziennie. Jeśli chcesz nową lekcję, kliknij "Następna lekcja" w zakładce Lekcja.
+
+**P: Jak wyeksportować fiszki do Anki?**
+O: Wejdź w zakładkę **Fiszki** → **Eksportuj do Anki**. Plik `.apkg` zostanie pobrany automatycznie.
+
+**P: Czy mogę używać aplikacji offline?**
+O: Nie — aplikacja wymaga połączenia z internetem do komunikacji z API Gemini (generowanie lekcji, testów, rozmów).

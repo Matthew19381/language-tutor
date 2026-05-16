@@ -211,29 +211,34 @@ async def get_today_lesson(user_id: int, background_tasks: BackgroundTasks, db: 
 
     # Extract vocabulary and create flashcards
     vocabulary = lesson_content.get("vocabulary", [])
+    # N+1 fix: batch-check existing flashcards for all vocab words at once
+    vocab_words = [v.get("word", "") for v in vocabulary if v.get("word") and v.get("translation")]
+    if vocab_words:
+        existing_flashcards = db.query(Flashcard.word).filter(
+            Flashcard.user_id == user_id,
+            Flashcard.language == user.target_language,
+            Flashcard.word.in_(vocab_words)
+        ).all()
+        existing_words = {row[0] for row in existing_flashcards}
+    else:
+        existing_words = set()
+
     for vocab_item in vocabulary:
         word = vocab_item.get("word", "")
         translation = vocab_item.get("translation", "")
-        if word and translation:
-            # Check if flashcard already exists (per language)
-            existing = db.query(Flashcard).filter(
-                Flashcard.user_id == user_id,
-                Flashcard.word == word,
-                Flashcard.language == user.target_language
-            ).first()
-            if not existing:
-                flashcard = Flashcard(
-                    user_id=user_id,
-                    word=word,
-                    translation=translation,
-                    example_sentence=vocab_item.get("example", ""),
-                    language=user.target_language,
-                    cefr_level=user.cefr_level,
-                    lesson_id=lesson.id,
-                    lesson_day=lesson.day_number,
-                    lesson_topic=lesson.topic
-                )
-                db.add(flashcard)
+        if word and translation and word not in existing_words:
+            flashcard = Flashcard(
+                user_id=user_id,
+                word=word,
+                translation=translation,
+                example_sentence=vocab_item.get("example", ""),
+                language=user.target_language,
+                cefr_level=user.cefr_level,
+                lesson_id=lesson.id,
+                lesson_day=lesson.day_number,
+                lesson_topic=lesson.topic
+            )
+            db.add(flashcard)
 
     db.commit()
 
@@ -582,21 +587,20 @@ async def get_lesson_history(user_id: int, db: Session = Depends(get_db)):
             deduped.append(l)
     lessons = sorted(deduped, key=lambda l: l.day_number, reverse=True)
 
+    # N+1 fix: fetch all test results for this user once, build date→best_score lookup
+    all_tests = db.query(TestResult).filter(
+        TestResult.user_id == user_id
+    ).all()
+    tests_by_date: dict = {}
+    for t in all_tests:
+        d = t.created_at.date() if t.created_at else None
+        if d:
+            tests_by_date[d] = max(tests_by_date.get(d, 0.0), t.score)
+
     result = []
     for lesson in lessons:
-        # Find best test score for the same calendar day
         lesson_date = lesson.created_at.date() if lesson.created_at else None
-        best_score = None
-        if lesson_date:
-            day_start = datetime.combine(lesson_date, datetime.min.time())
-            day_end = datetime.combine(lesson_date + timedelta(days=1), datetime.min.time())
-            tests_that_day = db.query(TestResult).filter(
-                TestResult.user_id == user_id,
-                TestResult.created_at >= day_start,
-                TestResult.created_at < day_end,
-            ).all()
-            if tests_that_day:
-                best_score = max(t.score for t in tests_that_day)
+        best_score = tests_by_date.get(lesson_date) if lesson_date else None
 
         result.append({
             "lesson_id": lesson.id,
@@ -683,27 +687,34 @@ async def generate_next_lesson(user_id: int, background_tasks: BackgroundTasks, 
 
     # Create flashcards from vocabulary
     vocabulary = lesson_content.get("vocabulary", [])
+    # N+1 fix: batch-check existing flashcards for all vocab words at once
+    next_vocab_words = [v.get("word", "") for v in vocabulary if v.get("word") and v.get("translation")]
+    if next_vocab_words:
+        existing_fc = db.query(Flashcard.word).filter(
+            Flashcard.user_id == user_id,
+            Flashcard.language == user.target_language,
+            Flashcard.word.in_(next_vocab_words)
+        ).all()
+        next_existing_words = {row[0] for row in existing_fc}
+    else:
+        next_existing_words = set()
+
     for vocab_item in vocabulary:
         word = vocab_item.get("word", "")
         translation = vocab_item.get("translation", "")
-        if word and translation:
-            existing = db.query(Flashcard).filter(
-                Flashcard.user_id == user_id,
-                Flashcard.word == word
-            ).first()
-            if not existing:
-                flashcard = Flashcard(
-                    user_id=user_id,
-                    word=word,
-                    translation=translation,
-                    example_sentence=vocab_item.get("example", ""),
-                    language=user.target_language,
-                    cefr_level=user.cefr_level,
-                    lesson_id=lesson.id,
-                    lesson_day=lesson.day_number,
-                    lesson_topic=lesson.topic
-                )
-                db.add(flashcard)
+        if word and translation and word not in next_existing_words:
+            flashcard = Flashcard(
+                user_id=user_id,
+                word=word,
+                translation=translation,
+                example_sentence=vocab_item.get("example", ""),
+                language=user.target_language,
+                cefr_level=user.cefr_level,
+                lesson_id=lesson.id,
+                lesson_day=lesson.day_number,
+                lesson_topic=lesson.topic
+            )
+            db.add(flashcard)
     db.commit()
 
     # Extract topics (background, non-blocking)
@@ -829,6 +840,17 @@ Return JSON:
     except (httpx.RequestError, ValueError, KeyError):
         return {"success": False, "message": "AI generation failed", "created": 0}
 
+    # N+1 fix: batch-check existing flashcards for all concepts at once
+    concept_fronts = [c.get("front", "") for c in concepts if c.get("front") and c.get("back")]
+    if concept_fronts:
+        existing_fc = db.query(Flashcard.word).filter(
+            Flashcard.user_id == lesson.user_id,
+            Flashcard.word.in_(concept_fronts)
+        ).all()
+        concept_existing_words = {row[0] for row in existing_fc}
+    else:
+        concept_existing_words = set()
+
     created = 0
     skipped = 0
     for concept in concepts:
@@ -836,12 +858,7 @@ Return JSON:
         back = concept.get("back", "")
         if not front or not back:
             continue
-        # Check if already exists
-        existing = db.query(Flashcard).filter(
-            Flashcard.user_id == lesson.user_id,
-            Flashcard.word == front
-        ).first()
-        if not existing:
+        if front not in concept_existing_words:
             fc = Flashcard(
                 user_id=lesson.user_id,
                 word=front,
