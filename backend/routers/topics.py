@@ -1,12 +1,12 @@
 """
-Topics Router — thematic organization with spaced repetition.
+Topics Router — thematic organization with FSRS spaced repetition.
 
 GET  /api/topics/{user_id}              — list all topics (flat, with filters)
 GET  /api/topics/{user_id}/tree         — topics grouped by category
 GET  /api/topics/{user_id}/due          — topics due for review
 GET  /api/topics/{user_id}/stats        — aggregate statistics
 GET  /api/topics/detail/{topic_id}      — single topic with items
-POST /api/topics/{topic_id}/review      — submit SM-2 review (quality 0-5)
+POST /api/topics/{topic_id}/review      — submit FSRS review (rating 1-4)
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -23,7 +23,7 @@ router = APIRouter()
 # ── Request/Response schemas ─────────────────────────────────────────────────
 
 class ReviewRequest(BaseModel):
-    quality: int  # 0-5 SM-2 quality rating
+    rating: int  # 1-4 FSRS rating: 1=Again, 2=Hard, 3=Good, 4=Easy
     user_id: int
 
 
@@ -68,10 +68,15 @@ async def list_topics(
             "description": t.description,
             "cefr_level": t.cefr_level,
             "memory_strength": t.memory_strength,
+            "difficulty": t.difficulty,
+            "stability": t.stability,
+            "retrievability": t.retrievability,
+            "fsrs_state": t.fsrs_state,
             "is_due": t.is_due(),
             "days_until_review": t.days_until_review(),
             "items_count": t.total_items,
             "repetitions": t.repetitions,
+            "lapses": t.lapses,
             "interval": t.interval,
             "next_review": t.next_review_date.isoformat() if t.next_review_date else None,
             "created_at": t.created_at.isoformat() if t.created_at else None,
@@ -116,6 +121,9 @@ async def due_topics(
             "name": t.name,
             "category": t.category,
             "memory_strength": t.memory_strength,
+            "difficulty": t.difficulty,
+            "stability": t.stability,
+            "fsrs_state": t.fsrs_state,
             "days_until_review": t.days_until_review(),
             "items_count": t.total_items,
             "next_review": t.next_review_date.isoformat() if t.next_review_date else None,
@@ -164,9 +172,13 @@ async def topic_detail(
             "description": topic.description,
             "cefr_level": topic.cefr_level,
             "memory_strength": topic.memory_strength,
-            "easiness_factor": topic.easiness_factor,
+            "difficulty": topic.difficulty,
+            "stability": topic.stability,
+            "retrievability": topic.retrievability,
+            "fsrs_state": topic.fsrs_state,
             "interval": topic.interval,
             "repetitions": topic.repetitions,
+            "lapses": topic.lapses,
             "is_due": topic.is_due(),
             "days_until_review": topic.days_until_review(),
             "next_review": topic.next_review_date.isoformat() if topic.next_review_date else None,
@@ -194,18 +206,16 @@ async def review_topic(
     db: Session = Depends(get_db),
 ):
     """
-    Submit a review for a topic (SM-2 spaced repetition).
+    Submit a review for a topic (FSRS spaced repetition).
 
-    Quality scale:
-    0 = Complete blackout
-    1 = Incorrect, remembered on seeing answer
-    2 = Incorrect, but easy to recall answer
-    3 = Correct with serious difficulty
-    4 = Correct with some hesitation
-    5 = Perfect response
+    Rating scale:
+    1 = Again (forgot completely)
+    2 = Hard (recalled with significant difficulty)
+    3 = Good (recalled with some effort)
+    4 = Easy (instant, effortless recall)
     """
-    if review.quality < 0 or review.quality > 5:
-        raise HTTPException(status_code=400, detail="Quality must be 0-5")
+    if review.rating < 1 or review.rating > 4:
+        raise HTTPException(status_code=400, detail="Rating must be 1-4")
 
     # Verify ownership
     topic_check = db.query(Topic).get(topic_id)
@@ -215,7 +225,7 @@ async def review_topic(
         raise HTTPException(status_code=403, detail="Not authorized to review this topic")
 
     try:
-        topic = topic_service.review_topic(db, topic_id, review.quality)
+        topic = topic_service.review_topic(db, topic_id, review.rating)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
@@ -223,8 +233,13 @@ async def review_topic(
         "topic_id": topic.id,
         "name": topic.name,
         "memory_strength": topic.memory_strength,
+        "difficulty": topic.difficulty,
+        "stability": topic.stability,
+        "retrievability": topic.retrievability,
+        "fsrs_state": topic.fsrs_state,
         "interval": topic.interval,
         "repetitions": topic.repetitions,
+        "lapses": topic.lapses,
         "next_review": topic.next_review_date.isoformat() if topic.next_review_date else None,
         "is_due": topic.is_due(),
     }

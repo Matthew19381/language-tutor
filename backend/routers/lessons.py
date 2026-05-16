@@ -14,6 +14,7 @@ from backend.models.lesson import Lesson
 from backend.models.study_plan import StudyPlan
 from backend.models.test_result import TestResult
 from backend.models.flashcard import Flashcard
+from backend.models.topic import Topic
 from backend.schemas.lesson import (
     CompleteLessonRequest,
     SaveExerciseErrorRequest,
@@ -159,6 +160,25 @@ async def get_today_lesson(user_id: int, background_tasks: BackgroundTasks, db: 
     ).order_by(Lesson.created_at.desc()).limit(7).all()
     recent_topics = [l.topic for l in recent_lessons if l.topic] if recent_lessons else None
 
+    # ── RAG: fetch user's data to personalize the lesson ──
+
+    # User's known vocabulary (flashcards) — last 50 active cards
+    user_flashcards = db.query(Flashcard.word).filter(
+        Flashcard.user_id == user_id,
+        Flashcard.language == user.target_language,
+        Flashcard.is_active == True,
+    ).order_by(Flashcard.created_at.desc()).limit(50).all()
+    user_vocabulary = [f[0] for f in user_flashcards] if user_flashcards else None
+
+    # Weak topics (low memory_strength) and strong topics (high memory_strength)
+    all_topics = db.query(Topic).filter(
+        Topic.user_id == user_id,
+        Topic.language == user.target_language,
+    ).order_by(Topic.memory_strength.asc()).all()
+
+    weak_topics = [t.name for t in all_topics if t.memory_strength < 0.5][:5] if all_topics else None
+    strong_topics = [t.name for t in reversed(all_topics) if t.memory_strength >= 0.7][:3] if all_topics else None
+
     # Generate new lesson
     lesson_content = await generate_daily_lesson(
         day_number=day_number,
@@ -167,7 +187,10 @@ async def get_today_lesson(user_id: int, background_tasks: BackgroundTasks, db: 
         cefr_level=user.cefr_level,
         language=user.target_language,
         native_language=user.native_language,
-        recent_topics=recent_topics
+        recent_topics=recent_topics,
+        user_vocabulary=user_vocabulary,
+        weak_topics=weak_topics,
+        strong_topics=strong_topics,
     )
 
     # Save lesson to DB (handle race condition via unique constraint)
@@ -659,6 +682,21 @@ async def generate_next_lesson(user_id: int, background_tasks: BackgroundTasks, 
         except (json.JSONDecodeError, TypeError):
             pass
 
+    # RAG: fetch user's vocabulary and topic strengths for next lesson too
+    next_flashcards = db.query(Flashcard.word).filter(
+        Flashcard.user_id == user_id,
+        Flashcard.language == user.target_language,
+        Flashcard.is_active == True,
+    ).order_by(Flashcard.created_at.desc()).limit(50).all()
+    next_vocab = [f[0] for f in next_flashcards] if next_flashcards else None
+
+    next_all_topics = db.query(Topic).filter(
+        Topic.user_id == user_id,
+        Topic.language == user.target_language,
+    ).order_by(Topic.memory_strength.asc()).all()
+    next_weak = [t.name for t in next_all_topics if t.memory_strength < 0.5][:5] if next_all_topics else None
+    next_strong = [t.name for t in reversed(next_all_topics) if t.memory_strength >= 0.7][:3] if next_all_topics else None
+
     # Generate lesson
     lesson_content = await generate_daily_lesson(
         day_number=next_day,
@@ -667,7 +705,10 @@ async def generate_next_lesson(user_id: int, background_tasks: BackgroundTasks, 
         cefr_level=user.cefr_level,
         language=user.target_language,
         native_language=user.native_language,
-        recent_topics=recent_topics
+        recent_topics=recent_topics,
+        user_vocabulary=next_vocab,
+        weak_topics=next_weak,
+        strong_topics=next_strong,
     )
 
     # Save lesson to DB

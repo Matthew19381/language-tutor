@@ -220,13 +220,13 @@ async def process_test_topics(db: Session, test_result, test_content: dict,
 # SM-2 REVIEW
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def review_topic(db: Session, topic_id: int, quality: int) -> Topic:
+def review_topic(db: Session, topic_id: int, rating: int) -> Topic:
     """
-    Review a topic with SM-2 spaced repetition.
+    Review a topic with FSRS spaced repetition.
 
     Args:
         topic_id: Topic to review
-        quality: 0-5 (0=blackout, 5=perfect)
+        rating: 1-4 (1=Again, 2=Hard, 3=Good, 4=Easy)
 
     Returns:
         Updated Topic object
@@ -235,12 +235,13 @@ def review_topic(db: Session, topic_id: int, quality: int) -> Topic:
     if not topic:
         raise ValueError(f"Topic {topic_id} not found")
 
-    topic.apply_sm2(quality)
+    topic.apply_fsrs(rating)
 
-    # Update avg_score
+    # Update avg_score (normalize 1-4 → 0-5 scale for backward compat)
+    normalized_score = (rating - 1) / 3.0 * 5.0
     if topic.total_reviews > 0:
         topic.avg_score = round(
-            ((topic.avg_score * (topic.total_reviews - 1)) + quality) / topic.total_reviews, 2
+            ((topic.avg_score * (topic.total_reviews - 1)) + normalized_score) / topic.total_reviews, 2
         )
 
     db.commit()
@@ -315,10 +316,15 @@ def get_category_tree(db: Session, user_id: int, language: str = None) -> dict:
             "description": t.description,
             "cefr_level": t.cefr_level,
             "memory_strength": t.memory_strength,
+            "difficulty": t.difficulty,
+            "stability": t.stability,
+            "retrievability": t.retrievability,
+            "fsrs_state": t.fsrs_state,
             "is_due": t.is_due(),
             "days_until_review": t.days_until_review(),
             "items_count": t.total_items,
             "repetitions": t.repetitions,
+            "lapses": t.lapses,
             "interval": t.interval,
             "next_review": t.next_review_date.isoformat() if t.next_review_date else None,
         })

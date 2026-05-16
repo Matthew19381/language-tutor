@@ -253,7 +253,10 @@ async def generate_daily_lesson(
     cefr_level: str,
     language: str,
     native_language: str,
-    recent_topics: list = None
+    recent_topics: list = None,
+    user_vocabulary: list = None,
+    weak_topics: list = None,
+    strong_topics: list = None,
 ) -> dict:
     # Get today's topic from study plan
     daily_topics = study_plan_data.get("daily_topics", [])
@@ -270,6 +273,8 @@ async def generate_daily_lesson(
     vocab_theme = today_topic.get("vocabulary_theme", "Everyday vocabulary")
     conversation_topic = today_topic.get("conversation_topic", "Daily conversation")
 
+    # ── RAG sections: personalize lesson with user's actual data ──
+
     error_section = ""
     if user_errors:
         error_section = f"\nRecent errors to address: {user_errors[:3]}"
@@ -277,6 +282,24 @@ async def generate_daily_lesson(
     interleaving_section = ""
     if recent_topics:
         interleaving_section = f"\nRecent topics from the last 7 days (for interleaved review): {recent_topics[:5]}"
+
+    # User's known vocabulary — AI should use these words in examples/dialogues
+    vocab_section = ""
+    if user_vocabulary:
+        vocab_list = ", ".join(user_vocabulary[:30])
+        vocab_section = f"\nStudent's known vocabulary (use these words in examples, dialogues, and exercises where appropriate): {vocab_list}"
+
+    # Weak topics — AI should include extra practice on these
+    weak_section = ""
+    if weak_topics:
+        weak_list = ", ".join(weak_topics[:5])
+        weak_section = f"\nWeak topics needing extra practice (include targeted exercises): {weak_list}"
+
+    # Strong topics — AI can reference these as building blocks
+    strong_section = ""
+    if strong_topics:
+        strong_list = ", ".join(strong_topics[:3])
+        strong_section = f"\nStrong topics the student has mastered (can be referenced as known material): {strong_list}"
 
     prompt = f"""Create a comprehensive language lesson for Day {day_number}.
 
@@ -289,6 +312,9 @@ Student profile:
 - Conversation topic: {conversation_topic}
 {error_section}
 {interleaving_section}
+{vocab_section}
+{weak_section}
+{strong_section}
 
 Generate a complete lesson with rich content. Return JSON:
 {{

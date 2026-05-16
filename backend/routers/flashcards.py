@@ -51,8 +51,13 @@ async def get_flashcards(
                 "audio_path": f.audio_path,
                 "language": f.language,
                 "cefr_level": f.cefr_level,
-                "ease_factor": f.ease_factor,
+                "difficulty": f.difficulty,
+                "stability": f.stability,
+                "retrievability": f.retrievability,
                 "interval_days": f.interval_days,
+                "repetitions": f.repetitions,
+                "lapses": f.lapses,
+                "fsrs_state": f.fsrs_state,
                 "next_review_date": f.next_review_date.isoformat() if f.next_review_date else None,
                 "created_at": f.created_at.isoformat(),
                 "lesson_id": f.lesson_id,
@@ -87,8 +92,10 @@ async def get_due_flashcards(user_id: int, db: Session = Depends(get_db)):
                 "translation": f.translation,
                 "example_sentence": f.example_sentence,
                 "audio_path": f.audio_path,
-                "ease_factor": f.ease_factor,
-                "interval_days": f.interval_days
+                "difficulty": f.difficulty,
+                "stability": f.stability,
+                "interval_days": f.interval_days,
+                "fsrs_state": f.fsrs_state,
             }
             for f in due_cards
         ],
@@ -111,20 +118,28 @@ async def review_flashcard(
     if flashcard.user_id != user_id:
         raise HTTPException(status_code=403, detail="Not authorized to review this flashcard")
 
-    # SM-2 algorithm (unified service, 1-4 rating scale)
-    from backend.services.sm2_service import apply_sm2
+    # FSRS algorithm (1-4 rating scale: 1=Again, 2=Hard, 3=Good, 4=Easy)
+    from backend.services.fsrs_service import apply_fsrs
 
-    result = apply_sm2(
-        quality=request.rating,
-        scale=4,
-        current_ef=flashcard.ease_factor,
-        current_interval=flashcard.interval_days,
-        current_repetitions=flashcard.repetitions,
+    result = apply_fsrs(
+        rating=request.rating,
+        difficulty=flashcard.difficulty,
+        stability=flashcard.stability,
+        retrievability=flashcard.retrievability if flashcard.retrievability > 0 else None,
+        elapsed_days=0,
+        reps=flashcard.repetitions,
+        lapses=flashcard.lapses or 0,
+        current_state=flashcard.fsrs_state or "Learning",
+        last_review_date=flashcard.next_review_date,
     )
 
-    flashcard.ease_factor = result.easiness_factor
+    flashcard.difficulty = result.difficulty
+    flashcard.stability = result.stability
+    flashcard.retrievability = result.retrievability
     flashcard.interval_days = result.interval
     flashcard.repetitions = result.repetitions
+    flashcard.lapses = result.lapses
+    flashcard.fsrs_state = result.state
     flashcard.next_review_date = result.next_review_date
 
     db.commit()
@@ -133,7 +148,9 @@ async def review_flashcard(
         "success": True,
         "flashcard_id": flashcard_id,
         "new_interval": result.interval,
-        "new_ease_factor": result.easiness_factor,
+        "new_difficulty": result.difficulty,
+        "new_stability": result.stability,
+        "state": result.state,
         "next_review": flashcard.next_review_date.isoformat()
     }
 

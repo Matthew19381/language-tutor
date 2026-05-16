@@ -254,5 +254,5 @@ export const getTopicStats = (userId, language) =>
 export const getTopicDetail = (topicId) =>
   api.get(`/topics/detail/${topicId}`)
 
-export const reviewTopic = (topicId, quality) =>
-  api.post(`/topics/${topicId}/review`, { quality })
+export const reviewTopic = (topicId, rating) =>
+  api.post(`/topics/${topicId}/review`, { rating })

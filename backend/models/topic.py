@@ -45,10 +45,14 @@ class Topic(Base):
     description = Column(Text, nullable=True)           # AI-generated summary
     cefr_level = Column(String, nullable=True)          # A1-C2
 
-    # ── SM-2 Spaced Repetition ──
-    easiness_factor = Column(Float, default=2.5)        # EF, starts at 2.5
+    # ── FSRS Spaced Repetition ──
+    difficulty = Column(Float, default=5.0)             # FSRS difficulty (0-10, lower=easier)
+    stability = Column(Float, default=0.0)              # FSRS stability (days)
+    retrievability = Column(Float, default=0.0)         # FSRS retrievability (0-1)
     interval = Column(Integer, default=0)               # days until next review
-    repetitions = Column(Integer, default=0)            # consecutive successful reviews
+    repetitions = Column(Integer, default=0)            # total review count
+    lapses = Column(Integer, default=0)                 # times forgotten
+    fsrs_state = Column(String, default="Learning")     # Learning/Review/Relearning
     next_review_date = Column(DateTime, nullable=True)  # when to review next
     last_review_date = Column(DateTime, nullable=True)  # last time reviewed
     memory_strength = Column(Float, default=0.0)        # 0.0-1.0 visual indicator
@@ -63,13 +67,21 @@ class Topic(Base):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # Ensure SM-2 defaults for in-memory objects (Column default only applies on commit)
-        if self.easiness_factor is None:
-            self.easiness_factor = 2.5
+        # Ensure FSRS defaults for in-memory objects (Column default only applies on commit)
+        if self.difficulty is None:
+            self.difficulty = 5.0
+        if self.stability is None:
+            self.stability = 0.0
+        if self.retrievability is None:
+            self.retrievability = 0.0
         if self.interval is None:
             self.interval = 0
         if self.repetitions is None:
             self.repetitions = 0
+        if self.lapses is None:
+            self.lapses = 0
+        if self.fsrs_state is None:
+            self.fsrs_state = "Learning"
         if self.memory_strength is None:
             self.memory_strength = 0.0
         if self.total_items is None:
@@ -85,36 +97,17 @@ class Topic(Base):
 
     def calculate_memory_strength(self) -> float:
         """
-        Calculate memory strength 0.0-1.0 based on SM-2 state.
-        Considers: repetitions, interval, easiness_factor, time since last review.
+        Calculate memory strength 0.0-1.0 based on FSRS state.
+        Uses retrievability as the primary signal, adjusted by stability and difficulty.
         """
-        if self.repetitions == 0:
-            return 0.0
-
-        # Base strength from repetitions (diminishing returns)
-        rep_strength = min(1.0, self.repetitions / 5.0)
-
-        # Interval factor: longer interval = stronger memory
-        interval_strength = min(1.0, self.interval / 30.0)
-
-        # EF factor: higher EF = easier to remember
-        ef_strength = min(1.0, (self.easiness_factor - 1.3) / 1.2)
-
-        # Decay: reduce strength based on time elapsed since last review
-        if self.last_review_date and self.interval > 0:
-            days_since = (datetime.now(timezone.utc) - self.last_review_date).days
-            decay = max(0.0, 1.0 - (days_since / max(self.interval * 1.5, 1)))
-        else:
-            decay = 0.5  # neutral if no review yet
-
-        # Weighted combination
-        strength = (
-            rep_strength * 0.25 +
-            interval_strength * 0.25 +
-            ef_strength * 0.20 +
-            decay * 0.30
+        from backend.services.fsrs_service import calculate_memory_strength_fsrs
+        return calculate_memory_strength_fsrs(
+            difficulty=self.difficulty,
+            stability=self.stability,
+            retrievability=self.retrievability,
+            reps=self.repetitions,
+            lapses=self.lapses,
         )
-        return round(min(1.0, max(0.0, strength)), 2)
 
     def is_due(self) -> bool:
         """Check if topic is due for review."""
@@ -129,37 +122,45 @@ class Topic(Base):
         delta = (self.next_review_date - datetime.now(timezone.utc)).days
         return delta
 
-    def apply_sm2(self, quality: int) -> None:
+    def apply_fsrs(self, rating: int) -> None:
         """
-        Apply SM-2 algorithm after a review.
+        Apply FSRS algorithm after a review.
 
         Args:
-            quality: 0-5 rating
-              0 = complete blackout
-              1 = incorrect, remembered on seeing answer
-              2 = incorrect, but easy to recall answer
-              3 = correct with serious difficulty
-              4 = correct with some hesitation
-              5 = perfect response
+            rating: 1-4 rating
+              1 = Again (forgot completely)
+              2 = Hard (recalled with significant difficulty)
+              3 = Good (recalled with some effort)
+              4 = Easy (instant, effortless recall)
         """
-        from backend.services.sm2_service import apply_sm2
+        from backend.services.fsrs_service import apply_fsrs
 
-        result = apply_sm2(
-            quality=quality,
-            scale=5,
-            current_ef=self.easiness_factor,
-            current_interval=self.interval,
-            current_repetitions=self.repetitions,
+        result = apply_fsrs(
+            rating=rating,
+            difficulty=self.difficulty,
+            stability=self.stability,
+            retrievability=self.retrievability if self.retrievability > 0 else None,
+            elapsed_days=0,
+            reps=self.repetitions,
+            lapses=self.lapses or 0,
+            current_state=self.fsrs_state or "Learning",
+            last_review_date=self.last_review_date,
         )
 
-        self.easiness_factor = result.easiness_factor
+        self.difficulty = result.difficulty
+        self.stability = result.stability
+        self.retrievability = result.retrievability
         self.interval = result.interval
         self.repetitions = result.repetitions
+        self.fsrs_state = result.state
         self.next_review_date = result.next_review_date
         self.last_review_date = datetime.now(timezone.utc)
         self.memory_strength = self.calculate_memory_strength()
         self.total_reviews += 1
         self.updated_at = datetime.now(timezone.utc)
+
+    # Backward compatibility alias
+    apply_sm2 = apply_fsrs
 
 
 class TopicItem(Base):

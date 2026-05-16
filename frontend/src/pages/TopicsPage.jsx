@@ -57,27 +57,26 @@ function MemoryBar({ strength, size = 'md' }) {
   );
 }
 
-// ── Review buttons (SM-2 quality 0-5) ─────────────────────────────────────
+// ── Review buttons (FSRS rating 1-4) ────────────────────────────────────
 function ReviewButtons({ onReview, reviewing }) {
   const labels = [
-    { q: 0, label: 'Zapomniałem', color: 'bg-red-600 hover:bg-red-700' },
-    { q: 1, label: 'Pomyłka', color: 'bg-red-400 hover:bg-red-500' },
-    { q: 2, label: 'Trudne', color: 'bg-orange-400 hover:bg-orange-500' },
-    { q: 3, label: 'Dobry', color: 'bg-yellow-400 hover:bg-yellow-500' },
-    { q: 4, label: 'Łatwe', color: 'bg-green-400 hover:bg-green-500' },
-    { q: 5, label: 'Idealny', color: 'bg-green-600 hover:bg-green-700' },
+    { r: 1, label: 'Znowu', color: 'bg-red-600 hover:bg-red-700', desc: 'Zapomniałem' },
+    { r: 2, label: 'Trudne', color: 'bg-orange-500 hover:bg-orange-600', desc: 'Z trudem przypomniałem' },
+    { r: 3, label: 'Dobre', color: 'bg-blue-500 hover:bg-blue-600', desc: 'Przypomniałem z wysiłkiem' },
+    { r: 4, label: 'Łatwe', color: 'bg-green-500 hover:bg-green-600', desc: 'Natychmiastowe przypomnienie' },
   ];
 
   return (
-    <div className="flex flex-wrap gap-1 mt-2">
-      {labels.map(({ q, label, color }) => (
+    <div className="flex flex-wrap gap-1.5 mt-2">
+      {labels.map(({ r, label, color, desc }) => (
         <button
-          key={q}
-          onClick={() => onReview(q)}
+          key={r}
+          onClick={() => onReview(r)}
           disabled={reviewing}
-          className={`${color} text-white text-xs px-2 py-1 rounded transition-colors disabled:opacity-50`}
+          title={desc}
+          className={`${color} text-white text-xs px-2.5 py-1.5 rounded-md transition-colors disabled:opacity-50 font-medium`}
         >
-          {q} — {label}
+          {label}
         </button>
       ))}
     </div>
@@ -137,19 +136,23 @@ function TopicDetail({ topicId, onClose }) {
         <MemoryBar strength={topic.memory_strength} size="lg" />
       </div>
 
-      {/* SM-2 stats */}
-      <div className="grid grid-cols-3 gap-2 mb-3 text-center">
+      {/* FSRS stats */}
+      <div className="grid grid-cols-4 gap-2 mb-3 text-center">
         <div className="bg-gray-50 rounded-lg p-2">
           <div className="text-xs text-gray-500">Powtórki</div>
           <div className="font-bold">{topic.repetitions}</div>
         </div>
         <div className="bg-gray-50 rounded-lg p-2">
           <div className="text-xs text-gray-500">Interwał</div>
-          <div className="font-bold">{topic.interval} dni</div>
+          <div className="font-bold">{topic.interval}d</div>
         </div>
         <div className="bg-gray-50 rounded-lg p-2">
-          <div className="text-xs text-gray-500">Łatwość</div>
-          <div className="font-bold">{topic.easiness_factor?.toFixed(1)}</div>
+          <div className="text-xs text-gray-500">Trudność</div>
+          <div className="font-bold">{topic.difficulty?.toFixed(1)}</div>
+        </div>
+        <div className="bg-gray-50 rounded-lg p-2">
+          <div className="text-xs text-gray-500">Stabilność</div>
+          <div className="font-bold">{topic.stability?.toFixed(0)}d</div>
         </div>
       </div>
 

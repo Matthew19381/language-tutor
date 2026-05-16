@@ -401,18 +401,18 @@ export default function DailyLesson() {
           <button
             onClick={handleDownloadAudioPackage}
             disabled={audioPackageLoading}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm transition-colors disabled:opacity-50"
-            title="Pobierz audio (ZIP)"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg dark:bg-indigo-700 bg-indigo-600 dark:hover:bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition-colors disabled:opacity-50"
+            title="Pobierz audio na telefon (ZIP z MP3)"
           >
             <Download className="w-4 h-4" />
-            {audioPackageLoading ? t('lesson.generating') : 'MP3'}
+            {audioPackageLoading ? t('lesson.generating') : '🎧 Audio ZIP'}
           </button>
 
           {/* Obsidian Export Dropdown */}
           <div className="relative">
             <button
               onClick={() => setShowObsidianMenu(m => !m)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg dark:bg-gray-800 bg-gray-100 dark:hover:bg-gray-700 hover:bg-gray-200 dark:text-gray-300 text-gray-600 text-sm transition-colors"
               title={t('lesson.exportObsidian')}
             >
               <FileText className="w-4 h-4" />
@@ -421,8 +421,8 @@ export default function DailyLesson() {
             </button>
 
             {showObsidianMenu && (
-              <div className="absolute right-0 top-full mt-1 z-50 bg-gray-800 border border-gray-700 rounded-lg shadow-xl p-3 min-w-[220px]">
-                <p className="text-xs text-gray-400 mb-2 font-medium">{t('lesson.exportObsidian')}</p>
+              <div className="absolute right-0 top-full mt-1 z-50 dark:bg-gray-800 bg-white dark:border dark:border-gray-700 border border-gray-200 rounded-lg shadow-xl p-3 min-w-[220px]">
+                <p className="text-xs dark:text-gray-400 text-gray-500 mb-2 font-medium">{t('lesson.exportObsidian')}</p>
 
                 {/* Day offset selector */}
                 <div className="flex flex-wrap gap-1 mb-3">
@@ -433,7 +433,7 @@ export default function DailyLesson() {
                       className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
                         obsidianOffset === offset
                           ? 'bg-indigo-600 text-white'
-                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                          : 'dark:bg-gray-700 bg-gray-100 dark:text-gray-300 text-gray-600 dark:hover:bg-gray-600 hover:bg-gray-200'
                       }`}
                     >
                       {t(key)}
@@ -446,7 +446,7 @@ export default function DailyLesson() {
                   <button
                     onClick={() => setObsidianUpload(false)}
                     className={`flex-1 px-2 py-1 rounded text-xs font-medium transition-colors ${
-                      !obsidianUpload ? 'bg-indigo-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      !obsidianUpload ? 'bg-indigo-600 text-white' : 'dark:bg-gray-700 bg-gray-100 dark:text-gray-300 text-gray-600 dark:hover:bg-gray-600 hover:bg-gray-200'
                     }`}
                   >
                     {t('lesson.downloadLocal')}
@@ -454,7 +454,7 @@ export default function DailyLesson() {
                   <button
                     onClick={() => setObsidianUpload(true)}
                     className={`flex-1 px-2 py-1 rounded text-xs font-medium transition-colors ${
-                      obsidianUpload ? 'bg-indigo-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      obsidianUpload ? 'bg-indigo-600 text-white' : 'dark:bg-gray-700 bg-gray-100 dark:text-gray-300 text-gray-600 dark:hover:bg-gray-600 hover:bg-gray-200'
                     }`}
                   >
                     {t('lesson.sendToDrive')}
@@ -464,7 +464,7 @@ export default function DailyLesson() {
                 <button
                   onClick={handleExportObsidian}
                   disabled={obsidianLoading}
-                  className="w-full px-3 py-1.5 rounded bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-medium transition-colors disabled:opacity-50"
+                  className="w-full px-3 py-1.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium transition-colors disabled:opacity-50"
                 >
                   {obsidianLoading ? '...' : t('lesson.exportObsidian')}
                 </button>
