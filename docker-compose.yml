@@ -16,9 +16,9 @@ services:
       - FRONTEND_URL=http://localhost:5173
       - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
     volumes:
-      - ./backend/audio:/app/backend/audio
-      - ./backend/exports:/app/backend/exports
       - lingua_ai_db:/app/backend
+      - lingua_ai_audio:/app/backend/audio
+      - lingua_ai_exports:/app/backend/exports
     restart: unless-stopped
 
   frontend:
@@ -35,3 +35,5 @@ services:
 
 volumes:
   lingua_ai_db:
+  lingua_ai_audio:
+  lingua_ai_exports:
