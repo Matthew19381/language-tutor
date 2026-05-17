@@ -93,6 +93,7 @@ export default function DailyLesson() {
   const [addedWords, setAddedWords] = useState(new Set())
   const [addingWord, setAddingWord] = useState(null)
   const [flashToast, setFlashToast] = useState('')
+  const [regenerating, setRegenerating] = useState(false)
   const [productionAnswer, setProductionAnswer] = useState('')
   const [evaluating, setEvaluating] = useState(false)
   const [productionResult, setProductionResult] = useState(null)
@@ -212,6 +213,33 @@ export default function DailyLesson() {
       setError(e.message)
     } finally {
       setGeneratingNext(false)
+    }
+  }
+
+  const handleRegenerateLesson = async () => {
+    if (!lesson || !userId) return
+    if (!window.confirm(t('lesson.regenerateConfirm') || 'Czy na pewno chcesz wygenerować nową lekcję? Obecna lekcja zostanie usunięta.')) return
+    setRegenerating(true)
+    try {
+      // Delete today's lesson so it gets regenerated on next fetch
+      await axios.delete(`/api/lessons/reset-today/${userId}`)
+      // Clear cache and reload
+      clearLessonCache()
+      setLesson(null)
+      setLoading(true)
+      const data = await getTodayLesson(userId)
+      setLesson(data)
+      setCompleted(data.is_completed)
+      setExpandedSections({
+        explanation: true, vocabulary: true, dialogue: false,
+        exercises: false, production: false, errorReview: false,
+        comprehensibleInput: false, interleaved: false, outputForcing: false,
+      })
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setRegenerating(false)
+      setLoading(false)
     }
   }
 
@@ -393,6 +421,17 @@ export default function DailyLesson() {
             <History className="w-4 h-4" />
             <span className="hidden sm:block">{t('history.title')}</span>
           </button>
+          {!completed && (
+            <button
+              onClick={handleRegenerateLesson}
+              disabled={regenerating}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-700 hover:bg-orange-600 text-white text-sm font-medium transition-colors disabled:opacity-50"
+              title={t('lesson.regenerate') || 'Wygeneruj nową lekcję'}
+            >
+              <RefreshCw className={`w-4 h-4 ${regenerating ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:block">{t('lesson.regenerate') || 'Nowa lekcja'}</span>
+            </button>
+          )}
           <button
             onClick={handleDownloadPDF}
             disabled={pdfLoading}

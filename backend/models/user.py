@@ -13,6 +13,7 @@ class User(Base):
     target_language = Column(String, default="German")
     cefr_level = Column(String, default="A1")
     streak_days = Column(Integer, default=0)
+    streak_freezes = Column(Integer, default=2)  # 2 freezes granted by default
     total_xp = Column(Integer, default=0)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     # JSON: {"German": "B1", "Spanish": "A2", ...} — CEFR per language

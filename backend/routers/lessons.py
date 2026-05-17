@@ -65,10 +65,13 @@ def _create_flashcards_from_vocab(db, vocabulary, user_id, target_language, cefr
 router = APIRouter()
 
 
-def _calculate_streak(db: Session, user_id: int) -> int:
-    """Calculate consecutive days with at least one completed lesson, ending today or yesterday."""
+def _calculate_streak(db: Session, user_id: int, freezes_available: int = 0) -> tuple[int, int]:
+    """Calculate consecutive days with at least one completed lesson.
+
+    Uses streak freezes to bridge single-day gaps (1 missed day = 1 freeze).
+    Returns (streak_length, freezes_remaining).
+    """
     from sqlalchemy import func
-    # Get distinct dates with completed lessons, most recent first
     dates = db.query(func.date(Lesson.completed_at)).filter(
         Lesson.user_id == user_id,
         Lesson.is_completed == True,
@@ -76,23 +79,34 @@ def _calculate_streak(db: Session, user_id: int) -> int:
     ).distinct().order_by(func.date(Lesson.completed_at).desc()).all()
 
     if not dates:
-        return 0
+        return 0, freezes_available
 
     date_list = [d[0] for d in dates]
     today = date.today()
 
-    # If most recent completion is more than 1 day ago, streak is broken
-    if (today - date_list[0]).days > 1:
-        return 0
+    # Count freezes needed to connect today to the most recent lesson
+    freezes_used = 0
+    gap_to_today = (today - date_list[0]).days
+    if gap_to_today > 1:
+        needed = gap_to_today - 1  # missed days between today and last lesson
+        if needed > freezes_available:
+            return 0, freezes_available
+        freezes_used = needed
 
-    # Count consecutive days backwards from most recent
+    # Count consecutive days backwards, using freezes for gaps
     streak = 1
+    remaining_freezes = freezes_available - freezes_used
     for i in range(1, len(date_list)):
-        if (date_list[i - 1] - date_list[i]).days == 1:
+        gap = (date_list[i - 1] - date_list[i]).days
+        if gap == 1:
             streak += 1
+        elif gap == 2 and remaining_freezes > 0:
+            remaining_freezes -= 1
+            streak += 2  # missed day + current date
         else:
             break
-    return streak
+
+    return streak, remaining_freezes
 
 
 def get_day_number(user: User, db: Session = None, language: str = None) -> int:
@@ -347,8 +361,10 @@ async def complete_lesson(
             user = db.query(User).filter(User.id == request.user_id).first()
             if user:
                 user.total_xp += 25  # 25 XP for completing a lesson
-                # Update streak — consecutive days with at least one completed lesson
-                user.streak_days = _calculate_streak(db, user.id)
+                # Update streak — consecutive days with at least one completed lesson (with freeze support)
+                streak, freezes_left = _calculate_streak(db, user.id, user.streak_freezes)
+                user.streak_days = streak
+                user.streak_freezes = freezes_left
 
         db.commit()
 

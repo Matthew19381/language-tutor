@@ -52,17 +52,9 @@ async def get_stats(user_id: int, db: Session = Depends(get_db)):
     now = datetime.now(timezone.utc)
     due_flashcards = [f for f in flashcards if f.next_review_date and f.next_review_date <= now]
 
-    # Calculate streaks
-    streak = 0
-    if completed_lessons:
-        lesson_dates = sorted(set(l.completed_at.date() for l in completed_lessons if l.completed_at))
-        if lesson_dates:
-            streak = 1
-            for i in range(len(lesson_dates) - 1, 0, -1):
-                if (lesson_dates[i] - lesson_dates[i - 1]).days == 1:
-                    streak += 1
-                else:
-                    break
+    # Calculate streaks (with freeze support)
+    from backend.routers.lessons import _calculate_streak
+    streak, freezes_left = _calculate_streak(db, user_id, user.streak_freezes)
 
     # Calculate error categories with examples
     error_categories = {}
@@ -126,6 +118,7 @@ async def get_stats(user_id: int, db: Session = Depends(get_db)):
             "target_language": user.target_language,
             "cefr_level": user.cefr_level,
             "streak_days": streak,
+            "streak_freezes": freezes_left,
             "total_xp": user.total_xp,
             "member_since": user.created_at.strftime("%B %d, %Y") if user.created_at else "Unknown"
         },
