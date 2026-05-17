@@ -33,7 +33,29 @@ services:
       - backend
     restart: unless-stopped
 
+  # Daily DB backup (runs at 3 AM daily, keeps 7 days)
+  backup:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        while true; do
+          echo "[backup] Running daily backup..."
+          python -m backend.services.backup_service
+          echo "[backup] Done. Sleeping 24h..."
+          sleep 86400
+        done
+    volumes:
+      - lingua_ai_db:/app/backend:ro
+      - lingua_ai_backups:/app/backups
+    restart: unless-stopped
+    depends_on:
+      - backend
+
 volumes:
   lingua_ai_db:
   lingua_ai_audio:
   lingua_ai_exports:
+  lingua_ai_backups:

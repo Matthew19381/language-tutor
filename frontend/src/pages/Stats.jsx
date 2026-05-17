@@ -23,7 +23,7 @@ export default function Stats() {
   const [languageMsg, setLanguageMsg] = useState('')
   const [languageProfiles, setLanguageProfiles] = useState(null)
   const [voiceChatPrompt, setvoiceChatPrompt] = useState(null)
-  const [voiceChatLoading, setvoiceChatLoading] = useState(false)
+  const [voiceChatLoading, setVoiceChatLoading] = useState(false)
   const [manualAnkiDone, setManualAnkiDone] = useState(() => {
     const today = new Date().toISOString().slice(0, 10)
     return localStorage.getItem('manual_anki_date') === today

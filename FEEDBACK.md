@@ -117,7 +117,7 @@
 
 ### Next steps (from TASKS Backlog)
 1. Rename project folder to ASCII-only path (permanent fix)
-2. Build production frontend container (nginx) for Docker
+2. ~~Build production frontend container (nginx) for Docker~~ ✅ (Dockerfile.frontend + Dockerfile.backend + docker-compose.yml)
 3. Implement automated test suite (pytest + Playwright)
-4. Daily DB backup automation
+4. ~~Daily DB backup automation~~ ✅ (backup_service.py + docker-compose backup service + admin API)
 5. User documentation (Getting Started guide)
