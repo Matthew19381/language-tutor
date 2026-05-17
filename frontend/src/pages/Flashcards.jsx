@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Brain, ChevronLeft, ChevronRight, Download, Eye,
@@ -38,20 +38,25 @@ export default function Flashcards() {
   const [aiPreview, setAiPreview] = useState(null)
   const [reversed, setReversed] = useState(false) // PL→target instead of target→PL
   const [exportError, setExportError] = useState('')
+  const [addLoading, setAddLoading] = useState(false)
+  const [allTotal, setAllTotal] = useState(0)
+  const [page, setPage] = useState(0)
+  const PAGE_SIZE = 50
 
   useEffect(() => {
     if (!userId) { navigate('/placement'); return }
     loadCards()
   }, [userId])
 
-  const loadCards = async () => {
+  const loadCards = async (p = page) => {
     setLoading(true)
     try {
       const [all, due] = await Promise.all([
-        getFlashcards(userId),
+        getFlashcards(userId, { limit: PAGE_SIZE, offset: p * PAGE_SIZE }),
         getDueFlashcards(userId)
       ])
       setAllCards(all.flashcards || [])
+      setAllTotal(all.total || 0)
       setDueCards(due.due_cards || [])
     } catch (e) {}
     finally { setLoading(false) }
@@ -79,34 +84,49 @@ export default function Flashcards() {
   const displayCards = filterCards(tab === TABS.DUE ? dueCards : allCards)
   const currentCard = displayCards[currentIndex]
 
-  const handleFlip = () => setIsFlipped(!isFlipped)
+  // Use refs to avoid stale closures in keyboard handler
+  const stateRef = useRef({ currentCard, isFlipped, currentIndex, displayCards, tab })
+  useEffect(() => {
+    stateRef.current = { currentCard, isFlipped, currentIndex, displayCards, tab }
+  }, [currentCard, isFlipped, currentIndex, displayCards, tab])
 
-  const handleNext = () => {
+  const handleFlip = useCallback(() => {
+    const { isFlipped: flipped } = stateRef.current
+    setIsFlipped(!flipped)
+  }, [])
+
+  const handleNext = useCallback(() => {
     setIsFlipped(false)
-    setCurrentIndex(i => Math.min(i + 1, displayCards.length - 1))
-  }
+    setCurrentIndex(i => {
+      const maxIdx = stateRef.current.displayCards.length - 1
+      return Math.min(i + 1, maxIdx)
+    })
+  }, [])
 
-  const handlePrev = () => {
+  const handlePrev = useCallback(() => {
     setIsFlipped(false)
     setCurrentIndex(i => Math.max(0, i - 1))
-  }
+  }, [])
 
-  const handleReview = async (rating) => {
-    if (!currentCard) return
+  const handleReview = useCallback(async (rating) => {
+    const { currentCard: card, currentIndex: idx, displayCards: cards } = stateRef.current
+    if (!card) return
     try {
-      await reviewFlashcard(currentCard.id, rating, userId)
-      setReviewDone(prev => new Set([...prev, currentCard.id]))
-      if (currentIndex < displayCards.length - 1) {
-        handleNext()
+      await reviewFlashcard(card.id, rating, userId)
+      setReviewDone(prev => new Set([...prev, card.id]))
+      if (idx < cards.length - 1) {
+        setIsFlipped(false)
+        setCurrentIndex(i => Math.min(i + 1, cards.length - 1))
       }
     } catch (e) {}
-  }
+  }, [userId])
 
   // Keyboard navigation: Space/Enter = flip, 1-4 = review rating, ←/→ = prev/next
   useEffect(() => {
     const onKey = (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
-      if (!currentCard) return
+      const { currentCard: card } = stateRef.current
+      if (!card) return
       if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); handleFlip() }
       else if (e.key === 'ArrowRight') handleNext()
       else if (e.key === 'ArrowLeft') handlePrev()
@@ -117,7 +137,7 @@ export default function Flashcards() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [currentCard, isFlipped, currentIndex, displayCards.length, tab])
+  }, [handleFlip, handleNext, handlePrev, handleReview])
 
   const handleExport = async () => {
     setExporting(true)
@@ -140,7 +160,9 @@ export default function Flashcards() {
   }
 
   const handleAddCard = async () => {
-    if (!newWord || !newTranslation) return
+    if (!newWord || !newTranslation || addLoading) return
+    setAddLoading(true)
+    setAddMsg('')
     try {
       const res = await addFlashcard(userId, {
         word: newWord,
@@ -158,6 +180,8 @@ export default function Flashcards() {
       }
     } catch (e) {
       setAddMsg('Error: ' + e.message)
+    } finally {
+      setAddLoading(false)
     }
   }
 
@@ -204,7 +228,7 @@ export default function Flashcards() {
                 ? 'bg-indigo-600 text-white'
                 : 'bg-gray-800 text-gray-400 hover:text-gray-100'
             }`}
-            onClick={() => { setTab(key); setCurrentIndex(0); setIsFlipped(false) }}
+            onClick={() => { setTab(key); setCurrentIndex(0); setIsFlipped(false); if (key === TABS.ALL) { setPage(0); loadCards(0); } }}
           >
             {icon}{label}
           </button>
@@ -443,6 +467,30 @@ export default function Flashcards() {
               </div>
             </div>
           )}
+
+          {/* Pagination (All tab only, server-side) */}
+          {tab === TABS.ALL && allTotal > PAGE_SIZE && (
+            <div className="flex items-center justify-center gap-3 mt-4">
+              <button
+                className="btn-secondary text-sm px-3 py-1.5 disabled:opacity-40"
+                disabled={page === 0}
+                onClick={() => { const p = page - 1; setPage(p); setCurrentIndex(0); loadCards(p) }}
+              >
+                ← {t('flash.prevPage') || 'Poprzednia'}
+              </button>
+              <span className="text-gray-400 text-sm">
+                {t('flash.page') || 'Strona'} {page + 1} / {Math.ceil(allTotal / PAGE_SIZE)}
+                <span className="text-gray-600 ml-2">({allTotal} {t('flash.total') || 'łącznie'})</span>
+              </span>
+              <button
+                className="btn-secondary text-sm px-3 py-1.5 disabled:opacity-40"
+                disabled={(page + 1) * PAGE_SIZE >= allTotal}
+                onClick={() => { const p = page + 1; setPage(p); setCurrentIndex(0); loadCards(p) }}
+              >
+                {t('flash.nextPage') || 'Następna'} →
+              </button>
+            </div>
+          )}
         </>
       )}
 
@@ -548,9 +596,9 @@ export default function Flashcards() {
                 <button
                   className="btn-secondary w-full text-sm"
                   onClick={handleAddCard}
-                  disabled={!newWord || !newTranslation}
+                  disabled={!newWord || !newTranslation || addLoading}
                 >
-                  {t('flash.addButton')}
+                  {addLoading ? t('flash.adding') || 'Dodawanie...' : t('flash.addButton')}
                 </button>
               </div>
             </div>

@@ -21,22 +21,22 @@ function App() {
     <ErrorBoundary>
       <Routes>
         <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path="lesson" element={<DailyLesson />} />
-          <Route path="lesson/history" element={<LessonHistory />} />
-          <Route path="lesson/:lessonId" element={<DailyLesson />} />
-          <Route path="test" element={<DailyTest />} />
-          <Route path="flashcards" element={<Flashcards />} />
-          <Route path="conversation" element={<Conversation />} />
-          <Route path="stats" element={<Stats />} />
-          <Route path="quickmode" element={<QuickMode />} />
-          <Route path="news" element={<News />} />
-          <Route path="pronunciation" element={<PronunciationTrainer />} />
-          <Route path="videos" element={<Videos />} />
-          <Route path="errors" element={<ErrorReview />} />
-          <Route path="topics" element={<TopicsPage />} />
+          <Route index element={<ErrorBoundary><Home /></ErrorBoundary>} />
+          <Route path="lesson" element={<ErrorBoundary><DailyLesson /></ErrorBoundary>} />
+          <Route path="lesson/history" element={<ErrorBoundary><LessonHistory /></ErrorBoundary>} />
+          <Route path="lesson/:lessonId" element={<ErrorBoundary><DailyLesson /></ErrorBoundary>} />
+          <Route path="test" element={<ErrorBoundary><DailyTest /></ErrorBoundary>} />
+          <Route path="flashcards" element={<ErrorBoundary><Flashcards /></ErrorBoundary>} />
+          <Route path="conversation" element={<ErrorBoundary><Conversation /></ErrorBoundary>} />
+          <Route path="stats" element={<ErrorBoundary><Stats /></ErrorBoundary>} />
+          <Route path="quickmode" element={<ErrorBoundary><QuickMode /></ErrorBoundary>} />
+          <Route path="news" element={<ErrorBoundary><News /></ErrorBoundary>} />
+          <Route path="pronunciation" element={<ErrorBoundary><PronunciationTrainer /></ErrorBoundary>} />
+          <Route path="videos" element={<ErrorBoundary><Videos /></ErrorBoundary>} />
+          <Route path="errors" element={<ErrorBoundary><ErrorReview /></ErrorBoundary>} />
+          <Route path="topics" element={<ErrorBoundary><TopicsPage /></ErrorBoundary>} />
         </Route>
-        <Route path="/placement" element={<PlacementTest />} />
+        <Route path="/placement" element={<ErrorBoundary><PlacementTest /></ErrorBoundary>} />
       </Routes>
     </ErrorBoundary>
   )

@@ -99,6 +99,7 @@ export default function DailyLesson() {
   const [generatingNext, setGeneratingNext] = useState(false)
   const [conceptsLoading, setConceptsLoading] = useState(false)
   const [conceptsMsg, setConceptsMsg] = useState('')
+  const [exportError, setExportError] = useState('')
   const navigate = useNavigate()
   const userId = getUserId()
   const { t } = useLanguage()
@@ -250,7 +251,8 @@ export default function DailyLesson() {
       link.click()
       URL.revokeObjectURL(url)
     } catch (e) {
-      console.error('Audio package download failed:', e)
+      setExportError(t('lesson.audioDownloadError') || 'Nie udało się pobrać pakietu audio. Spróbuj ponownie.')
+      setTimeout(() => setExportError(''), 5000)
     } finally {
       setAudioPackageLoading(false)
     }
@@ -270,7 +272,8 @@ export default function DailyLesson() {
       link.click()
       URL.revokeObjectURL(url)
     } catch (e) {
-      console.error('PDF download failed:', e)
+      setExportError(t('lesson.pdfDownloadError') || 'Nie udało się pobrać PDF. Spróbuj ponownie.')
+      setTimeout(() => setExportError(''), 5000)
     } finally {
       setPdfLoading(false)
     }
@@ -300,7 +303,8 @@ export default function DailyLesson() {
         URL.revokeObjectURL(url)
       }
     } catch (e) {
-      console.error('Obsidian export failed:', e)
+      setExportError(t('lesson.obsidianExportError') || 'Nie udało się wyeksportować do Obsidian. Spróbuj ponownie.')
+      setTimeout(() => setExportError(''), 5000)
     } finally {
       setObsidianLoading(false)
     }
@@ -931,6 +935,11 @@ export default function DailyLesson() {
       {flashToast && (
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-emerald-700 text-white px-4 py-2 rounded-xl shadow-lg text-sm font-medium animate-fade-in">
           {flashToast}
+        </div>
+      )}
+      {exportError && (
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-red-700 text-white px-4 py-2 rounded-xl shadow-lg text-sm font-medium animate-fade-in">
+          {exportError}
         </div>
       )}
     </div>

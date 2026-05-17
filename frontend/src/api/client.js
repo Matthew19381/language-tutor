@@ -103,8 +103,8 @@ export const getTestFromErrors = (userId) =>
 
 // ===== Flashcards =====
 
-export const getFlashcards = (userId) =>
-  api.get(`/flashcards/${userId}`)
+export const getFlashcards = (userId, params = {}) =>
+  api.get(`/flashcards/${userId}`, { params })
 
 export const getDueFlashcards = (userId) =>
   api.get(`/flashcards/${userId}/due`)

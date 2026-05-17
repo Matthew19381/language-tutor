@@ -27,6 +27,8 @@ router = APIRouter()
 async def get_flashcards(
     user_id: int,
     active_only: bool = True,
+    limit: int = 200,
+    offset: int = 0,
     db: Session = Depends(get_db)
 ):
     user = get_user_or_404(db, user_id)
@@ -38,7 +40,8 @@ async def get_flashcards(
     if active_only:
         query = query.filter(Flashcard.is_active == True)
 
-    flashcards = query.order_by(Flashcard.created_at.desc()).all()
+    total = query.count()
+    flashcards = query.order_by(Flashcard.created_at.desc()).offset(offset).limit(limit).all()
 
     return {
         "flashcards": [
@@ -65,7 +68,7 @@ async def get_flashcards(
             }
             for f in flashcards
         ],
-        "total": len(flashcards)
+        "total": total
     }
 
 
