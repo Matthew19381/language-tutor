@@ -137,8 +137,9 @@ def test_ask_question(client, sample_user):
         assert "answer" in data
 
 
-def test_translate_word(client):
+def test_translate_word(client, sample_user):
     """Translate word returns translation only."""
+    uid = sample_user["user_id"]
     with patch(
         "backend.routers.conversation._ai_translate",
         return_value="Hallo"
@@ -146,7 +147,8 @@ def test_translate_word(client):
         r = client.post("/api/conversation/translate", json={
             "from_lang": "German",
             "to_lang": "English",
-            "text": "Hallo"
+            "text": "Hallo",
+            "user_id": uid,
         })
         assert r.status_code == 200
         data = r.json()

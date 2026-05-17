@@ -189,7 +189,7 @@ function TranslatorWidget({ userId, targetLanguage }) {
         const res = await askQuestion(prompt, userId)
         setResult(res.answer || '')
       } else {
-        const res = await translateWord(t, fromLang, toLang)
+        const res = await translateWord(t, fromLang, toLang, userId)
         setResult(res.translation || '')
       }
     } catch {

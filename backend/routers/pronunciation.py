@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from backend.database import get_db
 from backend.models.user import User
+from backend.utils import get_user_or_404
 
 try:
     from backend.services.pronunciation_service import transcribe_audio, score_pronunciation
@@ -27,9 +28,7 @@ async def analyze_pronunciation(
     """Transcribe uploaded audio and compare to target_text. Returns pronunciation score."""
     if not PRONUNCIATION_AVAILABLE:
         raise HTTPException(status_code=503, detail="Pronunciation service unavailable: faster-whisper not installed.")
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = get_user_or_404(db, user_id)
 
     # Limit audio upload to 10 MB to prevent memory exhaustion
     MAX_AUDIO_SIZE = 10 * 1024 * 1024  # 10 MB
@@ -77,9 +76,7 @@ async def get_practice_phrases(user_id: int, db: Session = Depends(get_db)):
     import json
     from datetime import datetime, date, timedelta, timezone
 
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = get_user_or_404(db, user_id)
 
     # Get phrases from last 7 days of lessons (filtered by language)
     week_ago = datetime.now(timezone.utc) - timedelta(days=7)

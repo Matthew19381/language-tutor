@@ -82,6 +82,10 @@ def _card_from_state(
     now = datetime.now(timezone.utc)
     state_enum = _NAME_TO_STATE.get(state, State.Learning)
 
+    # Ensure last_review is timezone-aware (SQLite may store naive datetimes)
+    if last_review and last_review.tzinfo is None:
+        last_review = last_review.replace(tzinfo=timezone.utc)
+
     data = {
         "card_id": 0,
         "state": state_enum.value,

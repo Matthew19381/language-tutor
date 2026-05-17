@@ -11,6 +11,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from backend.database import get_db
 from backend.models.user import User
+from backend.utils import get_user_or_404
 from backend.models.lesson import Lesson
 from backend.models.test_result import TestResult
 from backend.models.flashcard import Flashcard
@@ -28,9 +29,7 @@ def calculate_level(xp: int) -> dict:
 
 @router.get("/api/stats/{user_id}")
 async def get_stats(user_id: int, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = get_user_or_404(db, user_id)
 
     # Get lesson stats (filter by current target language)
     all_lessons = db.query(Lesson).filter(
@@ -157,9 +156,7 @@ async def get_stats(user_id: int, db: Session = Depends(get_db)):
 
 @router.get("/api/tips/{user_id}")
 async def get_daily_tips(user_id: int, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = get_user_or_404(db, user_id)
 
     try:
         tips = await generate_daily_tips(
@@ -185,9 +182,7 @@ async def get_daily_tips(user_id: int, db: Session = Depends(get_db)):
 @router.get("/api/stats/{user_id}/leaderboard")
 async def get_leaderboard_position(user_id: int, db: Session = Depends(get_db)):
     """Get the user's position among all users by XP."""
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = get_user_or_404(db, user_id)
 
     # Get top 5 users by XP (efficient — only loads 5 rows)
     top_users = db.query(User).order_by(User.total_xp.desc()).limit(5).all()
@@ -214,9 +209,7 @@ async def get_leaderboard_position(user_id: int, db: Session = Depends(get_db)):
 
 @router.get("/api/stats/{user_id}/export-csv")
 async def export_progress_csv(user_id: int, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = get_user_or_404(db, user_id)
 
     lessons = db.query(Lesson).filter(Lesson.user_id == user_id).order_by(Lesson.created_at.asc()).all()
     test_results = db.query(TestResult).filter(TestResult.user_id == user_id).order_by(TestResult.created_at.asc()).all()
@@ -281,9 +274,7 @@ async def export_progress_csv(user_id: int, db: Session = Depends(get_db)):
 @router.get("/api/stats/{user_id}/errors")
 async def get_all_errors(user_id: int, db: Session = Depends(get_db)):
     """Return all test errors for the user, grouped by type, for the error review page."""
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = get_user_or_404(db, user_id)
 
     test_results = db.query(TestResult).filter(
         TestResult.user_id == user_id,

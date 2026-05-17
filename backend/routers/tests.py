@@ -7,6 +7,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from backend.database import get_db
 from backend.models.user import User
+from backend.utils import get_user_or_404
 from backend.models.lesson import Lesson
 from backend.models.test_result import TestResult
 from backend.models.study_plan import StudyPlan
@@ -24,9 +25,7 @@ router = APIRouter()
 
 @router.get("/api/tests/daily/{user_id}")
 async def get_daily_test(user_id: int, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = get_user_or_404(db, user_id)
 
     # Find today's lesson for the user's current language
     today_start = datetime.combine(date.today(), datetime.min.time())
@@ -105,9 +104,7 @@ async def submit_test_answers(
 async def get_errors_test(user_id: int, db: Session = Depends(get_db)):
     """Generate a test targeting the user's past error patterns."""
     from backend.services.lesson_generator import generate_errors_test
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = get_user_or_404(db, user_id)
 
     # Get recent errors from test results
     from backend.models.test_result import TestResult
@@ -156,9 +153,7 @@ async def get_weekly_test(
     week: Optional[int] = None,
     db: Session = Depends(get_db)
 ):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = get_user_or_404(db, user_id)
 
     if week is None:
         # Calculate current week number
@@ -190,9 +185,7 @@ async def get_history(
     limit: Optional[int] = 20,
     db: Session = Depends(get_db)
 ):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = get_user_or_404(db, user_id)
 
     history = get_test_history(user_id, db, limit)
 

@@ -255,7 +255,7 @@ function ClickableText({ text, userId, language }) {
     if (translations[idx] || loadingTrans[idx]) return
     setLoadingTrans(prev => ({ ...prev, [idx]: true }))
     try {
-      const res = await translateWord(sentence, language, 'Polish')
+      const res = await translateWord(sentence, language, 'Polish', userId)
       setTranslations(prev => ({ ...prev, [idx]: res.translation }))
     } catch {
       setTranslations(prev => ({ ...prev, [idx]: '—' }))

@@ -255,3 +255,20 @@ class TestBackupAPIEndpoints:
         """POST /api/admin/backup without key returns 422 (missing required header)."""
         r = client.post("/api/admin/backup")
         assert r.status_code == 422
+
+    def test_restore_backup_not_found(self, client):
+        """POST /api/admin/restore with nonexistent file returns 404."""
+        r = client.post("/api/admin/restore?backup_filename=nonexistent.db",
+                        headers={"X-Admin-Key": "test-key"})
+        assert r.status_code == 404
+
+    def test_restore_backup_requires_auth(self, client):
+        """POST /api/admin/restore without key returns 422."""
+        r = client.post("/api/admin/restore?backup_filename=test.db")
+        assert r.status_code == 422
+
+    def test_restore_backup_wrong_key(self, client):
+        """POST /api/admin/restore with wrong key returns 403."""
+        r = client.post("/api/admin/restore?backup_filename=test.db",
+                        headers={"X-Admin-Key": "wrong-key"})
+        assert r.status_code == 403

@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from backend.database import get_db
 from backend.models.user import User
+from backend.utils import get_user_or_404
 from backend.models.lesson import Lesson
 from backend.models.test_result import TestResult
 
@@ -15,9 +16,7 @@ router = APIRouter()
 @router.get("/api/quickmode/{user_id}")
 async def get_quickmode_plan(user_id: int, db: Session = Depends(get_db)):
     """Return a prioritized 15-minute daily activity list."""
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = get_user_or_404(db, user_id)
 
     activities = []
 

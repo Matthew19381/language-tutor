@@ -1,5 +1,5 @@
 """Pydantic schemas for conversation router."""
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List
 
 
@@ -9,7 +9,7 @@ class StartConversationRequest(BaseModel):
 
 class MessageRequest(BaseModel):
     session_id: str
-    user_message: str
+    user_message: str = Field(..., max_length=2000)
     user_id: int
 
 
@@ -19,16 +19,17 @@ class AnalyzeRequest(BaseModel):
 
 
 class QuestionRequest(BaseModel):
-    question: str
+    question: str = Field(..., max_length=500)
     user_id: Optional[int] = None
 
 
 class AnalyzePastedRequest(BaseModel):
     user_id: int
-    pasted_text: str
+    pasted_text: str = Field(..., max_length=5000)
 
 
 class TranslateRequest(BaseModel):
-    text: str
+    text: str = Field(..., max_length=200)
     from_lang: str
     to_lang: str
+    user_id: int

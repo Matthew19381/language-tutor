@@ -8,6 +8,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from backend.database import get_db
 from backend.models.user import User
+from backend.utils import get_user_or_404
 from backend.models.flashcard import Flashcard
 from backend.schemas.flashcard import (
     ReviewFlashcardRequest,
@@ -28,9 +29,7 @@ async def get_flashcards(
     active_only: bool = True,
     db: Session = Depends(get_db)
 ):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = get_user_or_404(db, user_id)
 
     query = db.query(Flashcard).filter(
         Flashcard.user_id == user_id,
@@ -72,9 +71,7 @@ async def get_flashcards(
 
 @router.get("/api/flashcards/{user_id}/due")
 async def get_due_flashcards(user_id: int, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = get_user_or_404(db, user_id)
 
     now = datetime.now(timezone.utc)
     due_cards = db.query(Flashcard).filter(
@@ -163,9 +160,7 @@ async def review_flashcard(
 
 @router.post("/api/flashcards/{user_id}/export-anki")
 async def export_anki(user_id: int, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = get_user_or_404(db, user_id)
 
     flashcards = db.query(Flashcard).filter(
         Flashcard.user_id == user_id,
@@ -228,9 +223,7 @@ async def add_flashcard(
     request: AddFlashcardRequest,
     db: Session = Depends(get_db)
 ):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = get_user_or_404(db, user_id)
 
     # Check for duplicate (per language)
     existing = db.query(Flashcard).filter(
@@ -273,9 +266,7 @@ async def add_flashcard_ai(
     request: AddFlashcardAIRequest,
     db: Session = Depends(get_db)
 ):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = get_user_or_404(db, user_id)
 
     # Check for duplicate (per language)
     existing = db.query(Flashcard).filter(

@@ -113,13 +113,19 @@ class Topic(Base):
         """Check if topic is due for review."""
         if self.next_review_date is None:
             return True  # never reviewed = due
-        return datetime.now(timezone.utc) >= self.next_review_date
+        review_date = self.next_review_date
+        if review_date.tzinfo is None:
+            review_date = review_date.replace(tzinfo=timezone.utc)
+        return datetime.now(timezone.utc) >= review_date
 
     def days_until_review(self) -> int:
         """Days until next review (negative = overdue)."""
         if self.next_review_date is None:
             return 0
-        delta = (self.next_review_date - datetime.now(timezone.utc)).days
+        review_date = self.next_review_date
+        if review_date.tzinfo is None:
+            review_date = review_date.replace(tzinfo=timezone.utc)
+        delta = (review_date - datetime.now(timezone.utc)).days
         return delta
 
     def apply_fsrs(self, rating: int) -> None:

@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 from backend.database import get_db
 from backend.models.user import User
+from backend.utils import get_user_or_404
 from backend.models.test_result import TestResult
 from backend.models.lesson import Lesson
 from backend.models.conversation_session import ConversationSession
@@ -49,9 +50,7 @@ async def start_conversation(
     request: StartConversationRequest,
     db: Session = Depends(get_db)
 ):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = get_user_or_404(db, user_id)
 
     # Get recent errors to incorporate
     recent_tests = db.query(TestResult).filter(
@@ -302,8 +301,12 @@ async def _ai_translate(prompt: str) -> str:
 
 
 @router.post("/api/conversation/translate")
-async def translate_word(request: TranslateRequest):
+async def translate_word(request: TranslateRequest, db: Session = Depends(get_db)):
     """Translate a word or short phrase. Returns only the translation, no explanation."""
+    user = db.query(User).filter(User.id == request.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
     prompt = (
         f'Translate from {request.from_lang} to {request.to_lang}: "{request.text}"\n'
         f'Reply with the translation ONLY. No explanations, no alternatives, no context.'
@@ -360,6 +363,9 @@ async def analyze_pasted_text(
         return {"success": True, **analysis}
     except HTTPException:
         raise
+    except httpx.RequestError as e:
+        logger.error(f"AI service error analyzing pasted text: {e}")
+        raise HTTPException(status_code=503, detail="AI service unavailable")
     except Exception as e:
-        logger.error(f"Error analyzing pasted text: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Unexpected error analyzing pasted text")
+        raise HTTPException(status_code=500, detail="Failed to analyze text")

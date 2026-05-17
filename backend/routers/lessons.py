@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from backend.database import get_db
 from backend.models.user import User
+from backend.utils import get_user_or_404
 from backend.models.lesson import Lesson
 from backend.models.study_plan import StudyPlan
 from backend.models.test_result import TestResult
@@ -101,9 +102,7 @@ def get_recent_errors(user_id: int, db: Session, limit: int = 10) -> list:
 
 @router.get("/api/lessons/today/{user_id}")
 async def get_today_lesson(user_id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = get_user_or_404(db, user_id)
 
     # Check if today's lesson already exists for this language
     from sqlalchemy import func
@@ -563,12 +562,11 @@ async def download_lesson_audio_package(lesson_id: int, user_id: int, db: Sessio
 
 @router.get("/api/lessons/list/{user_id}")
 async def list_lessons(user_id: int, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = get_user_or_404(db, user_id)
 
     lessons = db.query(Lesson).filter(
-        Lesson.user_id == user_id
+        Lesson.user_id == user_id,
+        Lesson.language == user.target_language
     ).order_by(Lesson.day_number.asc()).all()
 
     return {
@@ -592,9 +590,7 @@ async def list_lessons(user_id: int, db: Session = Depends(get_db)):
 @router.get("/api/lessons/history/{user_id}")
 async def get_lesson_history(user_id: int, db: Session = Depends(get_db)):
     """Return all lessons for a user ordered by day_number desc, with best test score per day."""
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = get_user_or_404(db, user_id)
 
     lessons = db.query(Lesson).filter(
         Lesson.user_id == user_id,
@@ -641,9 +637,7 @@ async def get_lesson_history(user_id: int, db: Session = Depends(get_db)):
 @router.post("/api/lessons/next/{user_id}")
 async def generate_next_lesson(user_id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     """Generate the NEXT lesson (max day_number + 1) without deleting the current one."""
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = get_user_or_404(db, user_id)
 
     # Get active study plan
     study_plan = db.query(StudyPlan).filter(
@@ -820,9 +814,7 @@ async def record_exercise_error(
 @router.delete("/api/lessons/reset-today/{user_id}")
 async def reset_today_lesson(user_id: int, db: Session = Depends(get_db)):
     """Delete today's lesson so it gets regenerated on next visit."""
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = get_user_or_404(db, user_id)
     today_start = datetime.combine(date.today(), datetime.min.time())
     deleted = db.query(Lesson).filter(
         Lesson.user_id == user_id,
@@ -927,9 +919,7 @@ Return JSON:
 @router.get("/api/lessons/latest/{user_id}/concepts")
 async def get_lesson_concepts(user_id: int, db: Session = Depends(get_db)):
     """Generate grammar concepts from the latest lesson and return them (without saving to flashcards)."""
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = get_user_or_404(db, user_id)
 
     lesson = db.query(Lesson).filter(
         Lesson.user_id == user_id,
@@ -977,9 +967,7 @@ Return JSON:
 
 @router.get("/api/lessons/study-plan/{user_id}")
 async def get_study_plan(user_id: int, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = get_user_or_404(db, user_id)
 
     active_plan = db.query(StudyPlan).filter(
         StudyPlan.user_id == user_id,

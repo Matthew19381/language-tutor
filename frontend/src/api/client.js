@@ -147,8 +147,8 @@ export const sendVoiceText = (userId, message, language) =>
 export const askQuestion = (question, userId) =>
   api.post('/conversation/question', { question, user_id: userId })
 
-export const translateWord = (text, fromLang, toLang) =>
-  api.post('/conversation/translate', { text, from_lang: fromLang, to_lang: toLang })
+export const translateWord = (text, fromLang, toLang, userId) =>
+  api.post('/conversation/translate', { text, from_lang: fromLang, to_lang: toLang, user_id: userId })
 
 // ===== Stats =====
 

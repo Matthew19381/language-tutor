@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from backend.database import get_db
 from backend.models.user import User
+from backend.utils import get_user_or_404
 from backend.models.lesson import Lesson
 from backend.config import settings
 from backend.services.gemini_service import generate_json
@@ -146,9 +147,7 @@ async def search_videos(
     include_polish: bool = Query(default=False, alias="include_polish"),
     db: Session = Depends(get_db)
 ):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = get_user_or_404(db, user_id)
 
     language = user.target_language
     cefr_level = user.cefr_level

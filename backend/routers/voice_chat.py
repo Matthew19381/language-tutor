@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import cast, Text
 from backend.database import get_db
 from backend.models.user import User
+from backend.utils import get_user_or_404
 from backend.models.lesson import Lesson
 from backend.models.flashcard import Flashcard
 from backend.models.test_result import TestResult
@@ -28,9 +29,7 @@ def generate_voice_chat_prompt(user_id: int, db: Session = Depends(get_db)):
     Generuj prompt dla Voice Chat/OpenRouter na podstawie dzisiejszej aktywności użytkownika.
     Prompt zawira: lekcję, błędy, słownictwo, plan nauki.
     """
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = get_user_or_404(db, user_id)
 
     today = date.today()
     language = user.target_language or "German"

@@ -12,6 +12,7 @@ from backend.schemas.placement import (
 from sqlalchemy.orm import Session
 from backend.database import get_db
 from backend.models.user import User
+from backend.utils import get_user_or_404
 from backend.models.test_result import TestResult
 from backend.models.study_plan import StudyPlan
 from backend.models.flashcard import Flashcard
@@ -218,9 +219,7 @@ async def create_user(
 
 @router.get("/api/placement/user/{user_id}")
 async def get_user(user_id: int, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = get_user_or_404(db, user_id)
 
     return {
         "user_id": user.id,
@@ -244,9 +243,7 @@ async def update_user_language(
     db: Session = Depends(get_db)
 ):
     import json as _json
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = get_user_or_404(db, user_id)
 
     new_lang = request.target_language
     if new_lang not in SUPPORTED_LANGUAGES:
@@ -295,9 +292,7 @@ async def update_user_language(
 async def get_language_profiles(user_id: int, db: Session = Depends(get_db)):
     """Return all language progress profiles for the user."""
     import json as _json
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = get_user_or_404(db, user_id)
 
     try:
         profiles = _json.loads(user.language_profiles or "{}")
