@@ -24,6 +24,10 @@ export default function Stats() {
   const [languageProfiles, setLanguageProfiles] = useState(null)
   const [voiceChatPrompt, setvoiceChatPrompt] = useState(null)
   const [voiceChatLoading, setvoiceChatLoading] = useState(false)
+  const [manualAnkiDone, setManualAnkiDone] = useState(() => {
+    const today = new Date().toISOString().slice(0, 10)
+    return localStorage.getItem('manual_anki_date') === today
+  })
   const navigate = useNavigate()
   const userId = getUserId()
   const { lang, setLang, t, targetLanguage } = useLanguage()
@@ -396,6 +400,26 @@ export default function Stats() {
               {t('stats.goToFlashcards') || 'PrzejdĹş do fiszek'}
             </Link>
           </div>
+          {/* Manual Anki review checkbox */}
+          <label className="flex items-center gap-2 mt-3 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={manualAnkiDone}
+              onChange={e => {
+                if (e.target.checked) {
+                  localStorage.setItem('manual_anki_date', new Date().toISOString().slice(0, 10))
+                  setManualAnkiDone(true)
+                } else {
+                  localStorage.removeItem('manual_anki_date')
+                  setManualAnkiDone(false)
+                }
+              }}
+              className="w-4 h-4 rounded border-gray-600 bg-gray-800 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-0 cursor-pointer accent-emerald-500"
+            />
+            <span className="text-sm text-gray-400">
+              {manualAnkiDone ? '✓ Powtórzone w Anki' : 'Powtórzone w Anki (ręczne)'}
+            </span>
+          </label>
         </div>
       )}
 

@@ -166,9 +166,9 @@ export default function QuickMode() {
 
       {/* Custom duration */}
       {!timerActive && secondsLeft === customMinutes * 60 && (
-        <div className="flex items-center justify-center gap-3 mb-4">
+        <div className="flex items-center justify-center gap-3 mb-4 flex-wrap">
           <span className="text-gray-400 text-sm">{t('quick.duration')}</span>
-          {[5, 10, 15, 20, 30].map(min => (
+          {[5, 10, 15, 20, 30, 45, 60].map(min => (
             <button
               key={min}
               onClick={() => {
@@ -183,6 +183,23 @@ export default function QuickMode() {
               {min} min
             </button>
           ))}
+          {/* Custom input */}
+          <div className="flex items-center gap-1">
+            <input
+              type="number"
+              min="1"
+              max="120"
+              value={customMinutes}
+              onChange={e => {
+                const v = Math.max(1, Math.min(120, parseInt(e.target.value) || 1))
+                setCustomMinutes(v)
+                setSecondsLeft(v * 60)
+                localStorage.setItem(STORAGE_KEY_DURATION, String(v))
+              }}
+              className="w-14 px-2 py-1 rounded bg-gray-800 border border-gray-700 text-gray-200 text-sm text-center focus:outline-none focus:border-emerald-500"
+            />
+            <span className="text-gray-500 text-xs">min</span>
+          </div>
         </div>
       )}
 

@@ -6,48 +6,56 @@ logger = logging.getLogger(__name__)
 
 @with_model("placement")
 async def generate_placement_test(language: str, native_language: str) -> dict:
-    prompt = f"""You are a strict certified {language} language examiner. Create a 30-question DIAGNOSTIC placement test for a native {native_language} speaker learning {language}.
+    prompt = f"""You are a strict certified {language} language examiner. Create a 20-question DIAGNOSTIC placement test for a native {native_language} speaker learning {language}.
 
-GOAL: Correctly distinguish between A1, A2, B1, B2, C1, C2 speakers. Most native {native_language} speakers with NO prior {language} knowledge should score at A1 level, NOT B1.
+GOAL: Correctly distinguish between A1, A2, B1, B2, C1, C2 speakers. Most native {native_language} speakers with NO prior {language} knowledge MUST score at A1 level.
 
 CRITICAL RULES:
-1. Questions must test KNOWLEDGE that requires actual study — not guessable by logic or similarity to {native_language}
-2. Do NOT use cognates or internationally recognizable words in correct answers
-3. Grammar questions must require knowledge of specific {language} grammatical rules
-4. A1 questions should be failed by someone with zero knowledge
-5. B1 questions should require at least 6+ months of study to answer
-6. fill_blank questions MUST have EXACTLY ONE blank (___) in the sentence. Never two or more gaps.
-7. translation questions: do NOT include both the {native_language} phrase AND its {language} translation in the same question — the answer must NOT be visible in the question text
-8. Do NOT give away the answer in the question text. The question must not contain the correct answer or any translation that makes the correct option obvious.
+1. Questions must test KNOWLEDGE that requires actual study — not guessable by logic, cognates, or similarity to {native_language} or English
+2. A1 questions should be IMPOSSIBLE to guess for someone with zero {language} knowledge — use grammar forms, not vocabulary recognition
+3. Do NOT use internationally recognizable words (hotel, taxi, radio, internet, restaurant) as correct answers — these are guessable
+4. Grammar questions must require knowledge of specific {language} grammatical rules (cases, conjugations, word order)
+5. B1 questions should require at least 6+ months of dedicated study
+6. fill_blank questions MUST have EXACTLY ONE blank (___) in the sentence
+7. translation questions: do NOT include the {language} translation anywhere in the question or options framing
+8. Distractor options must be plausible but clearly wrong to anyone who knows the rule
+9. For word_order: all options must use the SAME words, only order differs
+10. For correct_sentence: exactly 3 of 4 options must have a clear grammatical error
 
-QUESTION DISTRIBUTION (30 questions — do NOT deviate):
-- Q1-5: A1 — basic verb conjugation in present tense, gender of common nouns, basic word order SVO
-- Q6-10: A2 — accusative/dative case endings for articles, separable verbs, common irregular verbs in past tense (Perfekt)
-- Q11-17: B1 — Konjunktiv II (würde/wäre), subordinate clause word order (WEIL/DASS/OB), two-way prepositions (Wechselpräpositionen Dativ vs Akkusativ), Genitiv case
-- Q18-23: B2 — Passiv constructions (werden+Partizip II), indirect speech (Konjunktiv I), relative clauses with correct case, nominalized verbs
-- Q24-27: C1 — extended adjective phrases, stylistic register differences, advanced modal particle usage (DOCH/JA/HALT/SCHON with nuanced meanings)
-- Q28-30: C2 — subtle grammatical errors in formal text, pragmatic implicature, advanced stylistic choices
+QUESTION DISTRIBUTION (20 questions — do NOT deviate):
+- Q1-4: A1 — verb conjugation in present tense (sein/haben/regular verbs), gender of common nouns (der/die/das), basic SVO word order, simple negation (nicht/kein)
+- Q5-8: A2 — accusative/dative case endings for articles (den/dem), separable verbs in main clause, Perfekt with haben/sein, common prepositions with cases
+- Q9-13: B1 — Konjunktiv II (würde/wäre), subordinate clause word order (weil/dass/ob — verb at end), two-way prepositions (Wechselpräpositionen Dativ vs Akkusativ), Genitiv case, relative clauses
+- Q14-17: B2 — Passiv (werden+Partizip II), indirect speech (Konjunktiv I), complex relative clauses with correct case, nominalized verbs, N-Deklination
+- Q18-19: C1 — extended adjective phrases, stylistic register, advanced modal particles (doch/ja/halt/schon nuances)
+- Q20: C2 — subtle grammatical error detection in formal text, pragmatic implicature
 
-QUESTION TYPES (must vary — use all types):
-- fill_blank: A {language} sentence with a blank. Options are {language} word FORMS (e.g. "dem/den/des/der")
-- correct_sentence: Show 4 {language} sentences, only one is grammatically correct
-- word_order: Scrambled {language} words — pick the correctly ordered sentence
-- translation: A {native_language} phrase — pick the correct {language} translation from options
-- comprehension: A 3-4 sentence {language} text (no translation given), then a question in {native_language}
+QUESTION TYPES (must vary — use ALL types):
+- fill_blank: A {language} sentence with ONE blank. Options are {language} grammatical forms (e.g. "dem/den/des/der" or "bin/ist/sind/seid")
+- correct_sentence: 4 {language} sentences, only ONE grammatically correct, other 3 have clear errors
+- word_order: Scrambled {language} words — pick the correctly ordered sentence (all options same words)
+- translation: A {native_language} phrase — pick the correct {language} translation from 4 options
+- comprehension: A 2-3 sentence {language} text, question in {native_language} about the content
 
 MANDATORY LANGUAGE RULE:
 - {language} content (sentences, options for grammar questions) MUST stay in {language}
-- ONLY question framing ("Uzupełnij zdanie:", "Które zdanie jest poprawne?") is in {native_language}
+- ONLY question framing is in {native_language}
 - Answer options for comprehension questions may be in {native_language}
 
-GOOD EXAMPLE (fill_blank for A2 Akkusativ):
+GOOD EXAMPLE (fill_blank for A1 — verb conjugation):
+{{"question": "Uzupełnij zdanie: Ich ___ aus Polen.", "options": ["A. kommen", "B. komme", "C. kommt", "D. kommst"], "correct": "B", "points": 1, "cefr_hint": "A1"}}
+
+GOOD EXAMPLE (fill_blank for A2 — Akkusativ):
 {{"question": "Uzupełnij zdanie (biernik): Ich sehe ___ Mann auf der Straße.", "options": ["A. der", "B. den", "C. dem", "D. ein"], "correct": "B", "points": 1, "cefr_hint": "A2"}}
 
 GOOD EXAMPLE (word_order for B1):
-{{"question": "Ułóż słowa w poprawnej kolejności (zdanie podrzędne): weil / ich / müde / bin / heute", "options": ["A. weil ich heute müde bin", "B. weil bin ich heute müde", "C. weil ich bin heute müde", "D. weil heute ich müde bin"], "correct": "A", "points": 2, "cefr_hint": "B1"}}
+{{"question": "Ułóż słowa w poprawnej kolejności: weil / ich / müde / bin / heute", "options": ["A. weil ich heute müde bin", "B. weil bin ich heute müde", "C. weil ich bin heute müde", "D. weil heute ich müde bin"], "correct": "A", "points": 2, "cefr_hint": "B1"}}
 
-GOOD EXAMPLE (correct_sentence for B2 Passiv):
+GOOD EXAMPLE (correct_sentence for B2):
 {{"question": "Które zdanie jest gramatycznie poprawne (strona bierna)?", "options": ["A. Das Buch wurde von ihm gelesen.", "B. Das Buch ist von ihm gelesen worden.", "C. Das Buch wird von ihm gelesen gewesen.", "D. Das Buch hat von ihm gelesen werden."], "correct": "A", "points": 3, "cefr_hint": "B2"}}
+
+GOOD EXAMPLE (comprehension for A2):
+{{"question": "Anna kupiła wczoraj chleb i mleko. Poszła do sklepu rano, bo był pusty. Pytanie: Kiedy Anna poszła do sklepu?", "options": ["A. Wieczorem", "B. W południe", "C. Rano", "D. Wczoraj wieczorem"], "correct": "C", "points": 1, "cefr_hint": "A2"}}
 
 Return ONLY valid JSON:
 {{
@@ -142,26 +150,31 @@ Return JSON:
         return await generate_json(prompt)
     except Exception as e:
         logger.error(f"Error analyzing placement results: {e}")
-        # Calculate basic level from score — CONSERVATIVE: most beginners score A1-A2
-        if score < 30:
-            level = "A1"
-        elif score < 50:
-            level = "A2"
-        elif score < 65:
-            level = "B1"
-        elif score < 80:
-            level = "B2"
-        elif score < 90:
-            level = "C1"
+        # Calculate basic level from score — VERY CONSERVATIVE
+        # Most people with no knowledge score 5-15% (random guessing on 4-option MCQ = 25% max)
+        # A1: can answer basic grammar questions (30-50% of A1-level questions)
+        # To get B1, you need to actually know grammar rules — not guessable
+        if score < 20:
+            level = "A1"   # No knowledge or pure guessing (< 4/20 correct)
+        elif score < 40:
+            level = "A1"   # Some lucky guesses or minimal exposure (4-8/20)
+        elif score < 55:
+            level = "A2"   # Basic knowledge, some grammar rules known (9-11/20)
+        elif score < 70:
+            level = "B1"   # Solid grammar foundation (12-14/20)
+        elif score < 85:
+            level = "B2"   # Good command of grammar (15-17/20)
+        elif score < 95:
+            level = "C1"   # Advanced (18-19/20)
         else:
-            level = "C2"
+            level = "C2"   # Near perfect (20/20)
 
         return {
             "cefr_level": level,
             "score": score,
             "strong_areas": ["general knowledge"],
             "weak_areas": ["needs assessment"],
-            "recommendations": f"Based on your score of {score:.1f}%, you are at the {level} level. Continue practicing regularly."
+            "recommendations": f"Na podstawie wyniku {score:.1f}% Twój poziom to {level}. Kontynuuj regularną naukę."
         }
 
 

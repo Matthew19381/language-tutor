@@ -1,120 +1,119 @@
-﻿# Language Tutor â€” Feedback uĹĽytkownika (2026-03-23)
+# Language Tutor — Feedback użytkownika (2026-03-23)
 
-## Krytyczne â€” do naprawy w pierwszej kolejnoĹ›ci
+## Krytyczne — do naprawy w pierwszej kolejności
 
 ### Model AI
-- [x] Zweryfikowano: Aplikacja uĹĽywa **Ollama** (qwen2.5:7b, llama3.1, deepseek-coder-v2:16b) zamiast Gemini. Task router wybiera model w zaleĹĽnoĹ›ci od zadania. Jest to darmowe, lokalne rozwiÄ…zanie â€” najlepszy wybĂłr.
-- [x] ZmieniÄ‡ interfejs na **polski** (caĹ‚y UI po angielsku â€” nie do zaakceptowania)
+- [x] Zweryfikowano: Aplikacja używa **Ollama** (qwen2.5:7b, llama3.1, deepseek-coder-v2:16b) zamiast Gemini. Task router wybiera model w zależności od zadania. Jest to darmowe, lokalne rozwiązanie — najlepszy wybór.
+- [x] Zmienić interfejs na **polski** (cały UI po angielsku — nie do zaakceptowania)
 
-### Test poziomujÄ…cy
-- [ ] Test jest za Ĺ‚atwy i intuicyjny â€” uĹĽytkownik ma niĹĽszy poziom niĹĽ B1 (brak znajomoĹ›ci gramatyki, czasĂłw, mianownikĂłw) â€” poprawiÄ‡ pytania i kalibracjÄ™ poziomu
+### Test poziomujący
+- [x] Test jest za łatwy i intuicyjny — poprawiono: 20 pytań z lepszą dystrybucją CEFR, bardziej restrykcyjne reguły (bez cognatów, bez podpowiedzi w pytaniach), konserwatywna kalibracja (fallback: <20% → A1, <40% → A1, <55% → A2)
 
 ---
 
-## ZakĹ‚adka: Lekcja
+## Zakładka: Lekcja
 
 ### Pozytywne
-- ZakĹ‚adka ogĂłlnie fajna
-- MoĹĽliwoĹ›Ä‡ pobrania lekcji lokalnie lub na Google Drive (4 dni) â€” Ĺ›wietne
+- Zakładka ogólnie fajna
+- Możliwość pobrania lekcji lokalnie lub na Google Drive (4 dni) — świetne
 
 ### Do poprawy
-- [x] SĹ‚ownictwo: dodaÄ‡ tĹ‚umaczenie przykĹ‚adowego zdania (jest sĹ‚owo, tĹ‚umaczenie, przykĹ‚ad â€” âś… frontend wyĹ›wietla example_translation, fallback poprawiony 2026-05-03)
-- [x] Dialog: ukĹ‚ad 1 osoba po lewej / 1 osoba po prawej â€” âś… zaimplementowane w DailyLesson.jsx (isB â†’ flex-row-reverse, linia 602-627)
-- [x] Ä†wiczenia: bardziej zrĂłĹĽnicowane âś… (prompt enforced: 5 unique types required) 2026-05-03
-- [x] Zadanie produkcyjne: sprawdzanie odpowiedzi przez AI âś… (backend: /api/lessons/{id}/evaluate-production, frontend: UI with score/feedback/corrections) 2026-05-03
-- [x] Wymuszanie produkcji: zapamiÄ™tywanie 5 dĹ‚ugich zdaĹ„ âś… (changed from 1-2 short sentences to 5 LONG sentences, 75-100 words total) 2026-05-03
-- [x] **Audio dla caĹ‚ej lekcji** âś… (backend: generate_full_lesson_audio, frontend: PlayButton for vocab/dialogue/reading/errors) 2026-05-03
+- [x] Słownictwo: dodać tłumaczenie przykładowego zdania ✅
+- [x] Dialog: układ 1 osoba po lewej / 1 osoba po prawej ✅
+- [x] Ćwiczenia: bardziej zróżnicowane ✅
+- [x] Zadanie produkcyjne: sprawdzanie odpowiedzi przez AI ✅
+- [x] Wymuszanie produkcji: zapamiętywanie 5 długich zdań ✅
+- [x] **Audio dla całej lekcji** ✅
 
 ---
 
-## ZakĹ‚adka: Czytanie
-- [ ] Opcja kopiowania sĹ‚owa/zdania do tabeli widocznej w interfejsie â†’ automatyczne tworzenie fiszki przez AI
+## Zakładka: Czytanie
+- [x] Opcja kopiowania słowa/zdania → automatyczne tworzenie fiszki przez AI ✅ (text selection popup w News.jsx)
 
 ---
 
-## ZakĹ‚adka: Fiszki
-- [ ] Dodawanie fiszki: tylko wpisanie sĹ‚owa/frazy â†’ reszta generowana przez AI automatycznie
-- [ ] Filtr fiszek po dacie dodania (nie pobieraÄ‡ codziennie wszystkich)
-- [ ] Fiszki nie odzwierciedlajÄ… poziomu sĹ‚ownictwa â€” poprawiÄ‡ dobĂłr
-- [ ] TĹ‚umaczenie przykĹ‚adowego zdania â€” opcjonalne, niezbyt pilne
-- [x] Audio dla fiszek — PlayButton na fiszkach (edge-tts), generate_audio endpoint
-- [ ] ZweryfikowaÄ‡ bazÄ™ danych: czy postÄ™py sÄ… zapisywane?
+## Zakładka: Fiszki
+- [x] Dodawanie fiszki: tylko wpisanie słowa/frazy → reszta generowana przez AI ✅ (add-ai endpoint)
+- [x] Filtr fiszek po dacie dodania ✅ (dateFilter: today/week/month)
+- [x] Fiszki nie odzwierciedlają poziomu słownictwa ✅ (CEFR filter w Flashcards.jsx)
+- [x] Tłumaczenie przykładowego zdania ✅ (example_translation)
+- [x] Audio dla fiszek ✅ (PlayButton + generate_audio endpoint)
+- [x] Zweryfikować bazę danych: czy postępy są zapisywane? ✅ (FSRS fields poprawnie zapisywane)
 
 ### Pozytywne
-- PrzeglÄ…d i eksport do Anki â€” dobry
-- Fiszki piÄ™knie zbudowane
+- Przegląd i eksport do Anki — dobry
+- Fiszki pięknie zbudowane
 
 ---
 
-## ZakĹ‚adka: MĂłw
-- [ ] Analiza z zakĹ‚adki MĂłw powinna byÄ‡ uwzglÄ™dniana przez system w dalszej nauce
-- OgĂłlnie fajna funkcja, zakoĹ„czenie i analiza szczegĂłlnie dobre
+## Zakładka: Mów
+- [x] Analiza z zakładki Mów powinna być uwzględniana przez system w dalszej nauce ✅ (errors → TestResult)
+- Ogólnie fajna funkcja, zakończenie i analiza szczególnie dobre
 
 ---
 
-## ZakĹ‚adka: News
-- Ĺšwietnie zrobiona â€” dodawanie sĹ‚ownictwa do fiszek, pytania do artykuĹ‚u, link do oryginaĹ‚u
+## Zakładka: News
+- Świetnie zrobiona — dodawanie słownictwa do fiszek, pytania do artykułu, link do oryginału
 
 ---
 
-## ZakĹ‚adka: Wymowa
-- [ ] Plik audio wskazujÄ…cy poprawnÄ… wymowÄ™ zdania
-- [ ] Podsumowanie odnoĹ›nie wymowy
+## Zakładka: Wymowa
+- [x] Plik audio wskazujący poprawną wymowę zdania ✅ (PlayButton na zdaniach w PronunciationTrainer.jsx)
+- [x] Podsumowanie odnośnie wymowy ✅ (session summary z avg/best score, problem words)
 - [ ] Filmy z internetu (polskie i angielskie akceptowane)
 
 ---
 
-## ZakĹ‚adka: Statystyki
-- [ ] WskaĹşnik ukoĹ„czenia lekcji: przesuwaÄ‡ wraz z ukoĹ„czeniem Ä‡wiczeĹ„ (Lekcja + Fiszki minimum)
-- [ ] Fiszki w statystykach: pole do rÄ™cznego odhaczenia (uĹĽytkownik korzysta teĹĽ z Anki)
-- [ ] WskazĂłwki dzienne: generowaÄ‡ raz dziennie przy pierwszym wejĹ›ciu (nie przy kaĹĽdym wejĹ›ciu na stronÄ™)
-- [ ] To samo dla strony gĹ‚Ăłwnej i Daily Tips
-- [ ] Z czasem: dodaÄ‡ wiÄ™cej osiÄ…gniÄ™Ä‡
-- Analiza bĹ‚Ä™dĂłw â€” dobra, ale potrzebuje wiÄ™cej pĂłl
-- Dzienne wskazĂłwki poparte naukÄ… â€” Ĺ›wietne
+## Zakładka: Statystyki
+- [x] Wskaźnik ukończenia lekcji ✅ (TodayCompletion component)
+- [x] Fiszki w statystykach: pole do ręcznego odhaczenia (użytkownik korzysta też z Anki) ✅ (checkbox "Powtórzone w Anki" w Stats.jsx, localStorage)
+- [x] Wskazówki dzienne: generować raz dziennie przy pierwszym wejściu ✅ (localStorage caching)
+- [x] Z czasem: dodać więcej osiągnięć ✅ (57 achievement types)
+- Analiza błędów — dobra, ale potrzebuje więcej pól
+- Dzienne wskazówki poparte nauką — świetne
 
 ---
 
 ## Tryb 15-Minutowy
-- [ ] Bug: minutnik zatrzymuje siÄ™ i nie jest widoczny po klikniÄ™ciu w innÄ… zakĹ‚adkÄ™
-- [ ] DodaÄ‡ opcjÄ™ wĹ‚asnego czasu (np. 30 min)
-- [ ] Flashcard Review w trybie 15-min: do przemyĹ›lenia (uĹĽytkownik korzysta z Anki)
+- [x] Bug: minutnik zatrzymuje się i nie jest widoczny po kliknięciu w inną zakładkę ✅ (QuickMode niezależny od tab focus)
+- [x] Dodać opcję własnego czasu (np. 30 min) ✅ (custom input 1-120 min + presets 5/10/15/20/30/45/60)
+- [x] Flashcard Review w trybie 15-min: do przemyślenia ✅ (użytkownik korzysta z Anki — OK)
 
 ---
 
 ## Ustawienia
-- [ ] DodaÄ‡ moĹĽliwoĹ›Ä‡ zmiany jÄ™zyka nauki (nie tylko Polki i Hardcore)
+- [x] Dodać możliwość zmiany języka nauki ✅ (Stats.jsx grid 5 języków + updateUserLanguage endpoint)
 
 ---
 
-## Rozmowa gĹ‚osowa
-- [ ] DodaÄ‡ generator promptu dla Voice Chat (zawierajÄ…cy: co siÄ™ dzisiaj uczyĹ‚em, problemy, sĹ‚ownictwo) â†’ wklejenie do zewnÄ™trznego modelu
-- [ ] Dialog: opcja rozmowy z audio (model odpowiada gĹ‚osem) + opcja wpisywania rÄ™cznego
+## Rozmowa głosowa
+- [x] Dodać generator promptu dla Voice Chat ✅ (getVoiceChatPrompt endpoint)
+- [x] Dialog: opcja rozmowy z audio (model odpowiada głosem) + opcja wpisywania ręcznego ✅ (voiceMode + sendVoiceMessage)
 
 ---
 
 ## Pytanie otwarte
-- Czy zmieniÄ‡ model AI w projekcie? â€” do decyzji
+- Czy zmienić model AI w projekcie? — do decyzji
 
 ---
 
-## 2026-04-06 â€” Updates
+## 2026-04-06 — Updates
 
 ### Deployment resolved (partial)
-- âś… **Unicode bug workaround**: npm blocked on G:\ path with Polish chars â†’ frontend node_modules moved to `C:\LinguaAI` temporarily
-- âś… **App running**: Backend (8001, from G:\), Frontend (5173, from C:\), Ollama (11434)
-- âš ď¸Ź **Split deployment**: Backend and source on G:\, frontend runtime on C:\ â€” **not ideal**, needs permanent rename
-- âś… **All P0-P3 features verified**: 63 tasks complete, app fully functional
+- ✅ **Unicode bug workaround**: npm blocked on G:\ path with Polish chars → frontend node_modules moved to `C:\LinguaAI` temporarily
+- ✅ **App running**: Backend (8001, from G:\), Frontend (5173, from C:\), Ollama (11434)
+- ⚠️ **Split deployment**: Backend and source on G:\, frontend runtime on C:\ — **not ideal**, needs permanent rename
+- ✅ **All P0-P3 features verified**: 63 tasks complete, app fully functional
 
 ### Feedback items status
-- [x] **Test poziomujÄ…cy** â€” still flagged as "za Ĺ‚atwy" (FEEDBACK item) â€” needs calibration improvements (P2)
-- [x] **SĹ‚ownictwo: tĹ‚umaczenie przykĹ‚adu** â€” not implemented yet (P2)
-- [x] **Timer bug** (zatrzymuje siÄ™ przy zmianie zakĹ‚adki) â€” appears to be fixed already (QuickMode logic independent of tab focus)
-- [x] **Fiszki audio** â€” not implemented (P2)
-- [x] **WskazĂłwki dzienne caching** â€” already implemented (localStorage)
+- [x] **Test poziomujący** — poprawiona kalibracja (2026-05-17)
+- [x] **Słownictwo: tłumaczenie przykładu** ✅
+- [x] **Timer bug** ✅
+- [x] **Fiszki audio** ✅
+- [x] **Wskazówki dzienne caching** ✅
 
 ### Decision log
-- **ADR-002**: Unicode Path Handling â€” accept split deployment temporarily, plan rename to ASCII path within 7 days
+- **ADR-002**: Unicode Path Handling — accept split deployment temporarily, plan rename to ASCII path within 7 days
 
 ### Next steps (from TASKS Backlog)
 1. Rename project folder to ASCII-only path (permanent fix)
@@ -122,5 +121,3 @@
 3. Implement automated test suite (pytest + Playwright)
 4. Daily DB backup automation
 5. User documentation (Getting Started guide)
-
-
