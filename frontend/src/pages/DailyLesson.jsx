@@ -6,8 +6,7 @@ import {
   RefreshCw, Eye, EyeOff, FileText, BookmarkPlus, Loader2,
   History, ArrowRight
 } from 'lucide-react'
-import axios from 'axios'
-import { getUserId, getTodayLesson, getLesson, completeLesson, addFlashcardAI, evaluateProduction, generateNextLesson, generateConceptFlashcards, recordExerciseError, getDailyTest, getNews, searchYouTube } from '../api/client'
+import { getUserId, getTodayLesson, getLesson, completeLesson, addFlashcardAI, evaluateProduction, generateNextLesson, generateConceptFlashcards, recordExerciseError, getDailyTest, getNews, searchYouTube, exportLessonPDF, exportObsidian, resetTodayLesson, getLessonAudioPackage } from '../api/client'
 import PlayButton from '../components/PlayButton'
 import { PageLoader } from '../components/LoadingSpinner'
 import { useLanguage } from '../hooks/useLanguage'
@@ -222,7 +221,7 @@ export default function DailyLesson() {
     setRegenerating(true)
     try {
       // Delete today's lesson so it gets regenerated on next fetch
-      await axios.delete(`/api/lessons/reset-today/${userId}`)
+      await resetTodayLesson(userId)
       // Clear cache and reload
       clearLessonCache()
       setLesson(null)
@@ -269,9 +268,7 @@ export default function DailyLesson() {
     if (!lesson) return
     setAudioPackageLoading(true)
     try {
-      const response = await axios.get(`/api/lessons/${lesson.lesson_id}/audio-package`, {
-        responseType: 'blob',
-      })
+      const response = await getLessonAudioPackage(lesson.lesson_id)
       const url = URL.createObjectURL(new Blob([response.data], { type: 'application/zip' }))
       const link = document.createElement('a')
       link.href = url
@@ -290,9 +287,7 @@ export default function DailyLesson() {
     if (!lesson) return
     setPdfLoading(true)
     try {
-      const response = await axios.get(`/api/lessons/${lesson.lesson_id}/export-pdf`, {
-        responseType: 'blob',
-      })
+      const response = await exportLessonPDF(lesson.lesson_id, userId)
       const url = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
       const link = document.createElement('a')
       link.href = url
@@ -312,13 +307,7 @@ export default function DailyLesson() {
     setObsidianLoading(true)
     setShowObsidianMenu(false)
     try {
-      const response = await axios.get(
-        `/api/lessons/${lesson.lesson_id}/export-obsidian`,
-        {
-          params: { day_offset: obsidianOffset, upload: obsidianUpload },
-          responseType: obsidianUpload ? 'json' : 'blob',
-        }
-      )
+      const response = await exportObsidian(lesson.lesson_id, userId, obsidianOffset, obsidianUpload)
       if (obsidianUpload) {
         const data = response.data
         alert(`Uploaded to Google Drive: ${data.url || 'success'}`)

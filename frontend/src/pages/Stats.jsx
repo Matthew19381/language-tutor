@@ -5,7 +5,7 @@ import {
   FlaskConical, Brain, TrendingUp, Target, Calendar,
   Download, Globe, Lightbulb, CheckCircle, Loader2
 } from 'lucide-react'
-import axios from 'axios'
+import { exportProgressCSV } from '../api/client'
 import { getUserId, getStats, getDailyTips, updateUserLanguage, getLanguageProfiles, getStudyPlan, getLessonConcepts, generateConceptFlashcards, getVoiceChatPrompt } from '../api/client'
 import { NotificationSettings } from '../components/NotificationManager'
 import { PageLoader } from '../components/LoadingSpinner'
@@ -71,7 +71,7 @@ export default function Stats() {
     if (!userId) return
     setCsvLoading(true)
     try {
-      const response = await axios.get(`/api/stats/${userId}/export-csv`, { responseType: 'blob' })
+      const response = await exportProgressCSV(userId)
       const url = URL.createObjectURL(new Blob([response.data], { type: 'text/csv' }))
       const link = document.createElement('a')
       link.href = url
@@ -82,6 +82,20 @@ export default function Stats() {
       console.error('CSV download failed:', e)
     } finally {
       setCsvLoading(false)
+    }
+  }
+
+  const handleGetVoiceChatPrompt = async () => {
+    if (!userId) return
+    setVoiceChatLoading(true)
+    setvoiceChatPrompt(null)
+    try {
+      const res = await getVoiceChatPrompt(userId)
+      setvoiceChatPrompt(res.prompt || res)
+    } catch (e) {
+      console.error('Voice chat prompt generation failed:', e)
+    } finally {
+      setVoiceChatLoading(false)
     }
   }
 
@@ -431,7 +445,7 @@ export default function Stats() {
             <h2 className="section-title">{t('stats.voiceChatPrompt') || 'Prompt dla Voice Chat'}</h2>
           </div>
           <button
-            onClick={handlegetVoiceChatPrompt}
+            onClick={handleGetVoiceChatPrompt}
             disabled={voiceChatLoading}
             className="btn-primary text-sm flex items-center gap-1"
           >

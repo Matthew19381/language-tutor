@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Mic, MicOff, RotateCcw, ChevronRight, BarChart3, Trophy, CheckCircle } from 'lucide-react'
-import { getUserId, addXP, addFlashcard, askQuestion } from '../api/client'
+import { getUserId, addXP, addFlashcard, askQuestion, getPronunciationPhrases, analyzePronunciation } from '../api/client'
 import { PageLoader } from '../components/LoadingSpinner'
 import { useLanguage } from '../hooks/useLanguage'
 import PlayButton from '../components/PlayButton'
-import axios from 'axios'
 
 export default function PronunciationTrainer() {
   const [phrases, setPhrases] = useState([])
@@ -30,8 +29,8 @@ export default function PronunciationTrainer() {
 
   useEffect(() => {
     if (!userId) { navigate('/placement'); return }
-    axios.get(`/api/pronunciation/phrases/${userId}`)
-      .then(r => setPhrases(r?.data?.phrases || []))
+    getPronunciationPhrases(userId)
+      .then(r => setPhrases(r?.phrases || []))
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [userId])
@@ -103,10 +102,7 @@ export default function PronunciationTrainer() {
       formData.append('target_text', currentPhrase)
       formData.append('user_id', userId)
 
-      const response = await axios.post('/api/pronunciation/analyze', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-        timeout: 30000,
-      })
+      const response = await analyzePronunciation(formData)
       setResult(response.data)
       setSessionResults(prev => [...prev, { phrase: currentPhrase, score: response.data.score, word_scores: response.data.word_scores || [] }])
     } catch (e) {

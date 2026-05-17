@@ -6,7 +6,6 @@ import logging
 import base64
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import cast, Text
 from backend.database import get_db
 from backend.models.user import User
 from backend.utils import get_user_or_404

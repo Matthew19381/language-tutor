@@ -264,3 +264,11 @@ export const getTopicDetail = (topicId) =>
 
 export const reviewTopic = (topicId, rating) =>
   api.post(`/topics/${topicId}/review`, { rating })
+
+// ===== Lesson Utilities =====
+
+export const resetTodayLesson = (userId) =>
+  api.delete(`/lessons/reset-today/${userId}`)
+
+export const getLessonAudioPackage = (lessonId) =>
+  axios.get(`/api/lessons/${lessonId}/audio-package`, { responseType: 'blob' })

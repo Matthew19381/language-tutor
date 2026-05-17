@@ -33,9 +33,9 @@ Start-Process powershell -ArgumentList "-NoExit", "-Command", $frontendCmd
 Write-Host ""
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host "  Services starting up..." -ForegroundColor Green
-Write-Host "  Backend:  http://localhost:8000" -ForegroundColor White
+Write-Host "  Backend:  http://localhost:8001" -ForegroundColor White
 Write-Host "  Frontend: http://localhost:5173" -ForegroundColor White
-Write-Host "  API Docs: http://localhost:8000/docs" -ForegroundColor White
+Write-Host "  API Docs: http://localhost:8001/docs" -ForegroundColor White
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Both windows are opening. Wait a moment before opening the browser."
