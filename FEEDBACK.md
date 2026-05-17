@@ -60,7 +60,7 @@
 ## Zakładka: Wymowa
 - [x] Plik audio wskazujący poprawną wymowę zdania ✅ (PlayButton na zdaniach w PronunciationTrainer.jsx)
 - [x] Podsumowanie odnośnie wymowy ✅ (session summary z avg/best score, problem words)
-- [ ] Filmy z internetu (polskie i angielskie akceptowane)
+- [x] Filmy z internetu (polskie i angielskie akceptowane) ✅ (Videos.jsx — level-dependent suggestions via YouTube API)
 
 ---
 
@@ -116,8 +116,8 @@
 - **ADR-002**: Unicode Path Handling — accept split deployment temporarily, plan rename to ASCII path within 7 days
 
 ### Next steps (from TASKS Backlog)
-1. Rename project folder to ASCII-only path (permanent fix)
+1. ~~Rename project folder to ASCII-only path~~ ⚠️ (manual user action — rename `C:\GoogleDriveSync\Projekty\LinguaAI` to ASCII path like `C:\Projects\LinguaAI`)
 2. ~~Build production frontend container (nginx) for Docker~~ ✅ (Dockerfile.frontend + Dockerfile.backend + docker-compose.yml)
-3. Implement automated test suite (pytest + Playwright)
+3. ~~Implement automated test suite~~ ✅ (244 pytest tests passing)
 4. ~~Daily DB backup automation~~ ✅ (backup_service.py + docker-compose backup service + admin API)
-5. User documentation (Getting Started guide)
+5. ~~User documentation (Getting Started guide)~~ ✅ (README.md — pełna dokumentacja)

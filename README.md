@@ -1,6 +1,6 @@
-# LinguaAI - Inteligentny Tutor Językowy
+# LinguaAI — AI-Powered Language Learning App
 
-Nowoczesna platforma do nauki języków obcych wspierana przez AI (Google Gemini). Konwersacje, lekcje, testy, system fiszek i analiza wymowy w jednym miejscu.
+Aplikacja do nauki języków obcych wspierana przez AI. Interfejs w języku polskim. Uczy się z Tobą — dostosowuje poziom, generuje lekcje, analizuje błędy i motywuje systemem osiągnięć.
 
 ## Spis treści
 
@@ -10,135 +10,128 @@ Nowoczesna platforma do nauki języków obcych wspierana przez AI (Google Gemini
 - [Szybki start](#szybki-start)
 - [Dokumentacja API](#dokumentacja-api)
 - [Struktura projektu](#struktura-projektu)
-- [Rozwój](#rozwój)
 - [Testy](#testy)
-- [Wdrożenie](#wdrożenie)
-- [Pamięć Claude](#pamięć-claude)
+- [Wdrożenie Docker](#wdrożenie-docker)
+- [Rozwiązywanie problemów](#rozwiązywanie-problemów)
 
 ---
 
 ## Funkcje
 
-### 1. Test placujący CEFR
+### 1. Test poziomujący CEFR
 - 20-pytańowy test diagnostyczny
 - Poziomy: A1, A2, B1, B2, C1, C2
-- Automatyczne generowanie pytań przez AI (Google Gemini)
-- Typy pytań: `fill_blank`, `correct_sentence`, `word_order`, `translation`, `comprehension`
+- Automatyczne generowanie pytań przez AI
+- Konserwatywna kalibracja (fallback przy niskim wyniku)
 - Personalizacja na podstawie języka ojczystego
 
 ### 2. Codzienne lekcje
 - AI-generowane lekcje dopasowane do poziomu
-- Sekcje: słownictwo, gramatyka, cel lekcji, dialogi, ćwiczenia
+- Sekcje: słownictwo, gramatyka, dialogi, ćwiczenia, zadanie produkcyjne
 - **Comprehensible Input** — teksty i+1 z podświetlonymi nowymi słowami
 - **Interleaved Review** — powtórka materiału z ostatnich 7 dni
-- **Output Forcing** — dwufazowe karty do wymuszania produkcji językowej
+- **Output Forcing** — dwufazowe karty wymuszające produkcję językową
 - Eksport do PDF z tabelą słówek
-- Audio TTS (Text-to-Speech) dla tekstów
+- Audio TTS (Text-to-Speech) dla całej lekcji
 
 ### 3. System fiszek (Spaced Repetition)
-- Algorytm SM-2 (SuperMemo-2)
-- Automatyczne planowanie powtórek na podstawie jakości odpowiedzi
-- Eksport do Anki (.apkg)
-- Integracja ze słownictwem z lekcji
+- Algorytm **FSRS v6** (Free Spaced Repetition Scheduler)
+- Automatyczne planowanie powtórek na podstawie jakości odpowiedzi (1-4)
+- Eksport do Anki (.apki)
+- Audio dla każdej fiszki
+- Filtry: po dacie dodania (dzisiaj/tydzień/miesiąc), po poziomie CEFR
+- Dodawanie fiszek przez AI — wystarczy wpisać słowo
 
 ### 4. Konwersacja z AI
 - Rozmowy tekstowe i głosowe
-- AI konwersacyjne jako partner językowy
+- AI jako partner językowy
 - Automatyczna analiza rozmowy (błędy, wynik, rekomendacje)
-- Wsparcie dla wklejonego tekstu (analyze pasted text)
 - Tłumaczenie słówek i fraz
 
 ### 5. Testy i ocena
 - Codzienne testy ze znajomości materiału
-- Testy tygodniowe (zszyte z planem nauki)
+- Testy tygodniowe
 - Automatyczna ocena i analiza błędów
-- Śledzenie słabych stron (weak areas)
+- XP za testy: `wynik × 0.5` (max 50 XP)
 
 ### 6. System XP i osiągnięcia
 - 50 poziomów postępu
 - Krzywa poziomów: `(n-1)² × 20` XP
-- XP za: lekcje (+25), testy (score × 0.5, max 50), konwersacje, fiszki
-- System osiągnięć z powiadomieniami toast
+- **57 osiągnięć** w 10 kategoriach (lekcje, serie, testy, XP, poziomy, fiszki, konwersacje, wymowa, tematy, newsy, filmy, błędy, wiele języków)
+- Powiadomienia toast przy odblokowaniu osiągnięcia
 - Tablica liderów (leaderboard)
 
-### 7. Quick Mode — 15-minutowy plan dnia
-- Inteligentny dobór aktywności na 15 minut
+### 7. Tryb szybki (Quick Mode)
+- Inteligentny plan dzienny (5-120 minut, własny czas)
+- Timer niezależny od zakładki
 - Lekcja, test, fiszki, konwersacja, czytanie newsów
-- Śledzenie ukończonych zadań w czasie rzeczywistym
 
 ### 8. Czytanie newsów
 - RSS feed dla różnych języków
 - AI upraszcza artykuły do poziomu użytkownika (CEFR)
-- Cache 6-godzinny dla optymalizacji
-- Limit artykułów (parametr `limit`)
+- Zaznaczanie tekstu → tworzenie fiszki przez AI
+- Pytania kontrolne do artykułu
 
 ### 9. Trener wymowy
 - Transkrypcja audio przez faster-whisper (model tiny, ~75 MB)
 - Ocena wymowy słowo po słowie (word-level scoring)
-- Frazy z lekcji jako materiał do ćwiczeń
+- Podsumowanie sesji: średnia, najlepszy wynik, problemowe słowa
+- Audio z wymową poprawną
 
 ### 10. YouTube Learning
-- Wyszukiwanie filmów edukacyjnych na podstawie tematu lekcji
-- Napisy (captions) w formacie SRT
-- Integracja z planem nauki
+- Wyszukiwanie filmów edukacyjnych dopasowanych do poziomu CEFR
+- Sugestie na podstawie tematu lekcji
 
-### 11. Google Drive Backup
-- Autoryzacja OAuth2 z Google
-- Automatyczny backup bazy danych (SQLite → Google Drive)
-- Harmonogram zapisu (codziennie o 2:00 w nocy)
+### 11. Backup i administracja
+- Automatyczny backup bazy danych (codzienny, retencja 7 dni)
+- Admin API: tworzenie, lista, przywracanie backupów
+- Ochrona kluczem API (header `X-Admin-Key`)
 
 ---
 
 ## Architektura
 
 ```
-┌────────────────────────────────────────┐
-│                        Frontend (React)                        │
-│  React 18 + React Router v6 + Axios + Tailwind CSS + Vite  │
-│                     :5173 (dev server)                      │
-└────────────────────────────┬───────────────────────────────────┘
-                             │
-                     /api, /audio proxy
-                             │
-┌────────────────────────────▼───────────────────────────────────┐
-│                      Backend (FastAPI)                       │
-│   FastAPI + SQLAlchemy + SQLite + Google Gemini 2.0 Flash  │
-│                     :8001 (API server)                     │
-└────────────────────────────┬───────────────────────────────────┘
-                             │
-        ┌────────────────────┼─────────────────┐
-        ▼                    ▼                    ▼
-┌───────────┐    ┌───────────────┐    ┌───────────┐
-│ Routers   │    │  Services    │    │ Models     │
-│ /api/*    │◄──►│ - Gemini   │    │ - User      │
-│ placement  │    │ - Lesson    │    │ - Lesson    │
-│ lessons   │    │ - Test      │    │ - TestResult│
-│ tests     │    │ - PDF       │    │ - StudyPlan │
-│ flashcards │    │ - News      │    │ - Flashcard │
-│ conversation│    │ - Audio     │    │ - Achievement│
-│ stats     │    │ - Pronunciation│ │             │
-│ quickmode  │    │ - Anki      │    │             │
-│ news      │    │ - Obsidian  │    │             │
-│ pronunciation│    │ - GoogleDrive│    │             │
-│ voice-chat│    └───────────────┘    └───────────┘
-│ youtube   │
-│ settings  │
-│ audio     │
-└───────────┘
+┌──────────────────────────────────────────────────────┐
+│                  Frontend (React)                     │
+│    React 19 + React Router v7 + Axios + Tailwind     │
+│                   :5173 (dev server)                  │
+└──────────────────────────┬───────────────────────────┘
+                           │ /api, /audio proxy
+┌──────────────────────────▼───────────────────────────┐
+│                Backend (FastAPI)                      │
+│   FastAPI + SQLAlchemy 2.0 + SQLite + AI Provider    │
+│                   :8001 (API server)                  │
+└──────────────────────────┬───────────────────────────┘
+                           │
+        ┌──────────────────┼──────────────────┐
+        ▼                  ▼                   ▼
+┌──────────────┐  ┌───────────────┐  ┌────────────────┐
+│   Routers    │  │   Services    │  │    Models      │
+│ /api/*       │◄─┤ - AI calls    │  │ - User         │
+│ placement    │  │ - Lessons     │  │ - Lesson       │
+│ lessons      │  │ - Tests       │  │ - TestResult   │
+│ tests        │  │ - Audio (TTS) │  │ - Flashcard    │
+│ flashcards   │  │ - PDF export  │  │ - Achievement  │
+│ conversation │  │ - News (RSS)  │  │ - StudyPlan    │
+│ stats        │  │ - Anki export │  │ - Topic        │
+│ quickmode    │  │ - Backup      │  │ - ...          │
+│ news         │  │ - Achievements│  │                │
+│ pronunciation│  └───────────────┘  └────────────────┘
+│ admin        │
+│ youtube      │
+│ voice-chat   │
+│ settings     │
+│ audio        │
+│ topics       │
+└──────────────┘
 ```
 
-### Przepływ żądania (Request Flow)
+### Przepływ żądania
 
 ```
 Router → Service → SQLAlchemy Session (get_db dependency)
 ```
-
-Przykład:
-1. `POST /api/lessons/{user_id}` → `routers/lessons.py`
-2. Wywołanie `services/lesson_generator.py` → budowa promptu dla AI
-3. `services/gemini_service.py` → wywołanie OpenRouter API (Google Gemini 2.0 Flash)
-4. Zapis do bazy przez SQLAlchemy session
-5. Zwrot JSON odpowiedzi do frontendu
 
 ---
 
@@ -149,21 +142,22 @@ Przykład:
 | Komponent | Technologia | Uwagi |
 |-----------|-------------|--------|
 | Framework | **FastAPI** | Async API, automatyczna dokumentacja OpenAPI |
-| ORM | **SQLAlchemy** | Wersja 2.0, deklaratywne modele |
-| Baza danych | **SQLite** | Dla dewelopmentu, PostgreSQL-ready |
-| AI Model | **Google Gemini 2.0 Flash** | Przez OpenRouter API |
+| ORM | **SQLAlchemy 2.0** | Deklaratywne modele |
+| Baza danych | **SQLite** | PostgreSQL-ready |
+| AI Provider | **OpenRouter** lub **Google Gemini** | Konfigurowalny w .env |
 | TTS | **edge-tts** | Szybkie generowanie audio |
-| PDF | **fpdf2** | Generowanie eksportów lekcji |
+| PDF | **fpdf2** | Eksport lekcji |
 | RSS | **feedparser** | Czytanie newsów |
 | Speech-to-Text | **faster-whisper** | Model `tiny` (~75 MB, CPU, int8) |
-| Async HTTP | **httpx** | Nowoczesny klient HTTP |
+| Spaced Repetition | **FSRS v6** | Free Spaced Repetition Scheduler |
+| Anki Export | **genanki** | Generowanie plików .apkg |
 
 ### Frontend
 
 | Komponent | Technologia | Uwagi |
 |-----------|-------------|--------|
-| Framework | **React 18** | Funkcyjne komponenty, hooki |
-| Routing | **React Router v6** | SPA, nested routes |
+| Framework | **React 19** | Funkcyjne komponenty, hooki |
+| Routing | **React Router v7** | SPA, nested routes |
 | HTTP Client | **Axios** | Interceptory, unwrap `response.data` |
 | Styling | **Tailwind CSS** | Utility-first CSS |
 | Build Tool | **Vite** | Szybki dev server, HMR |
@@ -175,180 +169,179 @@ Przykład:
 
 ### Wymagania
 
-- **Python** 3.10+
-- **Node.js** 18+
-- **Google Gemini API Key** (przez OpenRouter)
+- **Python** 3.11+
+- **Node.js** 20+
+- **Klucz API** — OpenRouter lub Gemini (wystarczy jeden)
 
 ### 1. Klonowanie repozytorium
 
 ```bash
-git clone https://github.com/Matthew19381/LanguaAI.git
-cd LanguaAI
+git clone <repo-url>
+cd LinguaAI
 ```
 
-### 2. Konfiguracja backendu
+### 2. Konfiguracja
 
 ```bash
-# Skopiuj przykładowy plik środowiskowy
-copy .env.example .env   # Windows CMD
-# cp .env.example .env            # Linux/Mac
-
-# Edytuj .env i ustaw GEMINI_API_KEY oraz OPENROUTER_API_KEY
+copy backend\.env.example backend\.env   # Windows
 ```
 
-**Zawartość `.env`:**
+Edytuj `backend\.env`:
+
 ```env
-GEMINI_API_KEY=your_gemini_api_key_here
-OPENROUTER_API_KEY=sk-or-v1_your_openrouter_key_here
-TARGET_LANGUAGE=German
-NATIVE_LANGUAGE=Polish
-DATABASE_URL=sqlite:///./lingua_ai.db
-DEBUG=True
+# Wybór dostawcy AI: "openrouter" lub "gemini"
+AI_PROVIDER=openrouter
+
+# Klucz OpenRouter (https://openrouter.ai/keys)
+OPENROUTER_API_KEY=sk-or-v1-...
+
+# LUB klucz Gemini (https://aistudio.google.com/app/apikey)
+# GEMINI_API_KEY=AIza...
+
+# Opcjonalnie: klucz admina (backup/restore)
+ADMIN_API_KEY=your-secret-key
+
+# Opcjonalnie: YouTube API
+YOUTUBE_API_KEY=AIza...
 ```
 
-### 3. Instalacja zależności backendu
+### 3. Uruchomienie — tryb deweloperski
 
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Instalacja zależności frontendu
-
-```bash
-cd ../frontend
-npm install
-```
-
-### 5. Uruchomienie (z katalogu głównego projektu)
-
-**Opcja A — Skrypty startowe:**
-```bash
-# Windows CMD (otwiera dwa okna terminala)
+**Windows (CMD):**
+```cmd
 start.bat
+```
 
-# PowerShell
+**Windows (PowerShell):**
+```powershell
 .\start.ps1
 ```
 
-**Opcja B — Ręcznie:**
-```bash
-# Terminal 1 - Backend (z katalogu głównego!)
-uvicorn backend.main:app --reload --port 8001
+**Ręcznie (dwie terminale):**
 
-# Terminal 2 - Frontend
+Terminal 1 — backend (z katalogu głównego projektu):
+```bash
+py -3.11 -m uvicorn backend.main:app --reload --port 8001
+```
+
+Terminal 2 — frontend:
+```bash
 cd frontend
+npm install
 npm run dev
 ```
 
-### 6. Dostęp
+### 4. Dostęp
 
 - **Frontend:** http://localhost:5173
 - **Backend API:** http://localhost:8001
 - **API Docs (Swagger):** http://localhost:8001/docs
-- **API Docs (ReDoc):** http://localhost:8001/redoc
 
-> **Ważne:** Frontend dev server na `:5173` proxyzuje `/api` i `/audio` do `http://localhost:8001` (skonfigurowane w `frontend/vite.config.js`).
+> **Ważne:** Uruchamiaj backend z katalogu głównego projektu (nie z `backend/`), żeby importy `backend.*` działały poprawnie.
 
 ---
 
 ## Dokumentacja API
 
-Pełna dokumentacja API znajduje się w [docs/api.md](docs/api.md).
+Interaktywna dokumentacja Swagger: http://localhost:8001/docs
 
-Dostępne endpointy:
-- `POST /api/placement/create` — Tworzenie użytkownika + test placujący
-- `GET /api/lessons/today/{user_id}` — Dzisiejsza lekcja
-- `POST /api/tests/submit` — Zaliczenie testu (XP)
-- `GET /api/flashcards/due/{user_id}` — Fiszki do powtórki
-- `POST /api/conversation/message` — Wiadomość w konwersacji
-- `GET /api/stats/{user_id}` — Statystyki, poziom, XP
-- `GET /api/quickmode/{user_id}` — 15-minutowy plan
-- `GET /api/news/{user_id}` — Artykuły newsowe
-- `POST /api/pronunciation/analyze` — Analiza wymowy
-
-Interaktywna dokumentacja Swagger dostępna pod adresem: http://localhost:8001/docs
+| Metoda | Ścieżka | Opis |
+|--------|---------|------|
+| `POST` | `/api/placement/start` | Rozpocznij test poziomujący |
+| `POST` | `/api/placement/answer` | Odpowiedz na pytanie |
+| `GET` | `/api/placement/{user_id}/study-plan` | Pobierz plan nauki |
+| `GET` | `/api/lessons/{user_id}/daily` | Pobierz lekcję dzienną |
+| `POST` | `/api/lessons/{lesson_id}/complete` | Ukończ lekcję (+25 XP) |
+| `GET` | `/api/lessons/{lesson_id}/export-pdf` | Eksport lekcji do PDF |
+| `GET` | `/api/tests/{user_id}/daily` | Pobierz test dzienny |
+| `POST` | `/api/tests/{test_id}/submit` | Wyślij odpowiedzi |
+| `GET` | `/api/flashcards/{user_id}` | Lista fiszek |
+| `GET` | `/api/flashcards/{user_id}/due` | Fiszki do powtórki |
+| `POST` | `/api/flashcards/{user_id}/add` | Dodaj fiszkę ręcznie |
+| `POST` | `/api/flashcards/{user_id}/add-ai` | Dodaj fiszkę (AI generuje tłumaczenie) |
+| `POST` | `/api/flashcards/{id}/review` | Powtórz fiszkę (FSRS) |
+| `POST` | `/api/flashcards/{user_id}/export-anki` | Eksport do Anki |
+| `POST` | `/api/flashcards/{id}/audio` | Generuj audio fiszki |
+| `POST` | `/api/conversation/start` | Rozpocznij rozmowę |
+| `POST` | `/api/conversation/message` | Wyślij wiadomość |
+| `GET` | `/api/stats/{user_id}` | Statystyki, XP, osiągnięcia |
+| `GET` | `/api/tips/{user_id}` | Dzienne wskazówki |
+| `GET` | `/api/news/{user_id}` | Artykuły newsowe |
+| `POST` | `/api/pronunciation/analyze` | Analiza wymowy |
+| `GET` | `/api/quickmode/{user_id}` | Plan trybu szybkiego |
+| `GET` | `/api/videos/{user_id}` | Sugestie filmów YouTube |
+| `POST` | `/api/admin/backup` | Utwórz backup (wymaga `X-Admin-Key`) |
+| `GET` | `/api/admin/backups` | Lista backupów |
+| `POST` | `/api/admin/restore` | Przywróć backup |
 
 ---
 
 ## Struktura projektu
 
 ```
-lingua-ai/
+LinguaAI/
 ├── backend/
 │   ├── main.py                    # FastAPI app, lifespan, CORS, routers
 │   ├── config.py                  # Pydantic Settings
 │   ├── database.py                # SQLAlchemy engine, SessionLocal, Base
-│   ├── models/                   # SQLAlchemy models
-│   │   ├── __init__.py
+│   ├── models/                    # Modele SQLAlchemy
 │   │   ├── user.py
 │   │   ├── lesson.py
 │   │   ├── test_result.py
 │   │   ├── flashcard.py
 │   │   ├── study_plan.py
-│   │   └── achievement.py
-│   ├── routers/                  # FastAPI route handlers
-│   │   ├── __init__.py
-│   │   ├── placement.py
-│   │   ├── lessons.py
-│   │   ├── tests.py
-│   │   ├── flashcards.py
-│   │   ├── conversation.py
-│   │   ├── stats.py
-│   │   ├── quickmode.py
-│   │   ├── news.py
-│   │   ├── pronunciation.py
-│   │   ├── settings.py
-│   │   ├── audio.py
-│   │   ├── youtube.py
-│   │   └── voice_chat.py
-│   ├── services/                 # Business logic + AI calls
-│   │   ├── __init__.py
-│   │   ├── gemini_service.py     # OpenRouter API calls
-│   │   ├── lesson_generator.py   # AI prompts for lessons, tests
-│   │   ├── test_generator.py     # Test creation + XP award
-│   │   ├── achievement_service.py # Level/XP math, achievements
-│   │   ├── audio_service.py     # edge-tts TTS
-│   │   ├── pdf_service.py       # fpdf2 PDF export
-│   │   ├── news_service.py      # RSS + AI simplification
+│   │   ├── achievement.py
+│   │   ├── topic.py
+│   │   └── ...
+│   ├── routers/                   # Endpointy API
+│   │   ├── placement.py           # Test poziomujący + plan nauki
+│   │   ├── lessons.py             # Lekcje, PDF, audio
+│   │   ├── tests.py               # Testy dzienne/tygodniowe
+│   │   ├── flashcards.py          # FSRS, Anki, audio
+│   │   ├── conversation.py        # Rozmowy tekstowe
+│   │   ├── voice_chat.py          # Rozmowy głosowe
+│   │   ├── stats.py               # XP, poziomy, osiągnięcia, tips
+│   │   ├── quickmode.py           # Tryb szybki
+│   │   ├── news.py                # Artykuły RSS
+│   │   ├── pronunciation.py       # Analiza wymowy
+│   │   ├── youtube.py             # Filmy YouTube
+│   │   ├── settings.py            # Zmiana języka
+│   │   ├── audio.py               # Generowanie audio
+│   │   ├── topics.py              # Tematy użytkownika
+│   │   └── admin.py               # Backup/restore
+│   ├── services/                  # Logika biznesowa
+│   │   ├── gemini_service.py      # Komunikacja z AI
+│   │   ├── lesson_generator.py    # Generowanie lekcji/testów
+│   │   ├── test_generator.py      # Testy + XP
+│   │   ├── achievement_service.py # XP, poziomy, 57 osiągnięć
+│   │   ├── audio_service.py       # edge-tts TTS
+│   │   ├── pdf_service.py         # fpdf2 PDF export
+│   │   ├── anki_service.py        # Eksport Anki (.apkg)
+│   │   ├── news_service.py        # RSS + AI simplification
 │   │   ├── pronunciation_service.py # faster-whisper
-│   │   ├── anki_service.py      # .apkg export
-│   │   ├── google_drive_service.py # OAuth2 + backup
-│   │   ├── obsidian_service.py   # Markdown export
-│   │   └── model_router.py     # Smart model selection
-│   ├── schemas/                  # Pydantic request/response models
-│   ├── audio/                    # Generated TTS audio files
-│   ├── exports/                 # PDF, Anki exports
-│   ├── tests/                   # pytest test suite (127 tests)
+│   │   ├── backup_service.py      # Backup bazy danych
+│   │   └── fsrs_service.py        # Algorytm FSRS v6
+│   ├── schemas/                   # Schematy Pydantic
+│   ├── audio/                     # Wygenerowane pliki audio
+│   ├── exports/                   # PDF, Anki exports
+│   ├── tests/                     # Testy pytest (244 testy)
 │   │   ├── conftest.py
-│   │   ├── test_achievement_service.py
-│   │   ├── test_placement.py
-│   │   ├── test_lessons.py
-│   │   ├── test_tests.py
 │   │   ├── test_flashcards.py
-│   │   ├── test_conversation.py
-│   │   ├── test_stats.py
-│   │   ├── test_quickmode.py
-│   │   ├── test_news.py
-│   │   ├── test_pronunciation.py
-│   │   ├── test_settings.py
-│   │   ├── test_audio.py
-│   │   ├── test_youtube.py
-│   │   └── test_voice_chat.py
+│   │   ├── test_backup_service.py
+│   │   └── ...
 │   ├── .env.example
 │   └── requirements.txt
 │
 ├── frontend/
 │   ├── src/
 │   │   ├── api/
-│   │   │   └── client.js         # Axios instance + interceptors
+│   │   │   └── client.js          # Axios instance + interceptors
 │   │   ├── components/
-│   │   │   ├── Layout.jsx       # Shell with NavBar + toasts
+│   │   │   ├── Layout.jsx         # Layout + achievement toasts
 │   │   │   ├── NavBar.jsx
-│   │   │   ├── LoadingSpinner.jsx
-│   │   │   ├── NotificationManager.jsx
-│   │   │   └── PlayButton.jsx
+│   │   │   ├── PlayButton.jsx
+│   │   │   └── ...
 │   │   ├── pages/
-│   │   │   ├── Home.jsx
 │   │   │   ├── PlacementTest.jsx
 │   │   │   ├── DailyLesson.jsx
 │   │   │   ├── DailyTest.jsx
@@ -358,171 +351,126 @@ lingua-ai/
 │   │   │   ├── QuickMode.jsx
 │   │   │   ├── News.jsx
 │   │   │   ├── PronunciationTrainer.jsx
-│   │   │   ├── LessonHistory.jsx
 │   │   │   ├── Videos.jsx
-│   │   │   └── ErrorReview.jsx
-│   │   ├── i18n/
-│   │   │   └── translations.js   # UI translations
-│   │   ├── App.jsx               # React Router setup
-│   │   └── main.jsx              # React entry point
-│   ├── vite.config.js             # Vite + proxy config
+│   │   │   └── ...
+│   │   ├── App.jsx                # React Router
+│   │   └── main.jsx               # Entry point
+│   ├── vite.config.js             # Vite + proxy
 │   ├── package.json
 │   └── tailwind.config.js
 │
-├── docs/                          # Documentation
-│   ├── architecture.md
-│   ├── api.md
-│   ├── user-guide.md
-│   ├── developer-guide.md
-│   ├── deployment.md
-│   └── backup-instructions.md
-│
-├── .gitignore
-├── CLAUDE.md                     # Instructions for Claude Code
-├── README.md                      # This file
-├── start.bat                      # Windows CMD starter
-└── start.ps1                      # PowerShell starter
+├── docker-compose.yml             # Backend + Frontend + Backup
+├── Dockerfile.backend             # Obraz backendu
+├── Dockerfile.frontend            # Obraz frontendu (nginx)
+├── start.bat                      # Launcher Windows CMD
+├── start.ps1                      # Launcher PowerShell
+├── CLAUDE.md                      # Instrukcje dla Claude Code
+└── README.md                      # Ten plik
 ```
-
----
-
-## Rozwój
-
-Szczegółowy poradnik dla deweloperów: [docs/developer-guide.md](docs/developer-guide.md)
-
-### Dodawanie nowego routera
-
-1. Utwórz plik w `backend/routers/`
-2. Zarejestruj w `backend/main.py`: `app.include_router(router, tags=["Name"])`
-
-### Dodawanie nowego modelu SQLAlchemy
-
-1. Utwórz model w `backend/models/`
-2. Dodaj import w `backend/models/__init__.py`
-3. Dodaj import w `backend/main.py` (w bloku lifespan, przed `Base.metadata.create_all`)
-
-### Dodawanie nowej strony frontendu
-
-1. Utwórz plik w `frontend/src/pages/ExamplePage.jsx`
-2. Dodaj routing w `frontend/src/App.jsx`
-3. Dodaj link w `frontend/src/components/NavBar.jsx`
 
 ---
 
 ## Testy
 
 ```bash
-cd "C:/Projects/LinguaAI"
+# Wszystkie testy (244)
+py -3.11 -m pytest backend/tests/ -v
 
-# Wszystkie testy
-python -m pytest backend/tests/ -v
+# Konkretny plik
+py -3.11 -m pytest backend/tests/test_flashcards.py -v
 
-# Z pokazaniem stdout
-python -m pytest backend/tests/ -v -s
-
-# Tylko jeden plik testowy
-python -m pytest backend/tests/test_lessons.py -v
-
-# Z logami błędów (short)
-python -m pytest backend/tests/ --tb=short
+# Z pokryciem
+py -3.11 -m pytest backend/tests/ --cov=backend --cov-report=term-missing
 ```
 
-### Statystyki testów
+### Statystyki
 
-- **Łączna liczba testów:** 127
-- **Pliki testowe:** 13
+- **Łączna liczba testów:** 244
 - **Framework:** pytest + pytest-asyncio
-- **Coverage:** routers, services, models
-
-| Plik | Liczba testów | Testowane routery/serwisy |
-|------|---------------|--------------------------------|
-| test_achievement_service.py | 11 | Achievement service (XP, level math) |
-| test_placement.py | 8 | Placement router |
-| test_lessons.py | 12 | Lessons router |
-| test_tests.py | 9 | Tests router + test_generator |
-| test_flashcards.py | 10 | Flashcards router |
-| test_conversation.py | 8 | Conversation router |
-| test_stats.py | 7 | Stats router |
-| test_quickmode.py | 7 | QuickMode router |
-| test_news.py | 6 | News router |
-| test_pronunciation.py | 6 | Pronunciation router |
-| test_settings.py | 7 | Settings router |
-| test_audio.py | 5 | Audio router |
-| test_youtube.py | 6 | YouTube router |
-| test_voice_chat.py | 6 | Voice Chat router |
+- **Pokrycie:** routers, services, models
 
 ---
 
-## Wdrożenie
+## Wdrożenie Docker
 
-Szczegółowa dokumentacja wdrożeniowa: [docs/deployment.md](docs/deployment.md)
+```bash
+# Budowanie i uruchomienie
+docker-compose up --build
 
-### Szybki przegląd
+# W tle
+docker-compose up -d --build
 
-1. **Przygotowanie serwera** (Linux VPS):
-   ```bash
-   sudo apt update
-   sudo apt install python3.10+ nodejs nginx certbot
-   ```
+# Logi
+docker-compose logs -f backend
 
-2. **Backend** (systemd service):
-   - Zainstaluj zależności: `pip install -r requirements.txt`
-   - Ustaw zmienne środowiskowe w `.env`
-   - Uruchom jako systemd service (uvicorn z pracownikami)
+# Zatrzymanie
+docker-compose down
+```
 
-3. **Frontend** (build statyczny):
-   ```bash
-   cd frontend
-   npm run build
-   # Serwuj `dist/` przez Nginx
-   ```
+Usługi:
+- **Backend:** http://localhost:8001
+- **Frontend:** http://localhost:5173
+- **Backup:** automatyczny, co 24h, retencja 7 dni
 
-4. **Nginx** (reverse proxy):
-   - Proxy `/api/` → `localhost:8000`
-   - Serwuj statyczne pliki frontendu
-   - SSL przez Certbot (Let's Encrypt)
+### Wolumeny Docker
 
-5. **Baza danych:**
-   - SQLite (dla małych instalacji)
-   - Lub migracja do PostgreSQL (dla skali)
+| Wolumen | Zawartość |
+|---------|-----------|
+| `lingua_ai_db` | Baza danych SQLite |
+| `lingua_ai_audio` | Wygenerowane pliki audio |
+| `lingua_ai_exports` | Eksporty PDF/Anki |
+| `lingua_ai_backups` | Kopie zapasowe bazy |
 
 ---
 
-## Pamięć Claude
+## Rozwiązywanie problemów
 
-System wykorzystuje trwałą pamięć w `C:\Users\Acer\.claude\projects\G--M-j-dysk-NowaNadzieja\memory\`.
+### Backend nie startuje — `ModuleNotFoundError`
+```bash
+# ✅ Dobrze (z katalogu głównego)
+py -3.11 -m uvicorn backend.main:app --reload --port 8001
 
-### Typy pamięci
+# Źle
+cd backend
+py -3.11 -m uvicorn main:app --reload --port 8001
+```
 
-| Typ | Opis | Kiedy zapisywać |
-|------|-------|-------------------|
-| user | Informacje o użytkowniku (rola, preferencje) | Gdy poznasz użytkownika |
-| feedback | Wskazówki od użytkownika (co robić/nie robić) | Po korekcie lub potwierdzeniu |
-| project | Cele, daty, inicjatywy w projekcie | Gdy poznasz kontekst zadania |
-| reference | Zewnętrzne systemy (GitHub, Linear, itp.) | Gdy poznasz zewnętrzne zasoby |
+### Frontend nie łączy się z backendiem
+Sprawdź `VITE_API_URL` w `vite.config.js` — powinno wskazywać na `http://localhost:8001`.
 
-### Pliki pamięci
+### Błąd AI — `401 Unauthorized`
+Sprawdź klucz API w `backend\.env`.
 
-- `MEMORY.md` — indeks wszystkich wpisów (pierwsza linia każdego pliku pamięci)
-- Poszczególne pliki `.md` w katalogu pamięci — zawartość w formacie Markdown z frontmatter YAML
+### Błąd bazy danych — `table does not exist`
+Usuń stary plik `backend\lingua_ai.db` — zostanie utworzony nowy.
+
+### Testy nie przechodzą
+```bash
+# Usuń stary plik testowej bazy
+del backend\test_lingua_ai.db
+py -3.11 -m pytest backend/tests/ -v
+```
+
+### Błąd `can't subtract offset-naive and offset-aware datetimes`
+Znany bug z SQLite — upewnij się, że masz najnowszą wersję `backend/routers/flashcards.py` z fixem timezone.
+
+---
+
+## Kluczowe numery
+
+| Parametr | Wartość | Gdzie |
+|----------|---------|-------|
+| XP za lekcję | +25 | `routers/lessons.py` |
+| XP za test | `score × 0.5` (max 50) | `services/test_generator.py` |
+| Krzywa poziomów | `(n-1)² × 20` XP, 50 poziomów | `services/achievement_service.py` |
+| Port backendu | 8001 | `start.bat`, `docker-compose.yml` |
+| Port frontendu | 5173 | `vite.config.js` |
+| Timeout API (frontend) | 60 s | `frontend/src/api/client.js` |
+| Retencja backupów | 7 dni | `services/backup_service.py` |
+| Osiągnięcia | 57 typów | `services/achievement_service.py` |
 
 ---
 
 ## Licencja
 
-MIT License — możesz używać, modyfikować i rozprowadzać kod.
-
----
-
-## Autorzy
-
-- **Matthew** — główny deweloper
-- **AI Assistance** — Claude (Anthropic) przez Claude Code
-
----
-
-## Linki
-
-- Repozytorium GitHub: https://github.com/Matthew19381/LanguaAI
-- API Docs (lokalnie): http://localhost:8001/docs
-- Issue Tracker: https://github.com/Matthew19381/LanguaAI/issues
+MIT
