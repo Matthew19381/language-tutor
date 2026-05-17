@@ -14,11 +14,11 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-async def verify_admin(x_admin_api_key: str = Header(...)):
+async def verify_admin(x_admin_key: str = Header(...)):
     """Verify admin API key from header."""
     if not settings.ADMIN_API_KEY:
         raise HTTPException(status_code=503, detail="Admin API not configured — set ADMIN_API_KEY in .env")
-    if x_admin_api_key != settings.ADMIN_API_KEY:
+    if x_admin_key != settings.ADMIN_API_KEY:
         raise HTTPException(status_code=403, detail="Invalid admin API key")
     return True
 

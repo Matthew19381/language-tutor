@@ -252,6 +252,6 @@ class TestBackupAPIEndpoints:
         assert isinstance(data["backups"], list)
 
     def test_backup_requires_auth(self, client):
-        """POST /api/admin/backup without key returns 403."""
+        """POST /api/admin/backup without key returns 422 (missing required header)."""
         r = client.post("/api/admin/backup")
-        assert r.status_code == 403
+        assert r.status_code == 422

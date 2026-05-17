@@ -155,17 +155,18 @@ def check_and_award_achievements(user, db: Session) -> list:
     total_flashcards = db.query(Flashcard).filter(
         Flashcard.user_id == user.id
     ).count()
+    from sqlalchemy import func as _func
     total_reviews = db.query(Flashcard).filter(
         Flashcard.user_id == user.id,
         Flashcard.repetitions > 0
-    ).with_entities(db.func.sum(Flashcard.repetitions)).scalar() or 0
+    ).with_entities(_func.sum(Flashcard.repetitions)).scalar() or 0
 
     # Topic stats
     total_topics = db.query(Topic).filter(Topic.user_id == user.id).count()
     topic_reviews = db.query(Topic).filter(
         Topic.user_id == user.id,
         Topic.total_reviews > 0
-    ).with_entities(db.func.sum(Topic.total_reviews)).scalar() or 0
+    ).with_entities(_func.sum(Topic.total_reviews)).scalar() or 0
 
     # Conversation count (from conversation sessions)
     try:

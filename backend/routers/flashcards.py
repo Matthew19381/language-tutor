@@ -120,6 +120,12 @@ async def review_flashcard(
 
     # FSRS algorithm (1-4 rating scale: 1=Again, 2=Hard, 3=Good, 4=Easy)
     from backend.services.fsrs_service import apply_fsrs
+    from datetime import timezone as _tz
+
+    # Ensure last_review_date is timezone-aware (SQLite may store naive datetimes)
+    last_review = flashcard.next_review_date
+    if last_review and last_review.tzinfo is None:
+        last_review = last_review.replace(tzinfo=_tz.utc)
 
     result = apply_fsrs(
         rating=request.rating,
@@ -130,7 +136,7 @@ async def review_flashcard(
         reps=flashcard.repetitions,
         lapses=flashcard.lapses or 0,
         current_state=flashcard.fsrs_state or "Learning",
-        last_review_date=flashcard.next_review_date,
+        last_review_date=last_review,
     )
 
     flashcard.difficulty = result.difficulty
