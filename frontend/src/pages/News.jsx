@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Newspaper, BookOpen, ChevronDown, ChevronUp, ExternalLink, Plus, CheckCircle } from 'lucide-react'
 import { getUserId, addFlashcard, addFlashcardAI, addXP, translateWord } from '../api/client'
@@ -231,6 +231,8 @@ function ClickableText({ text, userId, language }) {
   const [addedWords, setAddedWords] = useState({})
   const [translations, setTranslations] = useState({})
   const [loadingTrans, setLoadingTrans] = useState({})
+  const [selectionPopup, setSelectionPopup] = useState(null) // { text, x, y }
+  const containerRef = useRef(null)
 
   const sentences = text
     ? text.match(/[^.!?]+[.!?]*/g)?.map(s => s.trim()).filter(Boolean) || [text]
@@ -262,8 +264,43 @@ function ClickableText({ text, userId, language }) {
     }
   }
 
+  // Text selection handler
+  const handleMouseUp = () => {
+    const sel = window.getSelection()
+    const selectedText = sel.toString().trim()
+    if (selectedText.length >= 2) {
+      const range = sel.getRangeAt(0)
+      const rect = range.getBoundingClientRect()
+      const containerRect = containerRef.current?.getBoundingClientRect()
+      if (containerRect) {
+        setSelectionPopup({
+          text: selectedText,
+          x: rect.left - containerRect.left + rect.width / 2,
+          y: rect.top - containerRect.top - 10,
+        })
+      }
+    } else {
+      setSelectionPopup(null)
+    }
+  }
+
+  const handleSelectionFlashcard = async () => {
+    if (!selectionPopup) return
+    const word = selectionPopup.text
+    setSelectionPopup(null)
+    const clean = word.replace(/[^a-zA-ZäöüßÄÖÜáéíóúñàâêîôùûçőőűéàèìòù]/gi, '').toLowerCase()
+    setAddedWords(prev => ({ ...prev, [clean]: 'loading' }))
+    try {
+      await addFlashcardAI(userId, clean)
+      setAddedWords(prev => ({ ...prev, [clean]: 'done' }))
+      setTimeout(() => setAddedWords(prev => { const n = { ...prev }; delete n[clean]; return n }), 2000)
+    } catch {
+      setAddedWords(prev => { const n = { ...prev }; delete n[clean]; return n })
+    }
+  }
+
   return (
-    <div className="flex-1 leading-relaxed space-y-2">
+    <div className="flex-1 leading-relaxed space-y-2 relative" ref={containerRef} onMouseUp={handleMouseUp}>
       {sentences.map((sentence, idx) => (
         <div key={idx}>
           <span>
@@ -300,6 +337,45 @@ function ClickableText({ text, userId, language }) {
           )}
         </div>
       ))}
+
+      {/* Selection popup */}
+      {selectionPopup && (
+        <div
+          className="absolute z-50 transform -translate-x-1/2 -translate-y-full"
+          style={{ left: selectionPopup.x, top: selectionPopup.y }}
+          onMouseLeave={() => setSelectionPopup(null)}
+        >
+          <div className="bg-gray-800 border border-indigo-500/50 rounded-lg shadow-xl p-2 flex items-center gap-2 whitespace-nowrap">
+            <span className="text-xs text-gray-400 max-w-[120px] truncate">{selectionPopup.text}</span>
+            <button
+              onClick={handleSelectionFlashcard}
+              className="flex items-center gap-1 px-2 py-1 rounded bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium transition-colors"
+              title="Dodaj do fiszek"
+            >
+              <Plus className="w-3 h-3" /> Fiszka
+            </button>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(selectionPopup.text)
+                setSelectionPopup(null)
+              }}
+              className="flex items-center gap-1 px-2 py-1 rounded bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs transition-colors"
+              title="Kopiuj"
+            >
+              📋
+            </button>
+            <button
+              onClick={() => setSelectionPopup(null)}
+              className="text-gray-500 hover:text-gray-300 text-xs"
+            >
+              ✕
+            </button>
+          </div>
+          <div className="flex justify-center">
+            <div className="w-2 h-2 bg-gray-800 border-r border-b border-indigo-500/50 transform rotate-45 -mt-1" />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

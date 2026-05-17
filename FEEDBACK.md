@@ -37,7 +37,7 @@
 - [ ] Filtr fiszek po dacie dodania (nie pobieraÄ‡ codziennie wszystkich)
 - [ ] Fiszki nie odzwierciedlajÄ… poziomu sĹ‚ownictwa â€” poprawiÄ‡ dobĂłr
 - [ ] TĹ‚umaczenie przykĹ‚adowego zdania â€” opcjonalne, niezbyt pilne
-- [ ] Audio dla fiszek
+- [x] Audio dla fiszek — PlayButton na fiszkach (edge-tts), generate_audio endpoint
 - [ ] ZweryfikowaÄ‡ bazÄ™ danych: czy postÄ™py sÄ… zapisywane?
 
 ### Pozytywne
