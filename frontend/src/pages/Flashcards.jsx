@@ -4,7 +4,7 @@ import {
   Brain, ChevronLeft, ChevronRight, Download, Eye,
   CheckCircle, AlertCircle, Clock, Plus
 } from 'lucide-react'
-import { getUserId, getFlashcards, getDueFlashcards, reviewFlashcard, exportAnki, addFlashcard, addFlashcardAI } from '../api/client'
+import { getUserId, getFlashcards, getDueFlashcards, reviewFlashcard, exportAnki, addFlashcard, addFlashcardAI, bulkImportFlashcards } from '../api/client'
 import { PageLoader } from '../components/LoadingSpinner'
 import { useLanguage } from '../hooks/useLanguage'
 import PlayButton from '../components/PlayButton'
@@ -42,6 +42,12 @@ export default function Flashcards() {
   const [allTotal, setAllTotal] = useState(0)
   const [page, setPage] = useState(0)
   const PAGE_SIZE = 50
+
+  // Bulk import
+  const [showImport, setShowImport] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const [importResult, setImportResult] = useState(null)
+  const fileInputRef = useRef(null)
 
   useEffect(() => {
     if (!userId) { navigate('/placement'); return }
@@ -185,6 +191,23 @@ export default function Flashcards() {
     }
   }
 
+  const handleBulkImport = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setImporting(true)
+    setImportResult(null)
+    try {
+      const res = await bulkImportFlashcards(userId, file)
+      setImportResult(res)
+      loadCards()
+    } catch (err) {
+      setImportResult({ success: false, message: err.message || 'Import failed' })
+    } finally {
+      setImporting(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
   if (loading) return <PageLoader text={t('flash.loading')} />
 
   return (
@@ -238,6 +261,12 @@ export default function Flashcards() {
           className={`ml-auto flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${showAddForm ? 'bg-indigo-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-gray-100'}`}
         >
           <Plus className="w-4 h-4" />{t('flash.addTab')}
+        </button>
+        <button
+          onClick={() => setShowImport(s => !s)}
+          className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${showImport ? 'bg-indigo-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-gray-100'}`}
+        >
+          <Download className="w-4 h-4" />{t('flash.importTab') || 'Import'}
         </button>
       </div>
 
@@ -347,6 +376,11 @@ export default function Flashcards() {
                   <div
                     className={`flashcard ${isFlipped ? 'flipped' : ''}`}
                     onClick={handleFlip}
+                    onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleFlip() } }}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={isFlipped ? (t('flash.showFront') || 'Pokaż przód') : (t('flash.reveal') || 'Odpowiedź')}
+                    aria-expanded={isFlipped}
                   >
                     {/* Front */}
                     <div className="flashcard-front">
@@ -406,15 +440,16 @@ export default function Flashcards() {
               {tab === TABS.DUE && isFlipped && currentCard && (
                 <div className="grid grid-cols-4 gap-2 mb-4">
                   {[
-                    { rating: 1, labelKey: 'flash.again', color: 'bg-red-700 hover:bg-red-600 text-white', desc: '<1d' },
-                    { rating: 2, labelKey: 'flash.hard', color: 'bg-orange-700 hover:bg-orange-600 text-white', desc: '~3d' },
-                    { rating: 3, labelKey: 'flash.good', color: 'bg-blue-700 hover:bg-blue-600 text-white', desc: '~7d' },
-                    { rating: 4, labelKey: 'flash.easy', color: 'bg-emerald-700 hover:bg-emerald-600 text-white', desc: '~14d' },
-                  ].map(({ rating, labelKey, color, desc }) => (
+                    { rating: 1, labelKey: 'flash.again', color: 'bg-red-700 hover:bg-red-600 text-white', desc: '<1d', ariaKey: 'flash.again' },
+                    { rating: 2, labelKey: 'flash.hard', color: 'bg-orange-700 hover:bg-orange-600 text-white', desc: '~3d', ariaKey: 'flash.hard' },
+                    { rating: 3, labelKey: 'flash.good', color: 'bg-blue-700 hover:bg-blue-600 text-white', desc: '~7d', ariaKey: 'flash.good' },
+                    { rating: 4, labelKey: 'flash.easy', color: 'bg-emerald-700 hover:bg-emerald-600 text-white', desc: '~14d', ariaKey: 'flash.easy' },
+                  ].map(({ rating, labelKey, color, desc, ariaKey }) => (
                     <button
                       key={rating}
                       className={`${color} rounded-lg py-2 text-sm font-medium transition-colors`}
                       onClick={() => handleReview(rating)}
+                      aria-label={`${t(ariaKey)} — ${desc}`}
                     >
                       <div>{t(labelKey)}</div>
                       <div className="text-xs opacity-75">{desc}</div>
@@ -424,11 +459,12 @@ export default function Flashcards() {
               )}
 
               {/* Navigation */}
-              <div className="flex justify-between">
+              <div className="flex justify-between" role="group" aria-label={t('flash.cardNav') || 'Nawigacja fiszek'}>
                 <button
                   className="btn-secondary flex items-center gap-2"
                   onClick={handlePrev}
                   disabled={currentIndex === 0}
+                  aria-label={t('flash.previous') || 'Poprzednia fiszka'}
                 >
                   <ChevronLeft className="w-4 h-4" />
                   {t('flash.previous')}
@@ -436,6 +472,7 @@ export default function Flashcards() {
                 <button
                   className={isFlipped ? 'btn-primary' : 'btn-secondary'}
                   onClick={handleFlip}
+                  aria-label={isFlipped ? (t('flash.showFront') || 'Pokaż przód') : (t('flash.reveal') || 'Odpowiedź')}
                 >
                   {isFlipped ? t('flash.showFront') : t('flash.reveal')}
                 </button>
@@ -443,6 +480,7 @@ export default function Flashcards() {
                   className="btn-secondary flex items-center gap-2"
                   onClick={handleNext}
                   disabled={currentIndex === displayCards.length - 1}
+                  aria-label={t('flash.next') || 'Następna fiszka'}
                 >
                   {t('flash.next')}
                   <ChevronRight className="w-4 h-4" />
@@ -450,7 +488,7 @@ export default function Flashcards() {
               </div>
 
               {/* Progress dots */}
-              <div className="flex gap-1.5 mt-4 justify-center flex-wrap">
+              <div className="flex gap-1.5 mt-4 justify-center flex-wrap" role="tablist" aria-label={t('flash.cardProgress') || 'Postęp fiszek'}>
                 {displayCards.map((card, i) => (
                   <button
                     key={i}
@@ -462,6 +500,9 @@ export default function Flashcards() {
                         : 'bg-gray-700'
                     }`}
                     onClick={() => { setCurrentIndex(i); setIsFlipped(false) }}
+                    role="tab"
+                    aria-selected={i === currentIndex}
+                    aria-label={`${t('flash.card') || 'Fiszka'} ${i + 1}${reviewDone.has(card.id) ? ` (${t('flash.reviewed') || 'przejrzana'})` : ''}`}
                   />
                 ))}
               </div>
@@ -601,6 +642,45 @@ export default function Flashcards() {
                   {addLoading ? t('flash.adding') || 'Dodawanie...' : t('flash.addButton')}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Import Panel */}
+      {showImport && (
+        <div className="card mt-6 max-w-lg">
+          <h2 className="text-xl font-semibold mb-2">{t('flash.bulkImport') || 'Import z pliku'}</h2>
+          <p className="text-gray-500 text-sm mb-4">
+            {t('flash.bulkImportDesc') || 'Zaimportuj fiszki z pliku CSV lub TSV. Kolumny: word, translation, example (opcjonalne).'}
+          </p>
+          {importResult && (
+            <div className={`p-3 rounded-lg mb-4 text-sm ${
+              importResult.success ? 'bg-emerald-900/30 text-emerald-300' : 'bg-red-900/30 text-red-300'
+            }`}>
+              {importResult.message || importResult}
+              {importResult.errors?.length > 0 && (
+                <ul className="mt-2 text-xs list-disc list-inside">
+                  {importResult.errors.map((err, i) => <li key={i}>{err}</li>)}
+                </ul>
+              )}
+            </div>
+          )}
+          <div className="space-y-3">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv,.tsv,.txt"
+              onChange={handleBulkImport}
+              disabled={importing}
+              className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 file:cursor-pointer disabled:opacity-50"
+            />
+            {importing && <p className="text-gray-400 text-sm">{t('flash.importing') || 'Importowanie...'}</p>}
+            <div className="bg-gray-800 rounded-lg p-3">
+              <p className="text-xs text-gray-500 mb-1">{t('flash.csvExample') || 'Przykład CSV:'}</p>
+              <pre className="text-xs text-gray-400 font-mono">word,translation,example
+Haus,dom,Das Haus ist groß
+Katze,die Katze,Meine Katze schläft</pre>
             </div>
           </div>
         </div>

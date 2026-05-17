@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/api/v1/voice-chat/prompt/{user_id}")
+@router.get("/api/voice-chat/prompt/{user_id}")
 def generate_voice_chat_prompt(user_id: int, db: Session = Depends(get_db)):
     """
     Generuj prompt dla Voice Chat/OpenRouter na podstawie dzisiejszej aktywności użytkownika.
@@ -141,7 +141,7 @@ Dziękuję za pomoc!
     }
 
 
-@router.post("/api/v1/voice-chat/conversation/voice")
+@router.post("/api/voice-chat/conversation/voice")
 async def voice_chat_voice_conversation(request: VoiceChatMessageRequest):
     """
     Endpoint głosowej rozmowy przez OpenRouter.
@@ -183,7 +183,7 @@ async def voice_chat_voice_conversation(request: VoiceChatMessageRequest):
         raise HTTPException(status_code=500, detail="Voice conversation failed")
 
 
-@router.post("/api/v1/voice-chat/conversation/text")
+@router.post("/api/voice-chat/conversation/text")
 async def voice_chat_text_conversation(request: VoiceChatMessageRequest):
     """
     Rozmowa tekstowa przez OpenRouter (bez audio).

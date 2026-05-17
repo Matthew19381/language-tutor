@@ -1,8 +1,10 @@
+import csv
+import io
 import logging
 import os
 import httpx
 from datetime import datetime, date, timezone
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from fastapi.responses import FileResponse
 from typing import Optional
 from sqlalchemy.orm import Session
@@ -359,4 +361,76 @@ Return ONLY valid JSON:
         "translation": translation,
         "example": example,
         "message": "Flashcard added with AI"
+    }
+
+
+@router.post("/api/flashcards/{user_id}/bulk-import")
+async def bulk_import_flashcards(
+    user_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    """Import flashcards from a CSV/TSV file. Columns: word, translation, example (optional)."""
+    user = get_user_or_404(db, user_id)
+
+    filename = (file.filename or "").lower()
+    if not filename.endswith((".csv", ".tsv", ".txt")):
+        raise HTTPException(status_code=400, detail="Only .csv and .tsv files are supported")
+
+    content = (await file.read()).decode("utf-8-sig")
+    dialect = "excel-tab" if filename.endswith((".tsv", ".txt")) else "excel"
+    reader = csv.DictReader(io.StringIO(content), dialect=dialect)
+
+    if reader.fieldnames is None:
+        raise HTTPException(status_code=400, detail="Empty file")
+
+    # Normalise header names (case-insensitive, strip whitespace)
+    fieldnames = {f.strip().lower() for f in reader.fieldnames}
+
+    # Collect all words for duplicate check
+    rows = list(reader)
+    words = [row.get("word", row.get("Word", "")).strip() for row in rows if row.get("word", row.get("Word", "")).strip()]
+
+    existing = db.query(Flashcard.word).filter(
+        Flashcard.user_id == user_id,
+        Flashcard.language == user.target_language,
+        Flashcard.word.in_(words)
+    ).all() if words else []
+    existing_words = {row[0] for row in existing}
+
+    created = 0
+    skipped = 0
+    errors = []
+
+    for i, row in enumerate(rows, start=2):  # start=2: row 1 is header
+        word = (row.get("word") or row.get("Word") or "").strip()
+        translation = (row.get("translation") or row.get("Translation") or row.get("tłumaczenie") or row.get("Tłumaczenie") or "").strip()
+        example = (row.get("example") or row.get("Example") or row.get("przykład") or row.get("Przykład") or "").strip()
+
+        if not word or not translation:
+            errors.append(f"Row {i}: missing word or translation")
+            continue
+        if word in existing_words:
+            skipped += 1
+            continue
+
+        db.add(Flashcard(
+            user_id=user_id,
+            word=word,
+            translation=translation,
+            example_sentence=example or None,
+            language=user.target_language,
+            cefr_level=user.cefr_level,
+        ))
+        existing_words.add(word)
+        created += 1
+
+    db.commit()
+
+    return {
+        "success": True,
+        "created": created,
+        "skipped": skipped,
+        "errors": errors,
+        "message": f"Imported {created} flashcards, skipped {skipped} duplicates"
     }

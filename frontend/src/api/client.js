@@ -109,6 +109,14 @@ export const getFlashcards = (userId, params = {}) =>
 export const getDueFlashcards = (userId) =>
   api.get(`/flashcards/${userId}/due`)
 
+export const bulkImportFlashcards = (userId, file) => {
+  const formData = new FormData()
+  formData.append("file", file)
+  return api.post(`/flashcards/${userId}/bulk-import`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  })
+}
+
 export const reviewFlashcard = (flashcardId, rating, userId) =>
   api.post(`/flashcards/${flashcardId}/review`, { rating, user_id: userId })
 
