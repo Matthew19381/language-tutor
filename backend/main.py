@@ -40,6 +40,7 @@ async def lifespan(app: FastAPI):
     # SQLite migrations — add missing columns safely
     _migrations = [
         ("users", "ALTER TABLE users ADD COLUMN language_profiles TEXT DEFAULT '{}'"),
+        ("users", "ALTER TABLE users ADD COLUMN streak_freezes INTEGER DEFAULT 2"),
         ("flashcards", "ALTER TABLE flashcards ADD COLUMN lesson_id INTEGER"),
         ("flashcards", "ALTER TABLE flashcards ADD COLUMN lesson_day INTEGER"),
         ("flashcards", "ALTER TABLE flashcards ADD COLUMN lesson_topic TEXT"),
