@@ -129,6 +129,15 @@ export const addFlashcard = (userId, data) =>
 export const addFlashcardAI = (userId, word) =>
   api.post(`/flashcards/${userId}/add-ai`, { word })
 
+export const generateFlashcardsFromTopic = (userId, topicId, count = 10) =>
+  api.post('/flashcards/generate-from-topic', { user_id: userId, topic_id: topicId, count })
+
+export const generateFlashcardsFromErrors = (userId, count = 10) =>
+  api.post('/flashcards/generate-from-errors', { user_id: userId, count })
+
+export const batchAddFlashcards = (userId, flashcards) =>
+  api.post('/flashcards/batch-add', { user_id: userId, flashcards })
+
 // ===== Conversation =====
 
 export const startConversation = (userId, topic) =>

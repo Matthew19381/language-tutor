@@ -9,6 +9,33 @@ import { PageLoader } from '../components/LoadingSpinner'
 import { useLanguage } from '../hooks/useLanguage'
 import PlayButton from '../components/PlayButton'
 
+// German gender colors
+const GENDER_COLORS = {
+  der: { bg: 'bg-blue-500/20', text: 'text-blue-300', border: 'border-blue-500/30', label: 'm.' },
+  die: { bg: 'bg-red-500/20', text: 'text-red-300', border: 'border-red-500/30', label: 'f.' },
+  das: { bg: 'bg-green-500/20', text: 'text-green-300', border: 'border-green-500/30', label: 'n.' },
+};
+
+function GenderBadge({ gender }) {
+  if (!gender || !GENDER_COLORS[gender]) return null;
+  const c = GENDER_COLORS[gender];
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded text-sm font-medium ${c.bg} ${c.text} border ${c.border} mr-2`}>
+      {gender}
+    </span>
+  );
+}
+
+function highlightWordInSentence(sentence, word, gender) {
+  if (!sentence || !word) return sentence;
+  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(`\\b(${escaped})\\b`, 'gi');
+  const colorClass = gender && GENDER_COLORS[gender]
+    ? GENDER_COLORS[gender].bg.replace('/20', '/40')
+    : 'bg-yellow-500/30';
+  return sentence.replace(regex, `<mark class="${colorClass} rounded px-0.5">\$1</mark>`);
+}
+
 const TABS = { ALL: 'all', DUE: 'due' }
 
 export default function Flashcards() {
@@ -392,6 +419,7 @@ export default function Flashcards() {
                           <p className="text-3xl font-bold text-emerald-300">{currentCard.translation}</p>
                         ) : (
                           <div className="flex items-center justify-center gap-2">
+                            <GenderBadge gender={currentCard.gender} />
                             <p className="text-3xl font-bold text-indigo-300">{currentCard.word}</p>
                             <div onClick={e => e.stopPropagation()}>
                               <PlayButton text={currentCard.word} language={currentCard.language || targetLanguage} />
@@ -409,6 +437,7 @@ export default function Flashcards() {
                         </p>
                         {reversed ? (
                           <div className="flex items-center justify-center gap-2 mb-1">
+                            <GenderBadge gender={currentCard.gender} />
                             <p className="text-3xl font-bold text-indigo-300">{currentCard.word}</p>
                             <div onClick={e => e.stopPropagation()}>
                               <PlayButton text={currentCard.word} language={currentCard.language || targetLanguage} />
@@ -417,6 +446,7 @@ export default function Flashcards() {
                         ) : (
                           <>
                             <div className="flex items-center justify-center gap-2 mb-1">
+                              <GenderBadge gender={currentCard.gender} />
                               <p className="text-3xl font-bold text-indigo-300">{currentCard.word}</p>
                               <div onClick={e => e.stopPropagation()}>
                                 <PlayButton text={currentCard.word} language={currentCard.language || targetLanguage} />
@@ -426,7 +456,10 @@ export default function Flashcards() {
                           </>
                         )}
                         {currentCard.example_sentence && (
-                          <p className="text-gray-400 text-sm mt-3 italic max-w-xs">
+                          <p
+                            className="text-gray-400 text-sm mt-3 italic max-w-xs"
+                            dangerouslySetInnerHTML={{ __html: highlightWordInSentence(currentCard.example_sentence, currentCard.word, currentCard.gender) }}
+                          />
                             {currentCard.example_sentence}
                           </p>
                         )}

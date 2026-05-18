@@ -18,6 +18,7 @@ class Flashcard(Base):
     lesson_id = Column(Integer, ForeignKey("lessons.id"), nullable=True)
     lesson_day = Column(Integer, nullable=True)
     lesson_topic = Column(String, nullable=True)
+    gender = Column(String, nullable=True)  # der/die/das for German nouns
     # ── FSRS Spaced Repetition ──
     difficulty = Column(Float, default=5.0)          # FSRS difficulty (0-10, lower=easier)
     stability = Column(Float, default=0.0)           # FSRS stability (days)

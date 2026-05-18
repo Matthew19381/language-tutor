@@ -7,7 +7,9 @@ import {
 } from 'lucide-react';
 import {
   getUserId, getTopics, getTopicTree, getDueTopics,
-  getTopicStats, getTopicDetail, reviewTopic
+  getTopicStats, getTopicDetail, reviewTopic,
+  generateFlashcardsFromTopic, generateFlashcardsFromErrors,
+  batchAddFlashcards
 } from '../api/client';
 import { PageLoader } from '../components/LoadingSpinner';
 
@@ -37,6 +39,33 @@ const CATEGORY_COLORS = {
   idioms: 'bg-indigo-100 text-indigo-800 border-indigo-200',
   other: 'bg-gray-100 text-gray-800 border-gray-200',
 };
+
+// ── German gender colors ──────────────────────────────────────────────────
+const GENDER_COLORS = {
+  der: { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-300', label: 'm.' },
+  die: { bg: 'bg-red-100', text: 'text-red-700', border: 'border-red-300', label: 'f.' },
+  das: { bg: 'bg-green-100', text: 'text-green-700', border: 'border-green-300', label: 'n.' },
+};
+
+function GenderBadge({ gender }) {
+  if (!gender || !GENDER_COLORS[gender]) return null;
+  const c = GENDER_COLORS[gender];
+  return (
+    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${c.bg} ${c.text} border ${c.border} mr-1`}>
+      {gender}
+    </span>
+  );
+}
+
+function highlightWordInSentence(sentence, word, gender) {
+  if (!sentence || !word) return sentence;
+  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(`\\b(${escaped})\\b`, 'gi');
+  const colorClass = gender && GENDER_COLORS[gender]
+    ? GENDER_COLORS[gender].text.replace('text-', 'bg-').replace('-700', '-200')
+    : 'bg-yellow-200';
+  return sentence.replace(regex, `<mark class="${colorClass} rounded px-0.5">\$1</mark>`);
+}
 
 // ── Memory strength bar ───────────────────────────────────────────────────
 function MemoryBar({ strength, size = 'md' }) {
@@ -83,11 +112,59 @@ function ReviewButtons({ onReview, reviewing }) {
   );
 }
 
+// ── Flashcard preview card ─────────────────────────────────────────────────
+function FlashcardPreview({ fc, index, onToggle, selected }) {
+  const hasGender = fc.gender && GENDER_COLORS[fc.gender];
+  return (
+    <div
+      className={`border rounded-lg p-3 cursor-pointer transition-all ${
+        selected ? 'border-indigo-400 bg-indigo-50/50' : 'border-gray-200 hover:border-gray-300'
+      }`}
+      onClick={() => onToggle(index)}
+    >
+      <div className="flex items-start gap-2">
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={() => onToggle(index)}
+          className="mt-1 accent-indigo-600"
+        />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <GenderBadge gender={fc.gender} />
+            <span className="font-semibold text-sm">{fc.word}</span>
+            <span className="text-gray-400">—</span>
+            <span className="text-sm text-gray-600">{fc.translation}</span>
+          </div>
+          {fc.example && (
+            <p
+              className="text-xs text-gray-500 mt-1 italic"
+              dangerouslySetInnerHTML={{ __html: highlightWordInSentence(fc.example, fc.word, fc.gender) }}
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Topic detail panel ─────────────────────────────────────────────────────
 function TopicDetail({ topicId, onClose }) {
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true);
   const [reviewing, setReviewing] = useState(false);
+
+  // Flashcard generation state
+  const [fcCount, setFcCount] = useState(10);
+  const [fcPreview, setFcPreview] = useState(null);
+  const [fcLoading, setFcLoading] = useState(false);
+  const [fcError, setFcError] = useState('');
+  const [fcSelected, setFcSelected] = useState({});
+  const [fcSaving, setFcSaving] = useState(false);
+  const [fcSource, setFcSource] = useState('topic'); // 'topic' | 'errors'
+  const [showFcPanel, setShowFcPanel] = useState(false);
+
+  const userId = getUserId();
 
   useEffect(() => {
     getTopicDetail(topicId)
@@ -108,6 +185,57 @@ function TopicDetail({ topicId, onClose }) {
       alert('Błąd podczas zapisu powtórki: ' + e.message);
     } finally {
       setReviewing(false);
+    }
+  };
+
+  const handleGenerate = async (source) => {
+    setFcSource(source);
+    setFcLoading(true);
+    setFcError('');
+    setFcPreview(null);
+    setFcSelected({});
+    try {
+      const res = source === 'topic'
+        ? await generateFlashcardsFromTopic(userId, topicId, fcCount)
+        : await generateFlashcardsFromErrors(userId, fcCount);
+      setFcPreview(res.flashcards || []);
+      // Select all by default
+      const sel = {};
+      (res.flashcards || []).forEach((_, i) => { sel[i] = true; });
+      setFcSelected(sel);
+    } catch (e) {
+      setFcError(e.message || 'Nie udało się wygenerować fiszek');
+    } finally {
+      setFcLoading(false);
+    }
+  };
+
+  const handleToggleFc = (index) => {
+    setFcSelected(prev => ({ ...prev, [index]: !prev[index] }));
+  };
+
+  const handleSelectAll = () => {
+    if (!fcPreview) return;
+    const allSelected = fcPreview.every((_, i) => fcSelected[i]);
+    const sel = {};
+    fcPreview.forEach((_, i) => { sel[i] = !allSelected; });
+    setFcSelected(sel);
+  };
+
+  const handleSaveSelected = async () => {
+    if (!fcPreview) return;
+    const selectedFcs = fcPreview.filter((_, i) => fcSelected[i]);
+    if (selectedFcs.length === 0) return;
+    setFcSaving(true);
+    try {
+      const res = await batchAddFlashcards(userId, selectedFcs);
+      alert(`Dodano ${res.created} fiszek do kolekcji!`);
+      setFcPreview(null);
+      setShowFcPanel(false);
+    } catch (e) {
+      alert('Błąd podczas zapisu: ' + e.message);
+    } finally {
+      setFcSaving(false);
     }
   };
 
@@ -171,6 +299,95 @@ function TopicDetail({ topicId, onClose }) {
           <Clock size={14} /> Następna powtórka: {new Date(topic.next_review).toLocaleDateString('pl-PL')}
         </div>
       )}
+
+      {/* ── Flashcard generation section ── */}
+      <div className="border-t pt-3 mb-3">
+        <button
+          onClick={() => setShowFcPanel(!showFcPanel)}
+          className="flex items-center gap-2 text-sm font-medium text-indigo-600 hover:text-indigo-700 transition-colors"
+        >
+          {showFcPanel ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          Wygeneruj fiszki
+        </button>
+
+        {showFcPanel && (
+          <div className="mt-3 space-y-3">
+            {/* Count selector */}
+            <div className="flex items-center gap-3">
+              <label className="text-sm text-gray-600">Liczba fiszek:</label>
+              <select
+                value={fcCount}
+                onChange={e => setFcCount(Number(e.target.value))}
+                className="border rounded-lg px-2 py-1 text-sm"
+              >
+                {[5, 10, 15, 20, 25, 30].map(n => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
+              <button
+                onClick={() => handleGenerate('topic')}
+                disabled={fcLoading}
+                className="px-3 py-1.5 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+              >
+                {fcLoading && fcSource === 'topic' ? <Loader2 size={14} className="animate-spin inline" /> : 'Z tematu'}
+              </button>
+              <button
+                onClick={() => handleGenerate('errors')}
+                disabled={fcLoading}
+                className="px-3 py-1.5 bg-orange-500 text-white text-sm rounded-lg hover:bg-orange-600 disabled:opacity-50 transition-colors"
+              >
+                {fcLoading && fcSource === 'errors' ? <Loader2 size={14} className="animate-spin inline" /> : 'Z błędów'}
+              </button>
+            </div>
+
+            {/* Error */}
+            {fcError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-2 text-sm text-red-600">
+                {fcError}
+              </div>
+            )}
+
+            {/* Preview */}
+            {fcPreview && fcPreview.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-700">
+                    Podgląd ({fcPreview.length} fiszek)
+                  </span>
+                  <button
+                    onClick={handleSelectAll}
+                    className="text-xs text-indigo-600 hover:underline"
+                  >
+                    Zaznacz/odznacz wszystkie
+                  </button>
+                </div>
+                <div className="space-y-1.5 max-h-64 overflow-y-auto">
+                  {fcPreview.map((fc, i) => (
+                    <FlashcardPreview
+                      key={i}
+                      fc={fc}
+                      index={i}
+                      onToggle={handleToggleFc}
+                      selected={!!fcSelected[i]}
+                    />
+                  ))}
+                </div>
+                <button
+                  onClick={handleSaveSelected}
+                  disabled={fcSaving || Object.values(fcSelected).every(v => !v)}
+                  className="w-full py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors font-medium"
+                >
+                  {fcSaving ? 'Zapisywanie...' : `Dodaj zaznaczone (${Object.values(fcSelected).filter(Boolean).length})`}
+                </button>
+              </div>
+            )}
+
+            {fcPreview && fcPreview.length === 0 && !fcLoading && (
+              <p className="text-sm text-gray-500">Brak fiszek do wygenerowania.</p>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Items list */}
       <div className="border-t pt-3">

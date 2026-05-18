@@ -67,6 +67,7 @@ async def get_flashcards(
                 "lesson_id": f.lesson_id,
                 "lesson_day": f.lesson_day,
                 "lesson_topic": f.lesson_topic,
+                "gender": f.gender,
             }
             for f in flashcards
         ],
@@ -434,3 +435,193 @@ async def bulk_import_flashcards(
         "errors": errors,
         "message": f"Imported {created} flashcards, skipped {skipped} duplicates"
     }
+
+
+# ── Topic-based flashcard generation ─────────────────────────────────────────
+
+@router.post("/api/flashcards/generate-from-topic")
+async def generate_flashcards_from_topic(
+    user_id: int,
+    topic_id: int,
+    count: int = 10,
+    db: Session = Depends(get_db),
+):
+    """Generate flashcard previews from a topic (not saved to DB yet)."""
+    user = get_user_or_404(db, user_id)
+    from backend.models.topic import Topic, TopicItem
+
+    topic = db.query(Topic).filter(Topic.id == topic_id, Topic.user_id == user_id).first()
+    if not topic:
+        raise HTTPException(status_code=404, detail="Topic not found")
+
+    # Gather context from topic items
+    items = db.query(TopicItem).filter(TopicItem.topic_id == topic_id).all()
+    item_titles = [item.title for item in items if item.title][:10]
+
+    # Get existing flashcard words to avoid duplicates
+    existing_words = {
+        row[0] for row in
+        db.query(Flashcard.word).filter(
+            Flashcard.user_id == user_id,
+            Flashcard.language == user.target_language,
+        ).all()
+    }
+
+    prompt = f"""You are helping a Polish-speaking student learn {user.target_language} at {user.cefr_level} level.
+
+Topic: {topic.name}
+Category: {topic.category}
+Description: {topic.description or 'N/A'}
+Related materials: {', '.join(item_titles) if item_titles else 'N/A'}
+
+Generate {count} useful vocabulary flashcards for this topic.
+Avoid these existing words: {', '.join(list(existing_words)[:50])}
+
+For each flashcard provide:
+- word: the {user.target_language} word/phrase
+- translation: Polish translation
+- example: example sentence in {user.target_language}
+- example_translation: Polish translation of the example
+- gender: grammatical gender if the word is a German noun (der/die/das), or null
+
+Return ONLY valid JSON:
+{{"flashcards": [
+  {{"word": "...", "translation": "...", "example": "...", "example_translation": "...", "gender": "der"|"die"|"das"|null}},
+  ...
+]}}"""
+
+    try:
+        result = await _ai_generate_flashcard(prompt)
+        if isinstance(result, dict):
+            flashcards = result.get("flashcards", [])
+        else:
+            flashcards = []
+        return {"success": True, "flashcards": flashcards, "topic_name": topic.name}
+    except Exception as e:
+        logger.exception("Failed to generate flashcards from topic")
+        raise HTTPException(status_code=500, detail="Failed to generate flashcards")
+
+
+@router.post("/api/flashcards/generate-from-errors")
+async def generate_flashcards_from_errors(
+    user_id: int,
+    count: int = 10,
+    db: Session = Depends(get_db),
+):
+    """Generate flashcard previews from user's frequent errors (not saved to DB yet)."""
+    user = get_user_or_404(db, user_id)
+
+    # Collect recent errors from test results
+    from backend.models.test_result import TestResult
+    import json as _json
+    test_results = db.query(TestResult).filter(
+        TestResult.user_id == user_id,
+        TestResult.language == user.target_language
+    ).order_by(TestResult.created_at.desc()).limit(20).all()
+
+    all_errors = []
+    for test in test_results:
+        if not test.errors:
+            continue
+        try:
+            errors = _json.loads(test.errors)
+            for err in errors:
+                if isinstance(err, dict):
+                    all_errors.append({
+                        "question": err.get("question", err.get("error", "")),
+                        "user_answer": err.get("user_answer", ""),
+                        "correct_answer": err.get("correct_answer", err.get("correction", "")),
+                        "type": err.get("type", "unknown"),
+                    })
+        except (json.JSONDecodeError, TypeError):
+            pass
+
+    if not all_errors:
+        raise HTTPException(status_code=404, detail="Brak błędów do analizy. Najpierw rozwiąż kilka testów.")
+
+    # Get existing flashcard words to avoid duplicates
+    existing_words = {
+        row[0] for row in
+        db.query(Flashcard.word).filter(
+            Flashcard.user_id == user_id,
+            Flashcard.language == user.target_language,
+        ).all()
+    }
+
+    error_summary = "\n".join(
+        f"- Q: {e['question']} | Twoja odpowiedź: {e['user_answer']} | Poprawna: {e['correct_answer']}"
+        for e in all_errors[:15]
+    )
+
+    prompt = f"""You are helping a Polish-speaking student learn {user.target_language} at {user.cefr_level} level.
+
+The user made these errors in recent tests:
+{error_summary}
+
+Generate {count} flashcards that target these weak areas.
+Focus on vocabulary and grammar patterns the user struggles with.
+Avoid these existing words: {', '.join(list(existing_words)[:50])}
+
+For each flashcard provide:
+- word: the {user.target_language} word/phrase (the correct form)
+- translation: Polish translation
+- example: example sentence in {user.target_language}
+- example_translation: Polish translation of the example
+- gender: grammatical gender if the word is a German noun (der/die/das), or null
+
+Return ONLY valid JSON:
+{{"flashcards": [
+  {{"word": "...", "translation": "...", "example": "...", "example_translation": "...", "gender": "der"|"die"|"das"|null}},
+  ...
+]}}"""
+
+    try:
+        result = await _ai_generate_flashcard(prompt)
+        if isinstance(result, dict):
+            flashcards = result.get("flashcards", [])
+        else:
+            flashcards = []
+        return {"success": True, "flashcards": flashcards, "errors_count": len(all_errors)}
+    except Exception as e:
+        logger.exception("Failed to generate flashcards from errors")
+        raise HTTPException(status_code=500, detail="Failed to generate flashcards")
+
+
+@router.post("/api/flashcards/batch-add")
+async def batch_add_flashcards(
+    user_id: int,
+    flashcards: list[dict],
+    db: Session = Depends(get_db),
+):
+    """Save a batch of flashcards to the DB (after user preview/acceptance)."""
+    user = get_user_or_404(db, user_id)
+
+    existing_words = {
+        row[0] for row in
+        db.query(Flashcard.word).filter(
+            Flashcard.user_id == user_id,
+            Flashcard.language == user.target_language,
+        ).all()
+    }
+
+    created = 0
+    skipped = 0
+    for fc in flashcards:
+        word = (fc.get("word") or "").strip()
+        if not word or word in existing_words:
+            skipped += 1
+            continue
+        db.add(Flashcard(
+            user_id=user_id,
+            word=word,
+            translation=(fc.get("translation") or "").strip(),
+            example_sentence=(fc.get("example") or "").strip() or None,
+            language=user.target_language,
+            cefr_level=user.cefr_level,
+            gender=fc.get("gender") or None,
+        ))
+        existing_words.add(word)
+        created += 1
+
+    db.commit()
+    return {"success": True, "created": created, "skipped": skipped}
