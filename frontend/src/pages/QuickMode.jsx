@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Timer, CheckCircle, BookOpen, FlaskConical, Brain, Mic, Newspaper, Play, Pause, RotateCcw } from 'lucide-react'
-import { getUserId } from '../api/client'
+import { getUserId, getQuickMode } from '../api/client'
 import { PageLoader } from '../components/LoadingSpinner'
 import { useLanguage } from '../hooks/useLanguage'
-import axios from 'axios'
 
 const LANG_DISPLAY = {
   German: 'Niemiecki', English: 'Angielski', Spanish: 'Hiszpański',
@@ -26,6 +25,7 @@ const STORAGE_KEY_PAUSED = 'quickmode_paused_remaining'
 export default function QuickMode() {
   const [plan, setPlan] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [checked, setChecked] = useState(() => {
     try {
       const today = new Date().toISOString().slice(0, 10)
@@ -68,9 +68,9 @@ export default function QuickMode() {
 
   useEffect(() => {
     if (!userId) { navigate('/placement'); return }
-    axios.get(`/api/quickmode/${userId}`)
-      .then(r => setPlan(r?.data ?? null))
-      .catch(() => {})
+    getQuickMode(userId)
+      .then(r => setPlan(r ?? null))
+      .catch(e => setError(e.message))
       .finally(() => setLoading(false))
   }, [userId])
 
@@ -148,6 +148,15 @@ export default function QuickMode() {
   }
 
   if (loading) return <PageLoader text={t('quick.loading')} />
+  if (error) {
+    return (
+      <div className="page-container max-w-xl mx-auto">
+        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mt-4">
+          <p className="text-red-400 text-sm">{error}</p>
+        </div>
+      </div>
+    )
+  }
   if (!plan) return null
 
   const allDone = plan.activities.filter(a => !a.completed).every(a => checked[a.id])

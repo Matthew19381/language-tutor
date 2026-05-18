@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Newspaper, BookOpen, ChevronDown, ChevronUp, ExternalLink, Plus, CheckCircle } from 'lucide-react'
-import { getUserId, addFlashcard, addFlashcardAI, addXP, translateWord } from '../api/client'
+import { getUserId, addFlashcard, addFlashcardAI, addXP, translateWord, getNews } from '../api/client'
 import { PageLoader } from '../components/LoadingSpinner'
 import { useLanguage } from '../hooks/useLanguage'
 import PlayButton from '../components/PlayButton'
-import axios from 'axios'
 
 export default function News() {
   const [articles, setArticles] = useState([])
@@ -37,14 +36,14 @@ export default function News() {
       }
     }
 
-    axios.get(`/api/news/${userId}`)
+    getNews(userId)
       .then(r => {
-        const arts = r?.data?.articles || []
+        const arts = r?.articles || []
         setArticles(arts)
         localStorage.setItem(cacheDateKey, today)
         localStorage.setItem(cacheDataKey, JSON.stringify(arts))
       })
-      .catch(e => setError(e.response?.data?.detail || e.message))
+      .catch(e => setError(e.message))
       .finally(() => setLoading(false))
   }, [userId, targetLanguage])
 
