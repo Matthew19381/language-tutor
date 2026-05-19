@@ -26,14 +26,42 @@ function GenderBadge({ gender }) {
   );
 }
 
-function highlightWordInSentence(sentence, word, gender) {
+function highlightWordInSentence(sentence, word, gender, isImportant = false) {
   if (!sentence || !word) return sentence;
   const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const regex = new RegExp(`\\b(${escaped})\\b`, 'gi');
-  const colorClass = gender && GENDER_COLORS[gender]
-    ? GENDER_COLORS[gender].bg.replace('/20', '/40')
-    : 'bg-yellow-500/30';
-  return sentence.replace(regex, `<mark class="${colorClass} rounded px-0.5">\$1</mark>`);
+
+  // Get gender color class
+  let genderColorClass = '';
+  if (gender && GENDER_COLORS[gender]) {
+    genderColorClass = GENDER_COLORS[gender].bg.replace('/20', '/40');
+  }
+
+  // Get importance color class (yellow for important words)
+  let importanceColorClass = '';
+  if (isImportant) {
+    importanceColorClass = 'bg-yellow-500/30';
+  }
+
+  // Combine classes: if both exist, use gender color (as requested)
+  // If only one exists, use that one
+  // If neither exists, use default yellow
+  let finalColorClass = '';
+  if (genderColorClass && importanceColorClass) {
+    // Both present - use gender color as requested
+    finalColorClass = genderColorClass;
+  } else if (genderColorClass) {
+    // Only gender color
+    finalColorClass = genderColorClass;
+  } else if (importanceColorClass) {
+    // Only importance color
+    finalColorClass = importanceColorClass;
+  } else {
+    // Neither - default to yellow
+    finalColorClass = 'bg-yellow-500/30';
+  }
+
+  return sentence.replace(regex, `<mark class="${finalColorClass} rounded px-0.5">\$1</mark>`);
 }
 
 const TABS = { ALL: 'all', DUE: 'due' }
@@ -458,7 +486,7 @@ export default function Flashcards() {
                         {currentCard.example_sentence && (
                           <p
                             className="text-gray-400 text-sm mt-3 italic max-w-xs"
-                            dangerouslySetInnerHTML={{ __html: highlightWordInSentence(currentCard.example_sentence, currentCard.word, currentCard.gender) }}
+                            dangerouslySetInnerHTML={{ __html: highlightWordInSentence(currentCard.example_sentence, currentCard.word, currentCard.gender, currentCard.isImportant) }}
                           />
                             {currentCard.example_sentence}
                           </p>

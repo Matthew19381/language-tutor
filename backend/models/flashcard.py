@@ -19,6 +19,7 @@ class Flashcard(Base):
     lesson_day = Column(Integer, nullable=True)
     lesson_topic = Column(String, nullable=True)
     gender = Column(String, nullable=True)  # der/die/das for German nouns
+    isImportant = Column(Boolean, default=False)  # Flag for important words (e.g., key conjugations)
     # ── FSRS Spaced Repetition ──
     difficulty = Column(Float, default=5.0)          # FSRS difficulty (0-10, lower=easier)
     stability = Column(Float, default=0.0)           # FSRS stability (days)

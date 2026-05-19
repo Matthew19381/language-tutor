@@ -68,6 +68,7 @@ async def get_flashcards(
                 "lesson_day": f.lesson_day,
                 "lesson_topic": f.lesson_topic,
                 "gender": f.gender,
+                "isImportant": f.isImportant,
             }
             for f in flashcards
         ],
@@ -247,7 +248,8 @@ async def add_flashcard(
         translation=request.translation,
         example_sentence=request.example_sentence,
         language=user.target_language,
-        cefr_level=user.cefr_level
+        cefr_level=user.cefr_level,
+        isImportant=request.isImportant
     )
     db.add(flashcard)
     db.commit()
@@ -483,10 +485,11 @@ For each flashcard provide:
 - example: example sentence in {user.target_language}
 - example_translation: Polish translation of the example
 - gender: grammatical gender if the word is a German noun (der/die/das), or null
+- isImportant: boolean indicating if the word is particularly important for mastering this topic (e.g., key conjugations, essential vocabulary that unlocks other concepts)
 
 Return ONLY valid JSON:
 {{"flashcards": [
-  {{"word": "...", "translation": "...", "example": "...", "example_translation": "...", "gender": "der"|"die"|"das"|null}},
+  {{"word": "...", "translation": "...", "example": "...", "example_translation": "...", "gender": "der"|"die"|"das"|null, "isImportant": true/false}},
   ...
 ]}}"""
 
@@ -568,10 +571,11 @@ For each flashcard provide:
 - example: example sentence in {user.target_language}
 - example_translation: Polish translation of the example
 - gender: grammatical gender if the word is a German noun (der/die/das), or null
+- isImportant: boolean indicating if the word is particularly important for mastering this topic (e.g., key conjugations, essential vocabulary that unlocks other concepts)
 
 Return ONLY valid JSON:
 {{"flashcards": [
-  {{"word": "...", "translation": "...", "example": "...", "example_translation": "...", "gender": "der"|"die"|"das"|null}},
+  {{"word": "...", "translation": "...", "example": "...", "example_translation": "...", "gender": "der"|"die"|"das"|null, "isImportant": true/false}},
   ...
 ]}}"""
 
@@ -619,6 +623,7 @@ async def batch_add_flashcards(
             language=user.target_language,
             cefr_level=user.cefr_level,
             gender=fc.get("gender") or None,
+            isImportant=fc.get("isImportant") or False,
         ))
         existing_words.add(word)
         created += 1

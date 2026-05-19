@@ -57,14 +57,37 @@ function GenderBadge({ gender }) {
   );
 }
 
-function highlightWordInSentence(sentence, word, gender) {
+function highlightWordInSentence(sentence, word, gender, isImportant = false) {
   if (!sentence || !word) return sentence;
   const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const regex = new RegExp(`\\b(${escaped})\\b`, 'gi');
-  const colorClass = gender && GENDER_COLORS[gender]
-    ? GENDER_COLORS[gender].text.replace('text-', 'bg-').replace('-700', '-200')
-    : 'bg-yellow-200';
-  return sentence.replace(regex, `<mark class="${colorClass} rounded px-0.5">\$1</mark>`);
+
+  // Get gender color class
+  let genderColorClass = '';
+  if (gender && GENDER_COLORS[gender]) {
+    genderColorClass = GENDER_COLORS[gender].text.replace('text-', 'bg-').replace('-700', '-200');
+  }
+
+  // Build the final class string
+  let finalClass = '';
+  if (genderColorClass) {
+    // Start with gender background
+    finalClass = genderColorClass + ' rounded px-0.5';
+    // If important, add yellow border
+    if (isImportant) {
+      finalClass += ' border-2 border-yellow-200';
+    }
+  } else {
+    // No gender - use importance background or default
+    if (isImportant) {
+      finalClass = 'bg-yellow-200 border-2 border-yellow-200 rounded px-0.5';
+    } else {
+      // Neither gender nor importance - default to yellow background
+      finalClass = 'bg-yellow-200 rounded px-0.5';
+    }
+  }
+
+  return sentence.replace(regex, `<mark class="${finalClass}">\$1</mark>`);
 }
 
 // ── Memory strength bar ───────────────────────────────────────────────────
@@ -139,7 +162,7 @@ function FlashcardPreview({ fc, index, onToggle, selected }) {
           {fc.example && (
             <p
               className="text-xs text-gray-500 mt-1 italic"
-              dangerouslySetInnerHTML={{ __html: highlightWordInSentence(fc.example, fc.word, fc.gender) }}
+              dangerouslySetInnerHTML={{ __html: highlightWordInSentence(fc.example, fc.word, fc.gender, fc.isImportant) }}
             />
           )}
         </div>
